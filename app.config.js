@@ -19,8 +19,9 @@ const firebaseConfig = {
 module.exports = {
   expo: {
     name: "Escuela Nichiboku",
+    owner: "escuelanichiboku",
     slug: "escuela-nichiboku-app",
-    scheme: "nichiboku", // para deep links (expo-router / auth redirects)
+    scheme: "nichiboku", // deep links
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -29,6 +30,11 @@ module.exports = {
     ios: {
       bundleIdentifier: "com.nichiboku.app",
       supportsTablet: true,
+      infoPlist: {
+        // ⬅️ permiso necesario para STT
+        NSMicrophoneUsageDescription:
+          "Necesitamos el micrófono para practicar diálogos de profesiones.",
+      },
     },
 
     android: {
@@ -37,11 +43,9 @@ module.exports = {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
-      // Edge-to-edge está siempre activo en SDK 54
-      navigationBar: {
-        visible: "leanback", // opcional
-      },
-      // predictiveBackGestureEnabled: true, // activa si quieres probarlo
+      navigationBar: { visible: "leanback" },
+      // ⬅️ permiso necesario para STT
+      permissions: ["RECORD_AUDIO"],
     },
 
     web: {
@@ -52,11 +56,17 @@ module.exports = {
 
     extra: {
       firebase: firebaseConfig,
+      eas: {
+        // vincula tu proyecto local al de EAS
+        projectId: "5ae8e263-4a2d-4c96-9bda-13f36917a494",
+      },
     },
 
     plugins: [
+      "expo-dev-client",
       "expo-router",
       "expo-font",
+      "expo-asset", // requerido por expo doctor
       [
         "expo-splash-screen",
         {

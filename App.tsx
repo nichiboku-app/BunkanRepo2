@@ -101,10 +101,19 @@ import B3_Familia from "./src/screens/N5/B3_Familia/B3_Familia";
 import B3_Familia_Arbol from "./src/screens/N5/B3_Familia/B3_Familia_Arbol";
 import B3_Familia_Roleplay from "./src/screens/N5/B3_Familia/B3_Familia_Roleplay";
 import B3_Familia_Tarjetas from "./src/screens/N5/B3_Familia/B3_Familia_Tarjetas";
+import B3_ProfesionesScreen from "./src/screens/N5/B3_ProfesionesScreen/B3_ProfesionesScreen";
 import B3_NumerosEdad from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad";
 import B3_NumerosEdad_Contadores from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad_Contadores";
 import B3_NumerosEdad_Roleplay from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad_Roleplay";
 import B3_NumerosEdad_Tarjetas from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad_Tarjetas";
+
+import ProfesionesDictado from "./src/screens/N5/B3_ProfesionesScreen/ProfesionesDictado";
+import ProfesionesFlashcards from "./src/screens/N5/B3_ProfesionesScreen/ProfesionesFlashcards";
+import ProfesionesMatching from "./src/screens/N5/B3_ProfesionesScreen/ProfesionesMatching";
+import ProfesionesQuiz from "./src/screens/N5/B3_ProfesionesScreen/ProfesionesQuiz";
+import ProfesionesRoleplay from "./src/screens/N5/B3_ProfesionesScreen/ProfesionesRoleplay";
+
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function Placeholder({ title }: { title: string }) {
@@ -269,6 +278,17 @@ export default function App() {
         component={B3_Familia_Arbol}
         options={{ title: "Árbol familiar" }}
       />
+      <Stack.Screen
+  name="B3_Profesiones"
+  component={B3_ProfesionesScreen}
+  options={{ headerShown: false }}
+/>
+
+<Stack.Screen name="B3_Profesiones_Flashcards" component={ProfesionesFlashcards} options={{ title: "Tarjetas" }} />
+<Stack.Screen name="B3_Profesiones_Matching" component={ProfesionesMatching} options={{ title: "Emparejar" }} />
+<Stack.Screen name="B3_Profesiones_Dictado" component={ProfesionesDictado} options={{ title: "Dictado visual" }} />
+<Stack.Screen name="B3_Profesiones_Roleplay" component={ProfesionesRoleplay} options={{ title: "Roleplay" }} />
+<Stack.Screen name="B3_Profesiones_Quiz" component={ProfesionesQuiz} options={{ title: "Quiz" }} />
           </Stack.Navigator>
         </NavigationContainer>
       </B3ScoreProvider>

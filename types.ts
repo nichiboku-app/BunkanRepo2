@@ -99,6 +99,14 @@ export type RootStackParamList = {
   B3_Familia_Roleplay: undefined;
   B3_Familia_Tarjetas: undefined;
   B3_Familia_Arbol: undefined;
+
+   B3_Profesiones: undefined;
+     
+  B3_Profesiones_Flashcards: undefined;
+  B3_Profesiones_Matching: undefined;
+  B3_Profesiones_Dictado: undefined;
+  B3_Profesiones_Roleplay: undefined;
+  B3_Profesiones_Quiz: undefined;
   
 };
 
