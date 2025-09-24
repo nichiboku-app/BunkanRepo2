@@ -1,3 +1,4 @@
+// src/screens/N5/FamiliaN/NLecturaGuiadaScreen.tsx
 import { Asset } from "expo-asset";
 import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
@@ -12,96 +13,91 @@ import {
   View,
 } from "react-native";
 
-/* ===== Tipos ===== */
-type KanaKeySZ =
-  | "sa" | "shi" | "su" | "se" | "so"
-  | "za" | "ji"  | "zu" | "ze" | "zo";
+/* =========================
+   Tipos
+========================= */
+type KanaKeyN = "na" | "ni" | "nu" | "ne" | "no";
 
-type ItemSZ = {
-  key: KanaKeySZ;
+type ItemN = {
+  key: KanaKeyN;
   hira: string;
   romaji: string;
   example: { jp: string; romaji: string; es: string };
-  audioKey: KanaKeySZ; // clave para buscar mp3 local
+  audioKey: KanaKeyN; // para mapear al mp3 local
 };
 
-/* ===== MP3 locales (ya generados con gTTS) ===== */
-// Grupo S
-const LOCAL_S: Partial<Record<Extract<KanaKeySZ,
-  "sa" | "shi" | "su" | "se" | "so"
->, number>> = {
-  sa:  require("../../../../assets/audio/n5/grupoS/sa.mp3"),
-  shi: require("../../../../assets/audio/n5/grupoS/shi.mp3"),
-  su:  require("../../../../assets/audio/n5/grupoS/su.mp3"),
-  se:  require("../../../../assets/audio/n5/grupoS/se.mp3"),
-  so:  require("../../../../assets/audio/n5/grupoS/so.mp3"),
-};
-// Grupo Z
-const LOCAL_Z: Partial<Record<Extract<KanaKeySZ,
-  "za" | "ji" | "zu" | "ze" | "zo"
->, number>> = {
-  za:  require("../../../../assets/audio/n5/grupoZ/za.mp3"),
-  ji:  require("../../../../assets/audio/n5/grupoZ/ji.mp3"),
-  zu:  require("../../../../assets/audio/n5/grupoZ/zu.mp3"),
-  ze:  require("../../../../assets/audio/n5/grupoZ/ze.mp3"),
-  zo:  require("../../../../assets/audio/n5/grupoZ/zo.mp3"),
+/* =========================
+   MP3 locales (gTTS)
+   Coloca aquí los require a tus archivos generados:
+   assets/audio/n5/grupoN/{na,ni,nu,ne,no}.mp3
+========================= */
+const LOCAL_N: Record<KanaKeyN, number> = {
+  na: require("../../../../assets/audio/n5/grupoN/na.mp3"),
+  ni: require("../../../../assets/audio/n5/grupoN/ni.mp3"),
+  nu: require("../../../../assets/audio/n5/grupoN/nu.mp3"),
+  ne: require("../../../../assets/audio/n5/grupoN/ne.mp3"),
+  no: require("../../../../assets/audio/n5/grupoN/no.mp3"),
 };
 
-const LOCAL_ALL: Partial<Record<KanaKeySZ, number>> = { ...LOCAL_S, ...LOCAL_Z };
-
-/* ===== Datos (S y Z) ===== */
-const DATA: ItemSZ[] = [
-  { key: "sa",  hira: "さ", romaji: "sa",  example: { jp: "さかな", romaji: "sakana", es: "pez" },      audioKey: "sa" },
-  { key: "shi", hira: "し", romaji: "shi", example: { jp: "しま",   romaji: "shima",  es: "isla" },    audioKey: "shi" },
-  { key: "su",  hira: "す", romaji: "su",  example: { jp: "すし",   romaji: "sushi",  es: "sushi" },   audioKey: "su" },
-  { key: "se",  hira: "せ", romaji: "se",  example: { jp: "せんせい", romaji: "sensei", es: "maestro" }, audioKey: "se" },
-  { key: "so",  hira: "そ", romaji: "so",  example: { jp: "そら",   romaji: "sora",   es: "cielo" },   audioKey: "so" },
-
-  { key: "za",  hira: "ざ", romaji: "za",  example: { jp: "ざる",   romaji: "zaru",   es: "cesta" },   audioKey: "za" },
-  { key: "ji",  hira: "じ", romaji: "ji",  example: { jp: "じしょ", romaji: "jisho",  es: "diccionario" }, audioKey: "ji" },
-  { key: "zu",  hira: "ず", romaji: "zu",  example: { jp: "ずぼん", romaji: "zubon",  es: "pantalón" }, audioKey: "zu" },
-  { key: "ze",  hira: "ぜ", romaji: "ze",  example: { jp: "ぜんぶ", romaji: "zenbu",  es: "todo" },    audioKey: "ze" },
-  { key: "zo",  hira: "ぞ", romaji: "zo",  example: { jp: "ぞう",   romaji: "zou",    es: "elefante" }, audioKey: "zo" },
+/* =========================
+   Datos de práctica (grupo N)
+========================= */
+const DATA: ItemN[] = [
+  { key: "na", hira: "な", romaji: "na", example: { jp: "なつ", romaji: "natsu", es: "verano" }, audioKey: "na" },
+  { key: "ni", hira: "に", romaji: "ni", example: { jp: "にほん", romaji: "nihon", es: "Japón" }, audioKey: "ni" },
+  { key: "nu", hira: "ぬ", romaji: "nu", example: { jp: "ぬの", romaji: "nuno", es: "tela" }, audioKey: "nu" },
+  { key: "ne", hira: "ね", romaji: "ne", example: { jp: "ねこ", romaji: "neko", es: "gato" }, audioKey: "ne" },
+  { key: "no", hira: "の", romaji: "no", example: { jp: "のむ", romaji: "nomu", es: "beber" }, audioKey: "no" },
 ];
 
-/* ===== Utiles de audio ===== */
+/* =========================
+   Utilidades de audio
+========================= */
 async function ensurePlaybackMode() {
   await Audio.setIsEnabledAsync(true);
   await Audio.setAudioModeAsync({
     allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
+    playsInSilentModeIOS: true, // iOS en silencio
     staysActiveInBackground: false,
     shouldDuckAndroid: true,
     playThroughEarpieceAndroid: false,
+    interruptionModeAndroid: 1,
+    interruptionModeIOS: 1,
   });
 }
 
-export default function SLecturaSilabas() {
+/* =========================
+   Pantalla
+========================= */
+export default function NLecturaGuiadaScreen() {
   const [ready, setReady] = useState(false);
   const [jaVoiceId, setJaVoiceId] = useState<string | null>(null);
 
-  const soundsRef = useRef<Partial<Record<KanaKeySZ, Audio.Sound>>>({});
+  // cache de sonidos locales por clave (na/ni/…)
+  const soundsRef = useRef<Partial<Record<KanaKeyN, Audio.Sound>>>({});
   const currentRef = useRef<Audio.Sound | null>(null);
   const busyRef = useRef(false);
 
-  /* Precarga de MP3 locales */
+  /* Precarga de MP3 locales + voces TTS */
   useEffect(() => {
     let cancelled = false;
+
     (async () => {
       try {
         await ensurePlaybackMode();
 
-        // precargar voces TTS disponibles (opcional)
+        // Detectar voz japonesa disponible para TTS (para el botón "Sílaba")
         try {
-          const vs = await Speech.getAvailableVoicesAsync();
-          const ja = vs.find(v => v.language?.toLowerCase().startsWith("ja"));
+          const voices = await Speech.getAvailableVoicesAsync();
+          const ja = voices.find((v) => v.language?.toLowerCase().startsWith("ja"));
           setJaVoiceId(ja?.identifier ?? null);
-        } catch {}
+        } catch {
+          // si falla, TTS usará defaults
+        }
 
-        // precarga real de audios
+        // Precargar y preparar los mp3 locales
         for (const it of DATA) {
-          const mod = LOCAL_ALL[it.audioKey];
-          if (!mod) continue;
+          const mod = LOCAL_N[it.audioKey];
           const asset = Asset.fromModule(mod);
           await asset.downloadAsync();
           const uri = asset.localUri || asset.uri;
@@ -113,22 +109,28 @@ export default function SLecturaSilabas() {
 
         if (!cancelled) setReady(true);
       } catch (e) {
-        console.warn("[SLecturaSilabas] preload error:", e);
-        if (!cancelled) setReady(true); // dejamos usar TTS fallback
+        console.warn("[NLecturaGuiada] Error en preload:", e);
+        // Aún permitimos TTS para sílaba
+        if (!cancelled) setReady(true);
       }
     })();
 
     return () => {
       cancelled = true;
       (async () => {
-        // limpiar sonidos
-        const all = Object.values(soundsRef.current).filter(Boolean) as Audio.Sound[];
         try {
-          for (const s of all) { try { await s.unloadAsync(); } catch {} }
+          const all = Object.values(soundsRef.current).filter(Boolean) as Audio.Sound[];
+          for (const s of all) {
+            try {
+              await s.unloadAsync();
+            } catch {}
+          }
         } finally {
           soundsRef.current = {};
         }
-        try { Speech.stop(); } catch {}
+        try {
+          Speech.stop();
+        } catch {}
       })();
     };
   }, []);
@@ -136,45 +138,61 @@ export default function SLecturaSilabas() {
   const stopCurrent = useCallback(async () => {
     const cur = currentRef.current;
     if (!cur) return;
-    try { await cur.stopAsync(); } catch {}
+    try {
+      await cur.stopAsync();
+    } catch {}
     currentRef.current = null;
   }, []);
 
-  /* Reproducir: sílaba sola (TTS) */
-  const speakKana = useCallback(async (text: string) => {
-    try {
-      await ensurePlaybackMode();
-      Vibration.vibrate(6);
-      Speech.stop();
-      Speech.speak(text, { language: "ja-JP", voice: jaVoiceId ?? undefined, rate: 1.0, pitch: 1.0 });
-    } catch {}
-  }, [jaVoiceId]);
+  // Reproducir solo la sílaba (TTS)
+  const speakKana = useCallback(
+    async (text: string) => {
+      try {
+        await ensurePlaybackMode();
+        Vibration.vibrate(6);
+        Speech.stop();
+        Speech.speak(text, {
+          language: "ja-JP",
+          voice: jaVoiceId ?? undefined,
+          rate: 1.0,
+          pitch: 1.0,
+        });
+      } catch {}
+    },
+    [jaVoiceId]
+  );
 
-  /* Reproducir: ejemplo completo (MP3 si existe; si no, TTS fallback) */
-  const playExample = useCallback(async (item: ItemSZ) => {
-    const s = soundsRef.current[item.audioKey];
+  // Reproducir ejemplo completo (MP3 local)
+  const playExample = useCallback(
+    async (item: ItemN) => {
+      const s = soundsRef.current[item.audioKey];
+      if (!s) {
+        // Fallback: TTS "ね。ねこ。" si no cargó el mp3 (poco probable)
+        const frase = `${item.hira}。${item.example.jp}。`;
+        return speakKana(frase);
+      }
 
-    if (s) {
       if (busyRef.current) return;
       busyRef.current = true;
       try {
         await ensurePlaybackMode();
         await stopCurrent();
         currentRef.current = s;
+        Vibration.vibrate(8);
         await s.playFromPositionAsync(0);
       } finally {
-        setTimeout(() => { busyRef.current = false; }, 140);
+        setTimeout(() => {
+          busyRef.current = false;
+        }, 140);
       }
-      return;
-    }
+    },
+    [speakKana, stopCurrent]
+  );
 
-    // Fallback TTS: "さ。さかな。"
-    const frase = `${item.hira}。${item.example.jp}。`;
-    return speakKana(frase);
-  }, [speakKana, stopCurrent]);
-
-  /* UI */
-  const renderItem = ({ item }: { item: ItemSZ }) => (
+  /* =========================
+     UI
+  ========================= */
+  const renderItem = ({ item }: { item: ItemN }) => (
     <View style={styles.card}>
       <Text style={styles.kana}>{item.hira}</Text>
       <Text style={styles.romaji}>{item.romaji}</Text>
@@ -189,7 +207,7 @@ export default function SLecturaSilabas() {
       <View style={styles.row}>
         <Pressable
           onPressIn={() => speakKana(item.hira)}
-          style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
+          style={({ pressed }) => [styles.btnRed, pressed && styles.btnPressed]}
         >
           <Text style={styles.btnText}>▶︎ Sílaba</Text>
         </Pressable>
@@ -212,7 +230,7 @@ export default function SLecturaSilabas() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Lectura de sílabas — Familias S / Z</Text>
+      <Text style={styles.title}>Lectura guiada — Familia N</Text>
       <Text style={styles.subtitle}>
         Toca “Sílaba” para oír solo el sonido, o “Ejemplo completo” para escuchar la frase.
       </Text>
@@ -229,7 +247,9 @@ export default function SLecturaSilabas() {
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingCard}>
             <ActivityIndicator size="large" />
-            <Text style={{ marginTop: 8, fontWeight: "700" }}>Preparando audios…</Text>
+            <Text style={{ marginTop: 8, fontWeight: "700" }}>
+              Preparando audios…
+            </Text>
             <Text style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
               Solo la primera vez que abres esta pantalla.
             </Text>
@@ -238,13 +258,15 @@ export default function SLecturaSilabas() {
       )}
 
       <Text style={styles.footerNote}>
-        Tip: repite en voz alta, primero despacio (“さ… さかな”), luego continuo (“さ。さかな。”).
+        Tip: repite en voz alta, primero despacio (“ね… ねこ”), luego continuo (“ね。ねこ。”).
       </Text>
     </View>
   );
 }
 
-/* ===== Estilos ===== */
+/* =========================
+   Estilos
+========================= */
 const INK = "#111827";
 const PAPER = "#faf7f0";
 const RED = "#B32133";
@@ -274,7 +296,7 @@ const styles = StyleSheet.create({
   exampleRomaji: { fontSize: 13, color: "#666", marginTop: 2 },
 
   row: { flexDirection: "row", justifyContent: "center", columnGap: 10, marginTop: 12 },
-  btn: { backgroundColor: RED, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, minWidth: 120 },
+  btnRed: { backgroundColor: RED, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, minWidth: 120 },
   btnDark: { backgroundColor: INK, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, minWidth: 160 },
   btnPressed: { opacity: 0.75, transform: [{ scale: 0.99 }] },
   btnText: { color: "#fff", textAlign: "center", fontWeight: "700" },
