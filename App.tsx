@@ -105,6 +105,27 @@ import B3_NumerosEdad from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad";
 import B3_NumerosEdad_Contadores from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad_Contadores";
 import B3_NumerosEdad_Roleplay from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad_Roleplay";
 import B3_NumerosEdad_Tarjetas from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad_Tarjetas";
+
+// ✅ Bloque 3 — Profesiones (NUEVO)
+import B3_Profesiones from "./src/screens/N5/B3Vocabulario/B3_Profesiones";
+import B3_Profesiones_Roleplay from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Roleplay";
+import B3_Profesiones_Tarjetas from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Tarjetas";
+
+// imports
+import B3_Profesiones_Dialogo from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Dialogo";
+import B3_Profesiones_Oraciones from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Oraciones";
+
+// B3 — nuevas pantallas
+import B3_LugaresCiudad from "./src/screens/N5/B3Vocabulario/B3_LugaresCiudad";
+import B3_ObjetosClase from "./src/screens/N5/B3Vocabulario/B3_ObjetosClase";
+import B3_PreguntasBasicas from "./src/screens/N5/B3Vocabulario/B3_PreguntasBasicas";
+
+// ✅ Bloque 3 — Comida y Bebidas (NUEVO)
+import B3_ColoresAdjetivos from "./src/screens/N5/B3Vocabulario/B3_ColoresAdjetivos";
+import B3_ComidaBebidas from "./src/screens/N5/B3Vocabulario/B3_ComidaBebidas";
+import B3_Cortesia from "./src/screens/N5/B3Vocabulario/B3_Cortesia";
+
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function Placeholder({ title }: { title: string }) {
@@ -269,6 +290,50 @@ export default function App() {
         component={B3_Familia_Arbol}
         options={{ title: "Árbol familiar" }}
       />
+      <Stack.Screen name="B3_Profesiones" component={B3_Profesiones} options={{ headerShown: true, title: "B3 — Profesiones" }} />
+<Stack.Screen name="B3_Profesiones_Tarjetas" component={B3_Profesiones_Tarjetas} options={{ headerShown: true, title: "Tarjetas — Profesiones" }} />
+<Stack.Screen name="B3_Profesiones_Roleplay" component={B3_Profesiones_Roleplay} options={{ headerShown: true, title: "Roleplay — Profesiones" }} />
+      
+<Stack.Screen name="B3_Profesiones_Oraciones" component={B3_Profesiones_Oraciones} options={{ headerShown: true, title: "Oraciones — Profesiones" }} />
+<Stack.Screen name="B3_Profesiones_Dialogo" component={B3_Profesiones_Dialogo} options={{ headerShown: true, title: "Diálogo y traducción" }} />
+
+
+<Stack.Screen
+  name="B3_ObjetosClase"
+  component={B3_ObjetosClase}
+  options={{ headerShown: true, title: "B3 — Objetos de clase" }}
+/>
+<Stack.Screen
+  name="B3_LugaresCiudad"
+  component={B3_LugaresCiudad}
+  options={{ headerShown: true, title: "B3 — Lugares de la ciudad" }}
+/>
+<Stack.Screen
+  name="B3_PreguntasBasicas"
+  component={B3_PreguntasBasicas}
+  options={{ headerShown: true, title: "B3 — Preguntas básicas" }}
+/>
+
+<Stack.Screen
+  name="B3_ComidaBebidas"
+  component={B3_ComidaBebidas}
+  options={{ headerShown: true, title: "B3 — Comida y bebidas" }}
+/>
+
+<Stack.Screen
+  name="B3_ColoresAdjetivos"
+  component={B3_ColoresAdjetivos}
+  options={{ headerShown: true, title: "B3 — Colores y adjetivos" }}
+/>
+
+<Stack.Screen
+  name="B3_Cortesia"
+  component={B3_Cortesia}
+  options={{ headerShown: true, title: "B3 — Cortesía" }}
+/>
+
+
+
           </Stack.Navigator>
         </NavigationContainer>
       </B3ScoreProvider>

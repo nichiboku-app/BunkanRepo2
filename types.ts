@@ -66,7 +66,7 @@ export type RootStackParamList = {
   NLecturaGuiada: undefined;
   HRoleplaySaludo: undefined;
 
-    // ...rutas que ya tienes
+  // ...rutas que ya tienes
   HiraganaMMenu: undefined;
   HiraganaYRMenu: undefined;
   // (opcional si luego creas subpantallas)
@@ -75,13 +75,15 @@ export type RootStackParamList = {
   YR_AudioInteractivo: undefined;
   YR_CompletarPalabras: undefined;
 
-  HiraganaWNMenu: undefined; 
-   WN_LecturaFrases: undefined;
+  HiraganaWNMenu: undefined;
+  WN_LecturaFrases: undefined;
   WN_PracticaNFinal: undefined;
 
   KatakanaMenu: undefined;
   KatakanaChallenge: undefined;
   KatakanaRow: { row: "A" | "K" | "S" | "T" | "N" | "H" | "M" | "Y" | "R" | "W" } | undefined;
+
+  // Bloques
   B3VocabularioMenu: undefined;
   B4GramaticaIMenu: undefined;
   B5GramaticaIIMenu: undefined;
@@ -90,16 +92,34 @@ export type RootStackParamList = {
   B8EvaluacionesLogrosMenu: undefined;
   ExamenFinalMapacheN5: undefined;
 
+  // B3 — Números y Edad
   B3_NumerosEdad: undefined;
   B3_NumerosEdad_Roleplay: undefined;
   B3_NumerosEdad_Tarjetas: undefined;
   B3_NumerosEdad_Contadores: undefined;
 
-   B3_Familia: undefined;
+  // B3 — Familia
+  B3_Familia: undefined;
   B3_Familia_Roleplay: undefined;
   B3_Familia_Tarjetas: undefined;
   B3_Familia_Arbol: undefined;
-  
+
+  // B3 — Profesiones
+  B3_Profesiones: undefined;
+  B3_Profesiones_Tarjetas: undefined;
+  B3_Profesiones_Roleplay: undefined;
+  B3_Profesiones_Oraciones: undefined;
+  B3_Profesiones_Dialogo: undefined;
+
+  // ⭐ B3 — Nuevas pantallas
+  B3_ObjetosClase: undefined;
+  B3_LugaresCiudad: undefined;
+  B3_PreguntasBasicas: undefined;
+
+   B3_ComidaBebidas: undefined;
+    B3_ColoresAdjetivos: undefined;
+     B3_Cortesia: undefined;
+      B3_PreguntasBasicas: undefined; // 👈 NUEVA RUTA
 };
 
 declare global {
