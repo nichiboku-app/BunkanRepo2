@@ -124,6 +124,22 @@ import B3_PreguntasBasicas from "./src/screens/N5/B3Vocabulario/B3_PreguntasBasi
 import B3_ColoresAdjetivos from "./src/screens/N5/B3Vocabulario/B3_ColoresAdjetivos";
 import B3_ComidaBebidas from "./src/screens/N5/B3Vocabulario/B3_ComidaBebidas";
 import B3_Cortesia from "./src/screens/N5/B3Vocabulario/B3_Cortesia";
+import B4_Adjetivos from "./src/screens/N5/B4Gramatica/B4_Adjetivos";
+import B4_ArimasuImasu from "./src/screens/N5/B4Gramatica/B4_ArimasuImasu";
+import B4_De from "./src/screens/N5/B4Gramatica/B4_De";
+import B4_Desu from "./src/screens/N5/B4Gramatica/B4_Desu";
+import B4_DesuNeg from "./src/screens/N5/B4Gramatica/B4_DesuNeg";
+import B4_KoreSoreAre from "./src/screens/N5/B4Gramatica/B4_KoreSoreAre";
+import B4_MasuIntro from "./src/screens/N5/B4Gramatica/B4_MasuIntro";
+import B4_MasuNeg from "./src/screens/N5/B4Gramatica/B4_MasuNeg";
+import B4_Mo from "./src/screens/N5/B4Gramatica/B4_Mo";
+import B4_NiHe from "./src/screens/N5/B4Gramatica/B4_NiHe";
+import B4_NoModifier from "./src/screens/N5/B4Gramatica/B4_NoModifier";
+import B4_PregKa from "./src/screens/N5/B4Gramatica/B4_PregKa";
+import B4_Tiempo from "./src/screens/N5/B4Gramatica/B4_Tiempo";
+import B4_WaGa from "./src/screens/N5/B4Gramatica/B4_WaGa";
+import B4_Wo from "./src/screens/N5/B4Gramatica/B4_Wo";
+
 
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -331,6 +347,22 @@ export default function App() {
   component={B3_Cortesia}
   options={{ headerShown: true, title: "B3 — Cortesía" }}
 />
+
+<Stack.Screen name="B4_Desu" component={B4_Desu} />
+<Stack.Screen name="B4_DesuNeg" component={B4_DesuNeg} />
+<Stack.Screen name="B4_PregKa" component={B4_PregKa} />
+<Stack.Screen name="B4_KoreSoreAre" component={B4_KoreSoreAre} />
+<Stack.Screen name="B4_NoModifier" component={B4_NoModifier} />
+<Stack.Screen name="B4_WaGa" component={B4_WaGa} />
+<Stack.Screen name="B4_Wo" component={B4_Wo} />
+<Stack.Screen name="B4_NiHe" component={B4_NiHe} />
+<Stack.Screen name="B4_De" component={B4_De} />
+<Stack.Screen name="B4_ArimasuImasu" component={B4_ArimasuImasu} />
+<Stack.Screen name="B4_Adjetivos" component={B4_Adjetivos} />
+<Stack.Screen name="B4_Mo" component={B4_Mo} />
+<Stack.Screen name="B4_Tiempo" component={B4_Tiempo} />
+<Stack.Screen name="B4_MasuIntro" component={B4_MasuIntro} />
+<Stack.Screen name="B4_MasuNeg" component={B4_MasuNeg} />
 
 
 

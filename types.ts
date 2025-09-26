@@ -119,7 +119,24 @@ export type RootStackParamList = {
    B3_ComidaBebidas: undefined;
     B3_ColoresAdjetivos: undefined;
      B3_Cortesia: undefined;
-      B3_PreguntasBasicas: undefined; // 👈 NUEVA RUTA
+  
+     // ===== B4: Gramática I =====
+B4_Desu: undefined;
+B4_DesuNeg: undefined;
+B4_PregKa: undefined;
+B4_KoreSoreAre: undefined;
+B4_NoModifier: undefined;      // の (posesión/modificador)
+B4_WaGa: undefined;
+B4_Wo: undefined;
+B4_NiHe: undefined;
+B4_De: undefined;
+B4_ArimasuImasu: undefined;
+B4_Adjetivos: undefined;       // い／な adjetivos
+B4_Mo: undefined;
+B4_Tiempo: undefined;          // 時間・曜日・に
+B4_MasuIntro: undefined;       // ます afirmativo
+B4_MasuNeg: undefined;         // ません negativo
+
 };
 
 declare global {
