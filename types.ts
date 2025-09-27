@@ -137,6 +137,16 @@ B4_Tiempo: undefined;          // 時間・曜日・に
 B4_MasuIntro: undefined;       // ます afirmativo
 B4_MasuNeg: undefined;         // ません negativo
 
+  B5_Contadores: undefined;
+  B5_TiempoPuntos: undefined;
+  B5_TiempoDuracion: undefined;
+  B5_Frecuencia: undefined;
+  B5_AdverbiosFrecuencia: undefined;
+  B5_DiasMeses: undefined;
+  B5_HorariosRutina: undefined;
+  B5_VecesContador: undefined;
+  B5_ParticulasTiempo: undefined;
+
 };
 
 declare global {

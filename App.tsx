@@ -140,7 +140,17 @@ import B4_Tiempo from "./src/screens/N5/B4Gramatica/B4_Tiempo";
 import B4_WaGa from "./src/screens/N5/B4Gramatica/B4_WaGa";
 import B4_Wo from "./src/screens/N5/B4Gramatica/B4_Wo";
 
+import B5_AdverbiosFrecuencia from "./src/screens/N5/B5Gramatica/B5_AdverbiosFrecuencia";
+import B5_Contadores from "./src/screens/N5/B5Gramatica/B5_Contadores";
+import B5_DiasMeses from "./src/screens/N5/B5Gramatica/B5_DiasMeses";
+import B5_Frecuencia from "./src/screens/N5/B5Gramatica/B5_Frecuencia";
+import B5_HorariosRutina from "./src/screens/N5/B5Gramatica/B5_HorariosRutina";
+import B5_ParticulasTiempo from "./src/screens/N5/B5Gramatica/B5_ParticulasTiempo";
+import B5_TiempoDuracion from "./src/screens/N5/B5Gramatica/B5_TiempoDuracion";
+import B5_TiempoPuntos from "./src/screens/N5/B5Gramatica/B5_TiempoPuntos";
+import B5_VecesContador from "./src/screens/N5/B5Gramatica/B5_VecesContador";
 
+// Descomenta/usa estos cuando existan los archivos .tsx
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -364,6 +374,59 @@ export default function App() {
 <Stack.Screen name="B4_MasuIntro" component={B4_MasuIntro} />
 <Stack.Screen name="B4_MasuNeg" component={B4_MasuNeg} />
 
+<Stack.Screen
+  name="B5_Contadores"
+  component={B5_Contadores}
+  options={{ headerShown: true, title: "B5 — Contadores（助数詞）" }}
+/>
+
+<Stack.Screen
+  name="B5_TiempoPuntos"
+  component={B5_TiempoPuntos}
+  options={{ headerShown: true, title: "B5 — Tiempo: puntos (に)" }}
+/>
+
+<Stack.Screen
+  name="B5_TiempoDuracion"
+  component={B5_TiempoDuracion}
+  options={{ headerShown: true, title: "B5 — Tiempo: duración（～間／から／まで）" }}
+/>
+
+<Stack.Screen
+  name="B5_Frecuencia"
+  component={B5_Frecuencia}
+  options={{ headerShown: true, title: "B5 — Frecuencia" }}
+/>
+
+<Stack.Screen
+  name="B5_AdverbiosFrecuencia"
+  component={B5_AdverbiosFrecuencia}
+  options={{ headerShown: true, title: "B5 — Adverbios de frecuencia" }}
+/>
+
+<Stack.Screen
+  name="B5_DiasMeses"
+  component={B5_DiasMeses}
+  options={{ headerShown: true, title: "B5 — Días y meses" }}
+/>
+
+<Stack.Screen
+  name="B5_HorariosRutina"
+  component={B5_HorariosRutina}
+  options={{ headerShown: true, title: "B5 — Horarios y rutina（に／から／まで）" }}
+/>
+
+<Stack.Screen
+  name="B5_VecesContador"
+  component={B5_VecesContador}
+  options={{ headerShown: true, title: "B5 — Veces: ～回" }}
+/>
+
+<Stack.Screen
+  name="B5_ParticulasTiempo"
+  component={B5_ParticulasTiempo}
+  options={{ headerShown: true, title: "B5 — Partículas de tiempo（に・から・まで・ごろ・ぐらい）" }}
+/>
 
 
           </Stack.Navigator>
