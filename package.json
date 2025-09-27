@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "assets:prepare": "powershell -ExecutionPolicy Bypass -File scripts/prepare_assets.ps1",
-     "kanji:webp": "node ./scripts/fetch_kanjivg_webp.mjs"
+    "kanji:webp": "node ./scripts/fetch_kanjivg_webp.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-jp": "^0.4.1",
@@ -55,6 +55,7 @@
     "firebase": "^12.3.0",
     "lottie-react-native": "~7.3.1",
     "lucide-react-native": "^0.544.0",
+    "phosphor-react-native": "^3.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.4",
