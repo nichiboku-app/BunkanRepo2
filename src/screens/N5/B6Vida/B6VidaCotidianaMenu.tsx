@@ -1,10 +1,10 @@
-// src/screens/N5/B6Vida/B6VidaCotidianaMenu.tsx
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React, { useState } from "react";
 import {
-  Animated,
   Dimensions,
-  Platform,
+  InteractionManager,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,150 +12,40 @@ import {
   Vibration,
   View,
 } from "react-native";
+import type { RootStackParamList } from "../../../../types";
 
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 const { width: W, height: H } = Dimensions.get("window");
 
-/* ============ Farolito (🏮) con balanceo y vaivén vertical ============ */
-function Lantern({
-  x = 40,
-  y = 60,
-  size = 34,
-  delay = 0,
-  swingDeg = 6,
-  bob = 6,
-}: {
-  x?: number;
-  y?: number;
-  size?: number;
-  delay?: number;
-  swingDeg?: number;
-  bob?: number;
-}) {
-  const t = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(t, { toValue: 1, duration: 2600, useNativeDriver: true }),
-        Animated.timing(t, { toValue: 0, duration: 2600, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [delay, t]);
-
-  const rotate = t.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [`-${swingDeg}deg`, `${swingDeg}deg`, `-${swingDeg}deg`],
-  });
-  const translateY = t.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0, bob, 0],
-  });
-
-  return (
-    <View style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}>
-      {/* cuerda */}
-      <View
-        style={{
-          position: "absolute",
-          left: x + size / 2 - 1,
-          top: 0,
-          width: 2,
-          height: y - 6,
-          backgroundColor: "rgba(255,255,255,0.35)",
-        }}
-      />
-      {/* farol */}
-      <Animated.Text
-        style={{
-          position: "absolute",
-          left: x,
-          top: y,
-          fontSize: size,
-          transform: [{ rotate }, { translateY }],
-          textShadowColor: "rgba(255, 120, 80, 0.6)",
-          textShadowOffset: { width: 0, height: 0 },
-          textShadowRadius: 8,
-          opacity: Platform.select({ ios: 0.95, android: 0.9, default: 0.95 }),
-        }}
-      >
-        🏮
-      </Animated.Text>
-    </View>
-  );
-}
-
-/* ============ Luciérnaga (puntito brillante que sube) ============ */
-function Firefly({ x = 100, delay = 0 }: { x?: number; delay?: number }) {
-  const t = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(t, { toValue: 1, duration: 3500, useNativeDriver: true }),
-        Animated.timing(t, { toValue: 0, duration: 0, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [delay, t]);
-
-  const translateY = t.interpolate({
-    inputRange: [0, 1],
-    outputRange: [H * 0.2 + Math.random() * H * 0.4, -30],
-  });
-  const opacity = t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 0.9, 0] });
-  const scale = t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.6, 1, 0.6] });
-
-  return (
-    <Animated.View
-      style={{
-        position: "absolute",
-        left: x + Math.random() * 40 - 20,
-        width: 6,
-        height: 6,
-        borderRadius: 6,
-        backgroundColor: "rgba(255,240,120,0.95)",
-        shadowColor: "#fff7b3",
-        shadowOpacity: 0.9,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 0 },
-        transform: [{ translateY }, { scale }],
-        opacity,
-      }}
-    />
-  );
-}
-
 export default function B6VidaCotidianaMenu() {
-  /* Animación de entrada del contenido */
-  const fadeIn = useRef(new Animated.Value(0)).current;
-  const slideUp = useRef(new Animated.Value(12)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeIn, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(slideUp, { toValue: 0, duration: 600, useNativeDriver: true }),
-    ]).start();
-  }, [fadeIn, slideUp]);
+  const navigation = useNavigation<Nav>();
+  const [isPushing, setIsPushing] = useState(false);
 
   const cards = [
-    { icon: "cart-outline", label: "Compras" },
-    { icon: "restaurant-outline", label: "Restaurante" },
-    { icon: "train-outline", label: "Transporte" },
-    { icon: "cash-outline", label: "Dinero" },
-    { icon: "map-outline", label: "Direcciones" },
-    { icon: "pricetags-outline", label: "Tiendas" },
-    { icon: "bed-outline", label: "Hotel" },
-    { icon: "medkit-outline", label: "Emergencias" },
-  ] as const;
+    { icon: "cart-outline", label: "Compras", route: "B6_Compras" as const },
+    { icon: "restaurant-outline", label: "Restaurante", route: "B6_Restaurante" as const },
+    { icon: "train-outline", label: "Transporte", route: "B6_Transporte" as const },
+    { icon: "cash-outline", label: "Dinero", route: "B6_Dinero" as const },
+    { icon: "map-outline", label: "Direcciones", route: "B6_Direcciones" as const },
+    { icon: "pricetags-outline", label: "Tiendas", route: "B6_Tiendas" as const },
+    { icon: "bed-outline", label: "Hotel", route: "B6_Hotel" as const },
+    { icon: "medkit-outline", label: "Emergencias", route: "B6_Emergencias" as const },
+  ];
+
+  function go(route: keyof RootStackParamList) {
+    if (isPushing) return; // antirebote por si hay doble tap
+    setIsPushing(true);
+    Vibration.vibrate(8);
+    InteractionManager.runAfterInteractions(() => {
+      navigation.navigate(route);
+      // liberamos el bloqueo tras un pequeño tiempo
+      setTimeout(() => setIsPushing(false), 500);
+    });
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#0b1221" }}>
-      {/* Fondo: degradado simple con bandas suaves */}
+      {/* Fondo estático, cero animaciones */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0b1221" }]} />
       <View
         style={[
@@ -168,7 +58,7 @@ export default function B6VidaCotidianaMenu() {
           },
         ]}
       />
-      {/* niebla suave */}
+      {/* halos suaves (sin animar) */}
       <View
         style={{
           position: "absolute",
@@ -192,79 +82,65 @@ export default function B6VidaCotidianaMenu() {
         }}
       />
 
-      {/* Farolitos (nuevos, no usados antes) */}
-      <Lantern x={36} y={46} delay={0} />
-      <Lantern x={132} y={60} delay={400} size={36} swingDeg={7} bob={7} />
-      <Lantern x={228} y={52} delay={800} size={38} swingDeg={5} bob={5} />
-      <Lantern x={W - 80} y={58} delay={1200} size={34} swingDeg={6} bob={6} />
-
-      {/* Luciérnagas */}
-      {Array.from({ length: 12 }).map((_, i) => (
-        <Firefly key={i} x={20 + (i * (W - 40)) / 12} delay={i * 260} />
-      ))}
-
       {/* Contenido */}
       <ScrollView contentContainerStyle={s.c} showsVerticalScrollIndicator={false}>
-        <Animated.View style={{ opacity: fadeIn, transform: [{ translateY: slideUp }] }}>
-          <View style={s.header}>
-            <Text style={s.kicker}>⛩️ Bloque 6</Text>
-            <Text style={s.h}>Vida cotidiana</Text>
-            <Text style={s.sub}>Frases y situaciones útiles: compras, restaurante, transporte & más.</Text>
-          </View>
+        <View style={s.header}>
+          <Text style={s.kicker}>⛩️ Bloque 6</Text>
+          <Text style={s.h}>Vida cotidiana</Text>
+          <Text style={s.sub}>Frases y situaciones útiles: compras, restaurante, transporte & más.</Text>
+        </View>
 
-          {/* Chips de “atajos” */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: 6, gap: 8 }}
-          >
-            {[
-              { t: "Frases clave", i: "sparkles-outline" },
-              { t: "Cortés ✨", i: "hand-left-outline" },
-              { t: "Números ¥", i: "cash-outline" },
-              { t: "Direcciones", i: "map-outline" },
-            ].map((c, idx) => (
-              <View key={idx} style={s.chip}>
-                <Ionicons name={c.i as any} size={14} color="#0b1221" />
-                <Text style={s.chipTxt}>{c.t}</Text>
+        {/* Chips de “atajos” (horizontal ≠ orientación principal, así no choca) */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingVertical: 6, gap: 8 }}
+        >
+          {[
+            { t: "Frases clave", i: "sparkles-outline" },
+            { t: "Cortés ✨", i: "hand-left-outline" },
+            { t: "Números ¥", i: "cash-outline" },
+            { t: "Direcciones", i: "map-outline" },
+          ].map((c, idx) => (
+            <View key={idx} style={s.chip}>
+              <Ionicons name={c.i as any} size={14} color="#0b1221" />
+              <Text style={s.chipTxt}>{c.t}</Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Grid de tarjetas */}
+        <View style={s.grid}>
+          {cards.map((c) => (
+            <Pressable
+              key={c.label}
+              onPress={() => go(c.route)}
+              accessibilityRole="button"
+              android_ripple={{ color: "rgba(255,255,255,0.08)", borderless: false }}
+              style={s.card}
+            >
+              <View style={s.cardIconWrap}>
+                <Ionicons name={c.icon as any} size={24} color="#0b1221" />
               </View>
-            ))}
-          </ScrollView>
+              <Text style={s.cardTxt}>{c.label}</Text>
+              <View style={s.arrow}>
+                <Ionicons name="chevron-forward-outline" size={16} color="#fff" />
+              </View>
+            </Pressable>
+          ))}
+        </View>
 
-          {/* Grid de tarjetas */}
-          <View style={s.grid}>
-            {cards.map((c, idx) => (
-              <Pressable
-                key={c.label}
-                onPress={() => {
-                  Vibration.vibrate(8);
-                }}
-                android_ripple={{ color: "rgba(255,255,255,0.08)", borderless: false }}
-                style={[s.card]}
-              >
-                <View style={s.cardIconWrap}>
-                  <Ionicons name={c.icon as any} size={24} color="#0b1221" />
-                </View>
-                <Text style={s.cardTxt}>{c.label}</Text>
-                <View style={s.arrow}>
-                  <Ionicons name="chevron-forward-outline" size={16} color="#fff" />
-                </View>
-              </Pressable>
-            ))}
-          </View>
+        {/* Nota */}
+        <View style={s.note}>
+          <Text style={s.noteTitle}>¿Qué veremos aquí?</Text>
+          <Text style={s.noteTxt}>
+            Practicaremos frases cortas y claras para la vida real en Japón: pedir comida,
+            preguntar precios, comprar boletos y moverse en tren o bus. Todo con ejemplos
+            sencillos, paso a paso, como si fuera un juego.
+          </Text>
+        </View>
 
-          {/* Nota “como primaria” */}
-          <View style={s.note}>
-            <Text style={s.noteTitle}>¿Qué veremos aquí?</Text>
-            <Text style={s.noteTxt}>
-              Practicaremos frases cortas y claras para la vida real en Japón: pedir comida,
-              preguntar precios, comprar boletos y moverse en tren o bus. Todo con ejemplos
-              sencillos, paso a paso, como si fuera un juego.
-            </Text>
-          </View>
-
-          <View style={{ height: 36 }} />
-        </Animated.View>
+        <View style={{ height: 36 }} />
       </ScrollView>
     </View>
   );
@@ -308,7 +184,7 @@ const s = StyleSheet.create({
     gap: 12,
   },
   card: {
-    flexBasis: (W - 16 * 2 - 12) / 2, // 2 columnas con gap 12
+    flexBasis: (W - 16 * 2 - 12) / 2,
     backgroundColor: "rgba(255,255,255,0.92)",
     borderRadius: 16,
     borderWidth: 1,

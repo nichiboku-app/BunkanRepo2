@@ -150,6 +150,15 @@ import B5_TiempoDuracion from "./src/screens/N5/B5Gramatica/B5_TiempoDuracion";
 import B5_TiempoPuntos from "./src/screens/N5/B5Gramatica/B5_TiempoPuntos";
 import B5_VecesContador from "./src/screens/N5/B5Gramatica/B5_VecesContador";
 
+import B6_Compras from "./src/screens/N5/B6Vida/B6_Compras";
+import B6_Dinero from "./src/screens/N5/B6Vida/B6_Dinero";
+import B6_Direcciones from "./src/screens/N5/B6Vida/B6_Direcciones";
+import B6_Emergencias from "./src/screens/N5/B6Vida/B6_Emergencias";
+import B6_Hotel from "./src/screens/N5/B6Vida/B6_Hotel";
+import B6_Restaurante from "./src/screens/N5/B6Vida/B6_Restaurante";
+import B6_Tiendas from "./src/screens/N5/B6Vida/B6_Tiendas";
+import B6_Transporte from "./src/screens/N5/B6Vida/B6_Transporte";
+
 // Descomenta/usa estos cuando existan los archivos .tsx
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -427,6 +436,15 @@ export default function App() {
   component={B5_ParticulasTiempo}
   options={{ headerShown: true, title: "B5 — Partículas de tiempo（に・から・まで・ごろ・ぐらい）" }}
 />
+
+<Stack.Screen name="B6_Compras" component={B6_Compras} options={{ headerShown: true, title: "Compras" }} />
+<Stack.Screen name="B6_Restaurante" component={B6_Restaurante} options={{ headerShown: true, title: "Restaurante" }} />
+<Stack.Screen name="B6_Transporte" component={B6_Transporte} options={{ headerShown: true, title: "Transporte" }} />
+<Stack.Screen name="B6_Dinero" component={B6_Dinero} options={{ headerShown: true, title: "Dinero" }} />
+<Stack.Screen name="B6_Direcciones" component={B6_Direcciones} options={{ headerShown: true, title: "Direcciones" }} />
+<Stack.Screen name="B6_Tiendas" component={B6_Tiendas} options={{ headerShown: true, title: "Tiendas" }} />
+<Stack.Screen name="B6_Hotel" component={B6_Hotel} options={{ headerShown: true, title: "Hotel" }} />
+<Stack.Screen name="B6_Emergencias" component={B6_Emergencias} options={{ headerShown: true, title: "Emergencias" }} />
 
 
           </Stack.Navigator>

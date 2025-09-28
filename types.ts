@@ -147,6 +147,15 @@ B4_MasuNeg: undefined;         // ません negativo
   B5_VecesContador: undefined;
   B5_ParticulasTiempo: undefined;
 
+  B6_Compras: undefined;
+  B6_Restaurante: undefined;
+  B6_Transporte: undefined;
+  B6_Dinero: undefined;
+  B6_Direcciones: undefined;
+  B6_Tiendas: undefined;
+  B6_Hotel: undefined;
+  B6_Emergencias: undefined;
+
 };
 
 declare global {
