@@ -1,11 +1,12 @@
-import "react-native-gesture-handler"; // 👈 Debe ir primero
+// 👇 Debe ir primero siempre
+import "react-native-gesture-handler";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 import { Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { B3ScoreProvider } from "./src/context/B3ScoreContext"; // ⭐ Puntaje global B3
+import { B3ScoreProvider } from "./src/context/B3ScoreContext";
 import type { RootStackParamList } from "./types";
 
 // Screens raíz
@@ -108,12 +109,10 @@ import B3_NumerosEdad_Tarjetas from "./src/screens/N5/B3Vocabulario/B3_NumerosEd
 
 // ✅ Bloque 3 — Profesiones (NUEVO)
 import B3_Profesiones from "./src/screens/N5/B3Vocabulario/B3_Profesiones";
-import B3_Profesiones_Roleplay from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Roleplay";
-import B3_Profesiones_Tarjetas from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Tarjetas";
-
-// imports
 import B3_Profesiones_Dialogo from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Dialogo";
 import B3_Profesiones_Oraciones from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Oraciones";
+import B3_Profesiones_Roleplay from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Roleplay";
+import B3_Profesiones_Tarjetas from "./src/screens/N5/B3Vocabulario/B3_Profesiones_Tarjetas";
 
 // B3 — nuevas pantallas
 import B3_LugaresCiudad from "./src/screens/N5/B3Vocabulario/B3_LugaresCiudad";
@@ -124,6 +123,8 @@ import B3_PreguntasBasicas from "./src/screens/N5/B3Vocabulario/B3_PreguntasBasi
 import B3_ColoresAdjetivos from "./src/screens/N5/B3Vocabulario/B3_ColoresAdjetivos";
 import B3_ComidaBebidas from "./src/screens/N5/B3Vocabulario/B3_ComidaBebidas";
 import B3_Cortesia from "./src/screens/N5/B3Vocabulario/B3_Cortesia";
+
+// B4 gramática
 import B4_Adjetivos from "./src/screens/N5/B4Gramatica/B4_Adjetivos";
 import B4_ArimasuImasu from "./src/screens/N5/B4Gramatica/B4_ArimasuImasu";
 import B4_De from "./src/screens/N5/B4Gramatica/B4_De";
@@ -140,6 +141,7 @@ import B4_Tiempo from "./src/screens/N5/B4Gramatica/B4_Tiempo";
 import B4_WaGa from "./src/screens/N5/B4Gramatica/B4_WaGa";
 import B4_Wo from "./src/screens/N5/B4Gramatica/B4_Wo";
 
+// B5 gramática
 import B5_AdverbiosFrecuencia from "./src/screens/N5/B5Gramatica/B5_AdverbiosFrecuencia";
 import B5_Contadores from "./src/screens/N5/B5Gramatica/B5_Contadores";
 import B5_DiasMeses from "./src/screens/N5/B5Gramatica/B5_DiasMeses";
@@ -150,6 +152,12 @@ import B5_TiempoDuracion from "./src/screens/N5/B5Gramatica/B5_TiempoDuracion";
 import B5_TiempoPuntos from "./src/screens/N5/B5Gramatica/B5_TiempoPuntos";
 import B5_VecesContador from "./src/screens/N5/B5Gramatica/B5_VecesContador";
 
+// === N4 ===
+import CursoN4Screen from "./src/screens/N4/CursoN4Screen";
+import N4TemaScreen from "./src/screens/N4/N4TemaScreen"; // ⬅️ pantalla unificada por tema
+import N4IntroScreen from "./src/screens/N4IntroScreen";
+
+// === Vida cotidiana (B6) ===
 import B6_Compras from "./src/screens/N5/B6Vida/B6_Compras";
 import B6_Dinero from "./src/screens/N5/B6Vida/B6_Dinero";
 import B6_Direcciones from "./src/screens/N5/B6Vida/B6_Direcciones";
@@ -158,8 +166,6 @@ import B6_Hotel from "./src/screens/N5/B6Vida/B6_Hotel";
 import B6_Restaurante from "./src/screens/N5/B6Vida/B6_Restaurante";
 import B6_Tiendas from "./src/screens/N5/B6Vida/B6_Tiendas";
 import B6_Transporte from "./src/screens/N5/B6Vida/B6_Transporte";
-
-// Descomenta/usa estos cuando existan los archivos .tsx
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -203,9 +209,21 @@ export default function App() {
             <Stack.Screen name="EntradaActividadesN5" component={EntradaActividadesN5Screen} />
             <Stack.Screen name="IntroJapones" component={IntroJaponesScreen} />
 
-            <Stack.Screen name="OrigenesDelIdioma" component={OrigenesDelIdiomaScreen} options={{ headerShown: true, title: "Orígenes del idioma" }} />
-            <Stack.Screen name="EscrituraN5" component={EscrituraScreen} options={{ headerShown: true, title: "Sistemas de escritura" }} />
-            <Stack.Screen name="CulturaN5" component={CulturaScreen} options={{ headerShown: true, title: "Cultura básica" }} />
+            <Stack.Screen
+              name="OrigenesDelIdioma"
+              component={OrigenesDelIdiomaScreen}
+              options={{ headerShown: true, title: "Orígenes del idioma" }}
+            />
+            <Stack.Screen
+              name="EscrituraN5"
+              component={EscrituraScreen}
+              options={{ headerShown: true, title: "Sistemas de escritura" }}
+            />
+            <Stack.Screen
+              name="CulturaN5"
+              component={CulturaScreen}
+              options={{ headerShown: true, title: "Cultura básica" }}
+            />
             <Stack.Screen name="Subtema" component={SubtemaScreen} options={{ headerShown: false }} />
             <Stack.Screen
               name="TemaN5"
@@ -217,21 +235,45 @@ export default function App() {
             />
             <Stack.Screen name="Hiragana" component={HiraganaScreen} options={{ headerShown: false }} />
 
-            <Stack.Screen name="EjemplosGrupoA" component={EjemplosGrupoA} options={{ headerShown: true, title: "Ejemplos — Grupo A" }} />
+            <Stack.Screen
+              name="EjemplosGrupoA"
+              component={EjemplosGrupoA}
+              options={{ headerShown: true, title: "Ejemplos — Grupo A" }}
+            />
 
             {/* === Vocabulario K (REAL, ÚNICO) === */}
-            <Stack.Screen name="VocabularioGrupoK" component={VocabularioGrupoK} options={{ headerShown: true, title: "Vocabulario — Grupo K" }} />
+            <Stack.Screen
+              name="VocabularioGrupoK"
+              component={VocabularioGrupoK}
+              options={{ headerShown: true, title: "Vocabulario — Grupo K" }}
+            />
 
             {/* === Flashcards educativas === */}
             <Stack.Screen name="ATarjetas" component={AtarjetasScreen} options={{ headerShown: false }} />
 
             {/* === Matching K REAL === */}
-            <Stack.Screen name="MatchingGrupoK" component={MatchingGrupoK} options={{ headerShown: true, title: "Matching — Grupo K" }} />
+            <Stack.Screen
+              name="MatchingGrupoK"
+              component={MatchingGrupoK}
+              options={{ headerShown: true, title: "Matching — Grupo K" }}
+            />
 
             {/* === Otros N5 === */}
-            <Stack.Screen name="GifSaludo" component={GifSaludo} options={{ headerShown: true, title: "Saludos (GIF)" }} />
-            <Stack.Screen name="VowelExercises" component={VowelExercisesScreen} options={{ headerShown: true, title: "Ejercicios vocales" }} />
-            <Stack.Screen name="QuizCultural" component={QuizCultural} options={{ headerShown: true, title: "Quiz cultural" }} />
+            <Stack.Screen
+              name="GifSaludo"
+              component={GifSaludo}
+              options={{ headerShown: true, title: "Saludos (GIF)" }}
+            />
+            <Stack.Screen
+              name="VowelExercises"
+              component={VowelExercisesScreen}
+              options={{ headerShown: true, title: "Ejercicios vocales" }}
+            />
+            <Stack.Screen
+              name="QuizCultural"
+              component={QuizCultural}
+              options={{ headerShown: true, title: "Quiz cultural" }}
+            />
             <Stack.Screen
               name="VideoIntroModal"
               component={VideoIntroModal}
@@ -244,55 +286,135 @@ export default function App() {
             />
 
             {/* === HIRAGANA — GRUPO A === */}
-            <Stack.Screen name="TrazosGrupoA" component={TrazosGrupoA} options={{ headerShown: true, title: "Trazos — Grupo A" }} />
-            <Stack.Screen name="PronunciacionGrupoA" component={PronunciacionGrupoA} options={{ headerShown: true, title: "Pronunciación — Grupo A" }} />
+            <Stack.Screen
+              name="TrazosGrupoA"
+              component={TrazosGrupoA}
+              options={{ headerShown: true, title: "Trazos — Grupo A" }}
+            />
+            <Stack.Screen
+              name="PronunciacionGrupoA"
+              component={PronunciacionGrupoA}
+              options={{ headerShown: true, title: "Pronunciación — Grupo A" }}
+            />
 
             {/* === Implementadas === */}
-            <Stack.Screen name="ATrazoAnimado" component={ATrazoAnimado} options={{ headerShown: true, title: "Trazo animado" }} />
+            <Stack.Screen
+              name="ATrazoAnimado"
+              component={ATrazoAnimado}
+              options={{ headerShown: true, title: "Trazo animado" }}
+            />
 
             {/* === Dictado visual (REAL) === */}
             <Stack.Screen name="ADictadoVisual" component={ADictadoVisual} options={{ headerShown: false }} />
 
             {/* === Placeholders varios === */}
-            <Stack.Screen name="TarjetasGrupoA" options={{ headerShown: true, title: "Tarjetas — Grupo A" }} children={() => <Placeholder title="TarjetasGrupoA" />} />
-            <Stack.Screen name="TrazoAnimadoGrupoA" options={{ headerShown: true, title: "Trazo animado — Grupo A" }} children={() => <Placeholder title="TrazoAnimadoGrupoA" />} />
+            <Stack.Screen
+              name="TarjetasGrupoA"
+              options={{ headerShown: true, title: "Tarjetas — Grupo A" }}
+              children={() => <Placeholder title="TarjetasGrupoA" />}
+            />
+            <Stack.Screen
+              name="TrazoAnimadoGrupoA"
+              options={{ headerShown: true, title: "Trazo animado — Grupo A" }}
+              children={() => <Placeholder title="TrazoAnimadoGrupoA" />}
+            />
 
             {/* === Grupo K === */}
-            <Stack.Screen name="TrazoGrupoK" component={TrazosGrupoK} options={{ headerShown: true, title: "Trazo — Grupo K" }} />
+            <Stack.Screen
+              name="TrazoGrupoK"
+              component={TrazosGrupoK}
+              options={{ headerShown: true, title: "Trazo — Grupo K" }}
+            />
             <Stack.Screen name="MemoriaGrupoK" component={MemoriaGrupoK} options={{ headerShown: false }} />
 
             {/* === Familias S/T === */}
             <Stack.Screen name="FamiliaS" component={FamiliaSScreen} />
-            <Stack.Screen name="SEscrituraGrupoS" component={TrazosFamiliaSZ} options={{ headerShown: true, title: "Escritura (S)" }} />
-            <Stack.Screen name="SEjemplosGrupoS" component={SEjemplosGrupoS} options={{ headerShown: true, title: "Ejemplos (S)" }} />
-            <Stack.Screen name="SCaligrafiaDigital" component={SCaligrafiaDigital} options={{ headerShown: true, title: "Caligrafía digital (S)" }} />
-            <Stack.Screen name="SLecturaSilabas" component={SLecturaSilabas} options={{ headerShown: true, title: "Lectura de sílabas (S)" }} />
-            <Stack.Screen name="TTrazoGif" component={TTrazoGif} options={{ headerShown: true, title: "Trazo (T)" }} />
-            <Stack.Screen name="TQuizEscucha" component={TQuizEscucha} options={{ headerShown: true, title: "Quiz de escucha (T)" }} />
+            <Stack.Screen
+              name="SEscrituraGrupoS"
+              component={TrazosFamiliaSZ}
+              options={{ headerShown: true, title: "Escritura (S)" }}
+            />
+            <Stack.Screen
+              name="SEjemplosGrupoS"
+              component={SEjemplosGrupoS}
+              options={{ headerShown: true, title: "Ejemplos (S)" }}
+            />
+            <Stack.Screen
+              name="SCaligrafiaDigital"
+              component={SCaligrafiaDigital}
+              options={{ headerShown: true, title: "Caligrafía digital (S)" }}
+            />
+            <Stack.Screen
+              name="SLecturaSilabas"
+              component={SLecturaSilabas}
+              options={{ headerShown: true, title: "Lectura de sílabas (S)" }}
+            />
+            <Stack.Screen
+              name="TTrazoGif"
+              component={TTrazoGif}
+              options={{ headerShown: true, title: "Trazo (T)" }}
+            />
+            <Stack.Screen
+              name="TQuizEscucha"
+              component={TQuizEscucha}
+              options={{ headerShown: true, title: "Quiz de escucha (T)" }}
+            />
             <Stack.Screen name="FamiliaNH" component={FamiliaNHScreen} options={{ title: "Familias N y H" }} />
             <Stack.Screen name="NLecturaGuiada" component={NLecturaGuiadaScreen} options={{ title: "Lectura guiada (N)" }} />
             <Stack.Screen name="HRoleplaySaludo" component={HRoleplaySaludoScreen} options={{ title: "Roleplay: me llamo..." }} />
 
             {/* === Menús de unidades === */}
             <Stack.Screen name="HiraganaMMenu" component={HiraganaMMenu} options={{ title: "Hiragana M (まみむめも)" }} />
-            <Stack.Screen name="HiraganaYRMenu" component={HiraganaYRMenu} options={{ title: "Hiragana Y–R (やゆよ・らりるれろ)" }} />
+            <Stack.Screen
+              name="HiraganaYRMenu"
+              component={HiraganaYRMenu}
+              options={{ title: "Hiragana Y–R (やゆよ・らりるれろ)" }}
+            />
             {/* ✅ NUEVO: W–N */}
-            <Stack.Screen name="HiraganaWNMenu" component={HiraganaWNMenu} options={{ title: "Hiragana W–N (わ・を・ん / contracciones)" }} />
+            <Stack.Screen
+              name="HiraganaWNMenu"
+              component={HiraganaWNMenu}
+              options={{ title: "Hiragana W–N (わ・を・ん / contracciones)" }}
+            />
 
             {/* opcional: subpantallas */}
             <Stack.Screen name="M_Dictado" component={M_Dictado} options={{ title: "Dictado (M)" }} />
             <Stack.Screen name="M_PracticaVoz" component={M_PracticaVoz} options={{ title: "Práctica con voz (M)" }} />
-            <Stack.Screen name="YR_AudioInteractivo" component={YR_AudioInteractivo} options={{ title: "Audio interactivo (Y–R)" }} />
-            <Stack.Screen name="YR_CompletarPalabras" component={YR_CompletarPalabras} options={{ title: "Completar palabras (Y–R)" }} />
+            <Stack.Screen
+              name="YR_AudioInteractivo"
+              component={YR_AudioInteractivo}
+              options={{ title: "Audio interactivo (Y–R)" }}
+            />
+            <Stack.Screen
+              name="YR_CompletarPalabras"
+              component={YR_CompletarPalabras}
+              options={{ title: "Completar palabras (Y–R)" }}
+            />
 
             {/* ✅ Subpantallas W–N nuevas */}
-            <Stack.Screen name="WN_LecturaFrases" component={WN_LecturaFrases} options={{ headerShown: true, title: "Lectura de frases (W–N)" }} />
-            <Stack.Screen name="WN_PracticaNFinal" component={WN_PracticaNFinal} options={{ headerShown: true, title: "Cierre con ん (W–N)" }} />
+            <Stack.Screen
+              name="WN_LecturaFrases"
+              component={WN_LecturaFrases}
+              options={{ headerShown: true, title: "Lectura de frases (W–N)" }}
+            />
+            <Stack.Screen
+              name="WN_PracticaNFinal"
+              component={WN_PracticaNFinal}
+              options={{ headerShown: true, title: "Cierre con ん (W–N)" }}
+            />
 
             {/* === Katakana === */}
             <Stack.Screen name="KatakanaMenu" component={KatakanaMenu} options={{ title: "Katakana — Menú" }} />
-            <Stack.Screen name="KatakanaRow" component={KatakanaRow} options={{ title: "Katakana — Práctica por fila" }} />
-            <Stack.Screen name="KatakanaChallenge" component={KatakanaChallenge} options={{ title: "Katakana — Challenge" }} />
+            <Stack.Screen
+              name="KatakanaRow"
+              component={KatakanaRow}
+              options={{ title: "Katakana — Práctica por fila" }}
+            />
+            <Stack.Screen
+              name="KatakanaChallenge"
+              component={KatakanaChallenge}
+              options={{ title: "Katakana — Challenge" }}
+            />
 
             {/* === Bloques premium / examen === */}
             <Stack.Screen name="B3VocabularioMenu" component={B3VocabularioMenu} options={{ title: "Bloque 3" }} />
@@ -301,152 +423,201 @@ export default function App() {
             <Stack.Screen name="B6VidaCotidianaMenu" component={B6VidaCotidianaMenu} options={{ title: "Bloque 6" }} />
             <Stack.Screen name="B7LecturaPracticaMenu" component={B7LecturaPracticaMenu} options={{ title: "Bloque 7" }} />
             <Stack.Screen name="B8EvaluacionesLogrosMenu" component={B8EvaluacionesLogrosMenu} options={{ title: "Bloque 8" }} />
-            <Stack.Screen name="ExamenFinalMapacheN5" component={ExamenFinalMapacheN5} options={{ title: "Examen final N5" }} />
+            <Stack.Screen
+              name="ExamenFinalMapacheN5"
+              component={ExamenFinalMapacheN5}
+              options={{ title: "Examen final N5" }}
+            />
 
             {/* ✅ Bloque 3: pantallas reales */}
-            <Stack.Screen name="B3_NumerosEdad" component={B3_NumerosEdad} options={{ headerShown: true, title: "B3 — Números y edad" }} />
-            <Stack.Screen name="B3_NumerosEdad_Roleplay" component={B3_NumerosEdad_Roleplay} options={{ headerShown: true, title: "Roleplay — Números y edad" }} />
-            <Stack.Screen name="B3_NumerosEdad_Tarjetas" component={B3_NumerosEdad_Tarjetas} options={{ headerShown: true, title: "Tarjetas animadas — Números y edad" }} />
-            <Stack.Screen name="B3_NumerosEdad_Contadores" component={B3_NumerosEdad_Contadores} options={{ headerShown: true, title: "Contadores — Números y edad" }} />
+            <Stack.Screen
+              name="B3_NumerosEdad"
+              component={B3_NumerosEdad}
+              options={{ headerShown: true, title: "B3 — Números y edad" }}
+            />
+            <Stack.Screen
+              name="B3_NumerosEdad_Roleplay"
+              component={B3_NumerosEdad_Roleplay}
+              options={{ headerShown: true, title: "Roleplay — Números y edad" }}
+            />
+            <Stack.Screen
+              name="B3_NumerosEdad_Tarjetas"
+              component={B3_NumerosEdad_Tarjetas}
+              options={{ headerShown: true, title: "Tarjetas animadas — Números y edad" }}
+            />
+            <Stack.Screen
+              name="B3_NumerosEdad_Contadores"
+              component={B3_NumerosEdad_Contadores}
+              options={{ headerShown: true, title: "Contadores — Números y edad" }}
+            />
 
-             <Stack.Screen name="B3_Familia" component={B3_Familia} />
-      <Stack.Screen
-        name="B3_Familia_Roleplay"
-        component={B3_Familia_Roleplay}
-        options={{ title: "Roleplay (Familia)" }}
-      />
-      <Stack.Screen
-        name="B3_Familia_Tarjetas"
-        component={B3_Familia_Tarjetas}
-        options={{ title: "Tarjetas (Familia)" }}
-      />
-      <Stack.Screen
-        name="B3_Familia_Arbol"
-        component={B3_Familia_Arbol}
-        options={{ title: "Árbol familiar" }}
-      />
-      <Stack.Screen name="B3_Profesiones" component={B3_Profesiones} options={{ headerShown: true, title: "B3 — Profesiones" }} />
-<Stack.Screen name="B3_Profesiones_Tarjetas" component={B3_Profesiones_Tarjetas} options={{ headerShown: true, title: "Tarjetas — Profesiones" }} />
-<Stack.Screen name="B3_Profesiones_Roleplay" component={B3_Profesiones_Roleplay} options={{ headerShown: true, title: "Roleplay — Profesiones" }} />
-      
-<Stack.Screen name="B3_Profesiones_Oraciones" component={B3_Profesiones_Oraciones} options={{ headerShown: true, title: "Oraciones — Profesiones" }} />
-<Stack.Screen name="B3_Profesiones_Dialogo" component={B3_Profesiones_Dialogo} options={{ headerShown: true, title: "Diálogo y traducción" }} />
+            <Stack.Screen name="B3_Familia" component={B3_Familia} />
+            <Stack.Screen
+              name="B3_Familia_Roleplay"
+              component={B3_Familia_Roleplay}
+              options={{ title: "Roleplay (Familia)" }}
+            />
+            <Stack.Screen
+              name="B3_Familia_Tarjetas"
+              component={B3_Familia_Tarjetas}
+              options={{ title: "Tarjetas (Familia)" }}
+            />
+            <Stack.Screen
+              name="B3_Familia_Arbol"
+              component={B3_Familia_Arbol}
+              options={{ title: "Árbol familiar" }}
+            />
 
+            <Stack.Screen
+              name="B3_Profesiones"
+              component={B3_Profesiones}
+              options={{ headerShown: true, title: "B3 — Profesiones" }}
+            />
+            <Stack.Screen
+              name="B3_Profesiones_Tarjetas"
+              component={B3_Profesiones_Tarjetas}
+              options={{ headerShown: true, title: "Tarjetas — Profesiones" }}
+            />
+            <Stack.Screen
+              name="B3_Profesiones_Roleplay"
+              component={B3_Profesiones_Roleplay}
+              options={{ headerShown: true, title: "Roleplay — Profesiones" }}
+            />
+            <Stack.Screen
+              name="B3_Profesiones_Oraciones"
+              component={B3_Profesiones_Oraciones}
+              options={{ headerShown: true, title: "Oraciones — Profesiones" }}
+            />
+            <Stack.Screen
+              name="B3_Profesiones_Dialogo"
+              component={B3_Profesiones_Dialogo}
+              options={{ headerShown: true, title: "Diálogo y traducción" }}
+            />
 
-<Stack.Screen
-  name="B3_ObjetosClase"
-  component={B3_ObjetosClase}
-  options={{ headerShown: true, title: "B3 — Objetos de clase" }}
-/>
-<Stack.Screen
-  name="B3_LugaresCiudad"
-  component={B3_LugaresCiudad}
-  options={{ headerShown: true, title: "B3 — Lugares de la ciudad" }}
-/>
-<Stack.Screen
-  name="B3_PreguntasBasicas"
-  component={B3_PreguntasBasicas}
-  options={{ headerShown: true, title: "B3 — Preguntas básicas" }}
-/>
+            <Stack.Screen
+              name="B3_ObjetosClase"
+              component={B3_ObjetosClase}
+              options={{ headerShown: true, title: "B3 — Objetos de clase" }}
+            />
+            <Stack.Screen
+              name="B3_LugaresCiudad"
+              component={B3_LugaresCiudad}
+              options={{ headerShown: true, title: "B3 — Lugares de la ciudad" }}
+            />
+            <Stack.Screen
+              name="B3_PreguntasBasicas"
+              component={B3_PreguntasBasicas}
+              options={{ headerShown: true, title: "B3 — Preguntas básicas" }}
+            />
 
-<Stack.Screen
-  name="B3_ComidaBebidas"
-  component={B3_ComidaBebidas}
-  options={{ headerShown: true, title: "B3 — Comida y bebidas" }}
-/>
+            <Stack.Screen
+              name="B3_ComidaBebidas"
+              component={B3_ComidaBebidas}
+              options={{ headerShown: true, title: "B3 — Comida y bebidas" }}
+            />
+            <Stack.Screen
+              name="B3_ColoresAdjetivos"
+              component={B3_ColoresAdjetivos}
+              options={{ headerShown: true, title: "B3 — Colores y adjetivos" }}
+            />
+            <Stack.Screen
+              name="B3_Cortesia"
+              component={B3_Cortesia}
+              options={{ headerShown: true, title: "B3 — Cortesía" }}
+            />
 
-<Stack.Screen
-  name="B3_ColoresAdjetivos"
-  component={B3_ColoresAdjetivos}
-  options={{ headerShown: true, title: "B3 — Colores y adjetivos" }}
-/>
+            <Stack.Screen name="B4_Desu" component={B4_Desu} />
+            <Stack.Screen name="B4_DesuNeg" component={B4_DesuNeg} />
+            <Stack.Screen name="B4_PregKa" component={B4_PregKa} />
+            <Stack.Screen name="B4_KoreSoreAre" component={B4_KoreSoreAre} />
+            <Stack.Screen name="B4_NoModifier" component={B4_NoModifier} />
+            <Stack.Screen name="B4_WaGa" component={B4_WaGa} />
+            <Stack.Screen name="B4_Wo" component={B4_Wo} />
+            <Stack.Screen name="B4_NiHe" component={B4_NiHe} />
+            <Stack.Screen name="B4_De" component={B4_De} />
+            <Stack.Screen name="B4_ArimasuImasu" component={B4_ArimasuImasu} />
+            <Stack.Screen name="B4_Adjetivos" component={B4_Adjetivos} />
+            <Stack.Screen name="B4_Mo" component={B4_Mo} />
+            <Stack.Screen name="B4_Tiempo" component={B4_Tiempo} />
+            <Stack.Screen name="B4_MasuIntro" component={B4_MasuIntro} />
+            <Stack.Screen name="B4_MasuNeg" component={B4_MasuNeg} />
 
-<Stack.Screen
-  name="B3_Cortesia"
-  component={B3_Cortesia}
-  options={{ headerShown: true, title: "B3 — Cortesía" }}
-/>
+            <Stack.Screen
+              name="B5_Contadores"
+              component={B5_Contadores}
+              options={{ headerShown: true, title: "B5 — Contadores（助数詞）" }}
+            />
+            <Stack.Screen
+              name="B5_TiempoPuntos"
+              component={B5_TiempoPuntos}
+              options={{ headerShown: true, title: "B5 — Tiempo: puntos (に)" }}
+            />
+            <Stack.Screen
+              name="B5_TiempoDuracion"
+              component={B5_TiempoDuracion}
+              options={{ headerShown: true, title: "B5 — Tiempo: duración（～間／から／まで）" }}
+            />
+            <Stack.Screen
+              name="B5_Frecuencia"
+              component={B5_Frecuencia}
+              options={{ headerShown: true, title: "B5 — Frecuencia" }}
+            />
+            <Stack.Screen
+              name="B5_AdverbiosFrecuencia"
+              component={B5_AdverbiosFrecuencia}
+              options={{ headerShown: true, title: "B5 — Adverbios de frecuencia" }}
+            />
+            <Stack.Screen
+              name="B5_DiasMeses"
+              component={B5_DiasMeses}
+              options={{ headerShown: true, title: "B5 — Días y meses" }}
+            />
+            <Stack.Screen
+              name="B5_HorariosRutina"
+              component={B5_HorariosRutina}
+              options={{ headerShown: true, title: "B5 — Horarios y rutina（に／から／まで）" }}
+            />
+            <Stack.Screen
+              name="B5_VecesContador"
+              component={B5_VecesContador}
+              options={{ headerShown: true, title: "B5 — Veces: ～回" }}
+            />
+            <Stack.Screen
+              name="B5_ParticulasTiempo"
+              component={B5_ParticulasTiempo}
+              options={{ headerShown: true, title: "B5 — Partículas de tiempo（に・から・まで・ごろ・ぐらい）" }}
+            />
 
-<Stack.Screen name="B4_Desu" component={B4_Desu} />
-<Stack.Screen name="B4_DesuNeg" component={B4_DesuNeg} />
-<Stack.Screen name="B4_PregKa" component={B4_PregKa} />
-<Stack.Screen name="B4_KoreSoreAre" component={B4_KoreSoreAre} />
-<Stack.Screen name="B4_NoModifier" component={B4_NoModifier} />
-<Stack.Screen name="B4_WaGa" component={B4_WaGa} />
-<Stack.Screen name="B4_Wo" component={B4_Wo} />
-<Stack.Screen name="B4_NiHe" component={B4_NiHe} />
-<Stack.Screen name="B4_De" component={B4_De} />
-<Stack.Screen name="B4_ArimasuImasu" component={B4_ArimasuImasu} />
-<Stack.Screen name="B4_Adjetivos" component={B4_Adjetivos} />
-<Stack.Screen name="B4_Mo" component={B4_Mo} />
-<Stack.Screen name="B4_Tiempo" component={B4_Tiempo} />
-<Stack.Screen name="B4_MasuIntro" component={B4_MasuIntro} />
-<Stack.Screen name="B4_MasuNeg" component={B4_MasuNeg} />
+            {/* === Vida cotidiana === */}
+            <Stack.Screen name="B6_Compras" component={B6_Compras} options={{ headerShown: true, title: "Compras" }} />
+            <Stack.Screen
+              name="B6_Restaurante"
+              component={B6_Restaurante}
+              options={{ headerShown: true, title: "Restaurante" }}
+            />
+            <Stack.Screen
+              name="B6_Transporte"
+              component={B6_Transporte}
+              options={{ headerShown: true, title: "Transporte" }}
+            />
+            <Stack.Screen name="B6_Dinero" component={B6_Dinero} options={{ headerShown: true, title: "Dinero" }} />
+            <Stack.Screen
+              name="B6_Direcciones"
+              component={B6_Direcciones}
+              options={{ headerShown: true, title: "Direcciones" }}
+            />
+            <Stack.Screen name="B6_Tiendas" component={B6_Tiendas} options={{ headerShown: true, title: "Tiendas" }} />
+            <Stack.Screen name="B6_Hotel" component={B6_Hotel} options={{ headerShown: true, title: "Hotel" }} />
+            <Stack.Screen
+              name="B6_Emergencias"
+              component={B6_Emergencias}
+              options={{ headerShown: true, title: "Emergencias" }}
+            />
 
-<Stack.Screen
-  name="B5_Contadores"
-  component={B5_Contadores}
-  options={{ headerShown: true, title: "B5 — Contadores（助数詞）" }}
-/>
-
-<Stack.Screen
-  name="B5_TiempoPuntos"
-  component={B5_TiempoPuntos}
-  options={{ headerShown: true, title: "B5 — Tiempo: puntos (に)" }}
-/>
-
-<Stack.Screen
-  name="B5_TiempoDuracion"
-  component={B5_TiempoDuracion}
-  options={{ headerShown: true, title: "B5 — Tiempo: duración（～間／から／まで）" }}
-/>
-
-<Stack.Screen
-  name="B5_Frecuencia"
-  component={B5_Frecuencia}
-  options={{ headerShown: true, title: "B5 — Frecuencia" }}
-/>
-
-<Stack.Screen
-  name="B5_AdverbiosFrecuencia"
-  component={B5_AdverbiosFrecuencia}
-  options={{ headerShown: true, title: "B5 — Adverbios de frecuencia" }}
-/>
-
-<Stack.Screen
-  name="B5_DiasMeses"
-  component={B5_DiasMeses}
-  options={{ headerShown: true, title: "B5 — Días y meses" }}
-/>
-
-<Stack.Screen
-  name="B5_HorariosRutina"
-  component={B5_HorariosRutina}
-  options={{ headerShown: true, title: "B5 — Horarios y rutina（に／から／まで）" }}
-/>
-
-<Stack.Screen
-  name="B5_VecesContador"
-  component={B5_VecesContador}
-  options={{ headerShown: true, title: "B5 — Veces: ～回" }}
-/>
-
-<Stack.Screen
-  name="B5_ParticulasTiempo"
-  component={B5_ParticulasTiempo}
-  options={{ headerShown: true, title: "B5 — Partículas de tiempo（に・から・まで・ごろ・ぐらい）" }}
-/>
-
-<Stack.Screen name="B6_Compras" component={B6_Compras} options={{ headerShown: true, title: "Compras" }} />
-<Stack.Screen name="B6_Restaurante" component={B6_Restaurante} options={{ headerShown: true, title: "Restaurante" }} />
-<Stack.Screen name="B6_Transporte" component={B6_Transporte} options={{ headerShown: true, title: "Transporte" }} />
-<Stack.Screen name="B6_Dinero" component={B6_Dinero} options={{ headerShown: true, title: "Dinero" }} />
-<Stack.Screen name="B6_Direcciones" component={B6_Direcciones} options={{ headerShown: true, title: "Direcciones" }} />
-<Stack.Screen name="B6_Tiendas" component={B6_Tiendas} options={{ headerShown: true, title: "Tiendas" }} />
-<Stack.Screen name="B6_Hotel" component={B6_Hotel} options={{ headerShown: true, title: "Hotel" }} />
-<Stack.Screen name="B6_Emergencias" component={B6_Emergencias} options={{ headerShown: true, title: "Emergencias" }} />
-
-
+            {/* === N4 === */}
+            <Stack.Screen name="N4Intro" component={N4IntroScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="CursoN4" component={CursoN4Screen} options={{ headerShown: false }} />
+            <Stack.Screen name="N4_Tema" component={N4TemaScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
         </NavigationContainer>
       </B3ScoreProvider>

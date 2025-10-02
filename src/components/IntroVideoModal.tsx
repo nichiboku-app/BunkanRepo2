@@ -1,7 +1,17 @@
 // src/components/IntroVideoModal.tsx
-import { AVPlaybackStatusSuccess, Audio, ResizeMode, Video } from 'expo-av';
+import { Audio } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Image,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 const DRAGON = require('../../assets/ui/dragon_frame_red.png');
 
@@ -12,27 +22,66 @@ type Props = {
   onDontShowAgain?: () => void;
 };
 
-export default function IntroVideoModal({ visible, sourceUrl, onClose, onDontShowAgain }: Props) {
-  const videoRef = useRef<Video | null>(null);
+function InlineVideo({
+  uri,
+  onBecameReady,
+}: {
+  uri: string;
+  onBecameReady?: () => void;
+}) {
+  const player = useVideoPlayer({ uri }, (p) => {
+    p.loop = false;
+    p.muted = false;
+  });
+
+  // Autoplay cuando está listo. No hacemos pause/seek en cleanup para
+  // evitar "shared object already released" en Android.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    player.play();
+    const t = setTimeout(() => onBecameReady?.(), 180);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <VideoView
+      key={uri} // fuerza una instancia nueva si cambia la fuente
+      player={player}
+      nativeControls
+      allowsFullscreen
+      allowsPictureInPicture
+      contentFit="contain"
+      style={styles.video}
+    />
+  );
+}
+
+export default function IntroVideoModal({
+  visible,
+  sourceUrl,
+  onClose,
+  onDontShowAgain,
+}: Props) {
   const [ready, setReady] = useState(false);
   const fade = useRef(new Animated.Value(0)).current;
 
-  // Permite audio en modo silencio iOS mientras el modal esté visible (sin usar enums que cambian entre versiones)
+  // Permite audio en modo silencio iOS mientras el modal esté visible
   useEffect(() => {
     const setMode = async (on: boolean) => {
       try {
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           staysActiveInBackground: false,
-          playsInSilentModeIOS: on,     // 👈 clave para que suene con el switch silencioso
-          shouldDuckAndroid: true,      // reduce otras apps en Android
+          playsInSilentModeIOS: on,
+          shouldDuckAndroid: true,
           playThroughEarpieceAndroid: false,
-          // ❌ sin interruptionModeIOS/Android para evitar TS errors entre versiones
         });
       } catch {}
     };
     setMode(visible);
-    return () => { setMode(false); };
+    return () => {
+      setMode(false);
+    };
   }, [visible]);
 
   useEffect(() => {
@@ -40,21 +89,15 @@ export default function IntroVideoModal({ visible, sourceUrl, onClose, onDontSho
       setReady(false);
       fade.setValue(0);
     }
-  }, [visible]);
+  }, [visible, fade]);
 
-  const handleReady = async () => {
+  const handleReady = () => {
     setReady(true);
-    // Asegura volumen normal al iniciar
-    try {
-      await videoRef.current?.setStatusAsync({ isMuted: false, volume: 1.0, shouldPlay: true });
-    } catch {}
-    Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }).start();
-  };
-
-  const onPlaybackUpdate = (status: any) => {
-    const s = status as AVPlaybackStatusSuccess;
-    if (!s.isLoaded) return;
-    // sin loop; el usuario cierra manualmente
+    Animated.timing(fade, {
+      toValue: 1,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
   };
 
   return (
@@ -69,23 +112,11 @@ export default function IntroVideoModal({ visible, sourceUrl, onClose, onDontSho
               </View>
             )}
 
-            {sourceUrl && (
-              <Video
-                ref={videoRef}
-                source={{ uri: sourceUrl }}
-                style={styles.video}
-                resizeMode={ResizeMode.CONTAIN}
-                shouldPlay
-                isLooping={false}
-                isMuted={false}
-                useNativeControls={false}
-                // 👇 nada de playsInSilentModeIOS aquí; lo manejamos con Audio.setAudioModeAsync
-                onReadyForDisplay={handleReady}
-                onPlaybackStatusUpdate={onPlaybackUpdate}
-              />
-            )}
+            {sourceUrl ? (
+              <InlineVideo uri={sourceUrl} onBecameReady={handleReady} />
+            ) : null}
 
-            {/* Marco dragón rojo encima, sin interceptar toques */}
+            {/* Marco decorativo */}
             <View pointerEvents="none" style={styles.frame}>
               <Image source={DRAGON} style={styles.frameImg} resizeMode="stretch" />
             </View>
@@ -93,7 +124,10 @@ export default function IntroVideoModal({ visible, sourceUrl, onClose, onDontSho
 
           {/* Controles */}
           <View style={styles.row}>
-            <Pressable style={({ pressed }) => [styles.btn, pressed && { opacity: 0.85 }]} onPress={onClose}>
+            <Pressable
+              style={({ pressed }) => [styles.btn, pressed && { opacity: 0.85 }]}
+              onPress={onClose}
+            >
               <Text style={styles.btnTxt}>Cerrar</Text>
             </Pressable>
 

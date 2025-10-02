@@ -156,6 +156,8 @@ B4_MasuNeg: undefined;         // ません negativo
   B6_Hotel: undefined;
   B6_Emergencias: undefined;
 
+  N4Intro: undefined;
+
 };
 
 declare global {

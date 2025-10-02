@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ImageBackground,
   Pressable,
@@ -19,263 +19,295 @@ import {
 import type { RootStackParamList as AppRoutes } from '../../types';
 import { rememberLocation } from '../services/progress';
 
-// ===== ASSETS =====
-const TEMPLE  = require('../../assets/icons/intro/icon_temple_pagoda.webp');
-const CLOUDS  = require('../../assets/icons/intro/decor_red_clouds.webp');
-const PATTERN = require('../../assets/icons/intro/bg_seigaiha.webp');
+/* ===== RUTAS EXACTAS ===== */
+const BG_FUJI      = require('../../assets/intro/imagen_fuji.webp');   // 500x350 (AR 10:7)
+const FRAME_ROJO   = require('../../assets/intro/marco_rojo.webp');
+const FRAME_DORADO = require('../../assets/frames/marco_dorado.webp');
+const ICON_VIDEO   = require('../../assets/intro/icono_video.webp');
 
-const ICON_SCROLL   = require('../../assets/icons/intro/icon_scroll_kanji.webp');
-const ICON_BRUSH    = require('../../assets/icons/intro/icon_brush_ink.webp');
-const ICON_GEISHA   = require('../../assets/icons/intro/icon_geisha_mask.webp');
+const ICON_SCROLL  = require('../../assets/icons/intro/icon_scroll_kanji.webp');
+const ICON_BRUSH   = require('../../assets/icons/intro/icon_brush_ink.webp');
+const ICON_GEISHA  = require('../../assets/icons/intro/icon_geisha_mask.webp');
+const ICON_QUIZ    = require('../../assets/icons/intro/icon_quiz_book.webp');
+const ICON_KOKESHI = require('../../assets/icons/intro/icon_kokeshi.webp');
+const ICON_BOOK    = require('../../assets/icons/intro/icon_book_info.webp');
+const PATTERN      = require('../../assets/icons/intro/bg_seigaiha.webp');
 
-const ICON_PLAY     = require('../../assets/icons/intro/icon_video_play.webp');
-const ICON_QUIZ     = require('../../assets/icons/intro/icon_quiz_book.webp');
-const ICON_KOKESHI  = require('../../assets/icons/intro/icon_kokeshi.webp');
-const ICON_BOOK     = require('../../assets/icons/intro/icon_book_info.webp');
-
-// ===== NAV TYPES =====
 type Nav = NativeStackNavigationProp<AppRoutes>;
+
+/* ===== KNOBS ===== */
+const BG_AR          = 10 / 7;  // aspecto exacto 500x350
+const BG_OFFSET_Y    = 0;       // mueve la imagen verticalmente (px). negativo = arriba
+const TOP_FADE       = true;    // oscurecer arriba un poco para contraste
+const BOTTOM_SEAM_H  = 80;      // altura del degradado blanco que se mezcla con el panel
+const PANEL_RADIUS   = 36;
+const BTN_HEIGHT     = 116;
+const CONTENT_PAD    = 12;
+
+// 9-slice afinado para el marco ROJO
+const RED_CAPS = { top: 34, left: 34, bottom: 34, right: 34 };
+const RED_OUTER_PADDING = 12;
 
 export default function IntroJaponesScreen() {
   const navigation = useNavigation<Nav>();
-
   const go = <T extends keyof AppRoutes>(route: T, params?: AppRoutes[T]) => {
     rememberLocation('IntroJapones');
     (navigation as any).navigate(route as string, params as any);
   };
 
-  // 3 columnas perfectamente alineadas
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const SIDE = 16;
   const GAP  = 12;
-  const CARD_W = Math.floor((width - SIDE * 2 - GAP * 2) / 3);
+
+  // Alto del fondo para mostrar SIEMPRE la imagen completa sin distorsión
+  const bgHeight = useMemo(() => Math.round(width / BG_AR), [width]);
+
+  // Altura visible antes del panel (máx ~48% pantalla; min 240 px)
+  const visibleTop = useMemo(
+    () => Math.min(bgHeight, Math.max(240, Math.floor(height * 0.48))),
+    [bgHeight, height]
+  );
+
+  // 3 columnas exactas
+  const CARD_W = useMemo(
+    () => Math.floor((width - SIDE * 2 - GAP * 2) / 3),
+    [width]
+  );
 
   return (
     <View style={s.root}>
-      {/* StatusBar NO translúcida para que no se vea nada detrás del header */}
       <StatusBar translucent={false} backgroundColor="#6B0015" barStyle="light-content" />
 
-      {/* HEADER: gradiente + nubes + pagoda */}
-      <View style={s.header}>
-        <LinearGradient
-          colors={['#6B0015', '#842238', '#B59AA6']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={StyleSheet.absoluteFill}
+      {/* ===== Fondo Fuji RESPONSIVE (imagen completa, sin corte) ===== */}
+      <View style={{ height: visibleTop, overflow: 'hidden' }}>
+        <ExpoImage
+          source={BG_FUJI}
+          style={{ width, height: bgHeight, position: 'absolute', top: BG_OFFSET_Y }}
+          contentFit="contain"
+          cachePolicy="memory-disk"
         />
-        <ExpoImage source={CLOUDS} style={s.clouds} contentFit="cover" />
-        <ExpoImage source={TEMPLE} style={s.temple} contentFit="contain" />
-        <View style={s.headerTextWrap}>
-          <Text style={s.h1}>INTRODUCCIÓN AL{'\n'}JAPONÉS</Text>
-          <Text style={s.school}>Escuela Bunkan Nichiboku</Text>
-        </View>
+
+        {/* Oscurecer parte superior (opcional) */}
+        {TOP_FADE && (
+          <LinearGradient
+            colors={['rgba(0,0,0,0.30)', 'rgba(0,0,0,0.00)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 0.6 }}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: Math.floor(visibleTop * 0.8) }}
+            pointerEvents="none"
+          />
+        )}
+
+        {/* 👇 Degradado BLANCO pegado al fondo (ya no hay banda negra) */}
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: BOTTOM_SEAM_H }}
+          pointerEvents="none"
+        />
       </View>
 
-      <ScrollView contentContainerStyle={s.cc} showsVerticalScrollIndicator={false}>
-        <ImageBackground source={PATTERN} style={s.pattern} imageStyle={s.patternImg}>
-          {/* ===== SUBTEMAS ===== */}
-          <Text style={s.sectionTitle}>Subtemas principales</Text>
+      {/* ===== Panel blanco curvo ===== */}
+      <View style={s.panelWrap}>
+        <ImageBackground source={PATTERN} style={s.panel} imageStyle={s.panelImg}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+            <Text style={s.title}>INTRODUCCIÓN AL{'\n'}JAPONÉS</Text>
+            <Text style={s.subtitle}>Escuela Bunkan Nichiboku</Text>
 
-          <View style={s.row}>
-            <CardSolid
-              bg="#780000"
-              icon={ICON_SCROLL}
-              label="Orígenes del idioma"
-              onPress={() => go('OrigenesDelIdioma')}
-              style={{ width: CARD_W }}
-            />
-            <CardSolid
-              bg="#C1121f"
-              icon={ICON_BRUSH}
-              label="Sistemas de escritura"
-              onPress={() => go('EscrituraN5')}
-              style={{ width: CARD_W }}
-            />
-            <CardSolid
-              bg="#B7213F"
-              icon={ICON_GEISHA}
-              label="Cultura básica"
-              onPress={() => go('CulturaN5')}
-              style={{ width: CARD_W }}
-            />
-          </View>
+            {/* Subtemas (marco DORADO) */}
+            <Text style={s.sectionTitle}>Subtemas principales</Text>
+            <View style={[s.row, { paddingHorizontal: SIDE }]}>
+              <FramedButtonGold
+                icon={ICON_SCROLL}
+                label="Orígenes del idioma"
+                bg="#7A0D11"
+                style={{ width: CARD_W }}
+                onPress={() => go('OrigenesDelIdioma')}
+              />
+              <FramedButtonGold
+                icon={ICON_BRUSH}
+                label="Sistemas de escritura"
+                bg="#C1121F"
+                style={{ width: CARD_W }}
+                onPress={() => go('EscrituraN5')}
+              />
+              <FramedButtonGold
+                icon={ICON_GEISHA}
+                label="Cultura básica"
+                bg="#B7213F"
+                style={{ width: CARD_W }}
+                onPress={() => go('CulturaN5')}
+              />
+            </View>
 
-          <View style={s.sectionSpacer} />
+            {/* Actividades (marco ROJO 9-slice) */}
+            <Text style={[s.sectionTitle, { marginTop: 28 }]}>Actividades</Text>
+            <View style={[s.row, { paddingHorizontal: SIDE }]}>
+              <FramedButtonRed
+                icon={ICON_VIDEO}
+                label="Video introductorio"
+                bg="#6A2B09"
+                style={{ width: CARD_W }}
+                onPress={() => go('VideoIntroModal')}
+              />
+              <FramedButtonRed
+                icon={ICON_QUIZ}
+                label="Quiz cultural"
+                bg="#FCB861"
+                style={{ width: CARD_W }}
+                onPress={() => go('QuizCultural')}
+                textColor="#2B1900"
+              />
+              <FramedButtonRed
+                icon={ICON_KOKESHI}
+                label="Gif saludo japonés"
+                bg="#8FB3E2"
+                style={{ width: CARD_W }}
+                onPress={() => go('GifSaludo')}
+                textColor="#07223B"
+              />
+            </View>
 
-          {/* ===== ACTIVIDADES ===== */}
-          <Text style={s.sectionTitle}>Actividades</Text>
+            {/* Info */}
+            <View style={[s.infoBox, { marginHorizontal: SIDE, marginTop: 28 }]}>
+              <ExpoImage source={ICON_BOOK} style={s.infoIcon} contentFit="contain" />
+              <Text style={s.infoText}>
+                La Escuela Bunkan Nichiboku te acompaña en tu viaje al japonés con cursos desde N5
+                hasta N1, actividades interactivas y una comunidad apasionada.
+              </Text>
+            </View>
 
-          <View style={s.row}>
-            <CardBig
-              icon={ICON_PLAY}
-              label="Video introductorio"
-              onPress={() => go('VideoIntroModal')}
-              bg="#6A2B09"
-            />
-            <CardBig
-              icon={ICON_QUIZ}
-              label="Quiz cultural"
-              onPress={() => go('QuizCultural')}
-              bg="#FCB861"
-            />
-            <CardBig
-              icon={ICON_KOKESHI}
-              label="Gif saludo japonés"
-              onPress={() => go('GifSaludo')}
-              bg="#8FB3E2"
-            />
-          </View>
-
-          <View style={s.sectionSpacer} />
-
-          {/* ===== INFO BOX ===== */}
-          <View style={s.infoBox}>
-            <ExpoImage source={ICON_BOOK} style={s.infoIcon} contentFit="contain" />
-            <Text style={s.infoText}>
-              La Escuela Bunkan Nichiboku te acompaña en tu viaje al japonés con cursos desde N5
-              hasta N1, actividades interactivas y una comunidad apasionada.
-            </Text>
-          </View>
-
-          {/* ===== BOTÓN: SIGUIENTE BLOQUE DEL TEMARIO ===== */}
-          <Pressable
-  onPress={() => go('Hiragana')}   // 👈 antes: 'EntradaActividadesN5'
-  style={({ pressed }) => [s.nextBtn, pressed && s.pressed]}
-  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
->
-  <Text style={s.nextBtnText}>Siguiente capítulo: Hiragana ➜</Text>
-</Pressable>
-
-          <View style={{ height: 32 }} />
+            {/* Siguiente */}
+            <Pressable
+              onPress={() => go('Hiragana')}
+              style={({ pressed }) => [s.nextBtn, pressed && s.pressed, { marginHorizontal: SIDE }]}
+              hitSlop={10}
+            >
+              <Text style={s.nextBtnText}>Siguiente capítulo: Hiragana ➜</Text>
+            </Pressable>
+          </ScrollView>
         </ImageBackground>
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
-/* ---------- UI Components ---------- */
-function CardSolid({
+/* ===== Botones ===== */
+
+// DORADO (overlay)
+function FramedButtonGold({
   icon,
   label,
   onPress,
   bg,
+  textColor = '#fff',
   style,
 }: {
   icon: any;
   label: string;
   onPress: () => void;
   bg: string;
+  textColor?: string;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [s.cardSolid, { backgroundColor: bg }, style, pressed && s.pressed]}
-    >
-      <ExpoImage source={icon} style={s.cardSolidIcon} contentFit="contain" />
-      <Text style={s.cardSolidText}>{label}</Text>
-    </Pressable>
+    <View style={[btnGold.wrap, style]}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          btnGold.body,
+          { backgroundColor: bg, height: BTN_HEIGHT, padding: CONTENT_PAD },
+          pressed && { transform: [{ scale: 0.98 }], opacity: 0.92 },
+        ]}
+      >
+        <ExpoImage source={icon} style={btnGold.icon} contentFit="contain" />
+        <Text style={[btnGold.text, { color: textColor }]}>{label}</Text>
+      </Pressable>
+
+      <ExpoImage source={FRAME_DORADO} style={btnGold.frame} contentFit="fill" pointerEvents="none" />
+    </View>
   );
 }
 
-function CardBig({
+// ROJO (9-slice)
+function FramedButtonRed({
   icon,
   label,
   onPress,
   bg,
+  textColor = '#fff',
+  style,
 }: {
   icon: any;
   label: string;
   onPress: () => void;
   bg: string;
+  textColor?: string;
+  style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [s.cardBig, { backgroundColor: bg }, pressed && s.pressed]}>
-      <ExpoImage source={icon} style={s.cardBigIcon} contentFit="contain" />
-      <Text style={s.cardBigText}>{label}</Text>
-    </Pressable>
+    <ImageBackground
+      source={FRAME_ROJO}
+      resizeMode="stretch"
+      capInsets={RED_CAPS}
+      style={[btnRed.wrap, style, { padding: RED_OUTER_PADDING }]}
+      imageStyle={btnRed.frameImg}
+    >
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          btnRed.body,
+          { backgroundColor: bg, height: BTN_HEIGHT, padding: CONTENT_PAD },
+          pressed && { transform: [{ scale: 0.98 }], opacity: 0.92 },
+        ]}
+      >
+        <ExpoImage source={icon} style={btnRed.icon} contentFit="contain" />
+        <Text style={[btnRed.text, { color: textColor }]}>{label}</Text>
+      </Pressable>
+    </ImageBackground>
   );
 }
 
-/* ---------- Styles ---------- */
+/* ===== Styles ===== */
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  root: { flex: 1, backgroundColor: '#fff' }, // 👈 blanco para evitar bandas
 
-  header: {
-    height: 170,
-    paddingTop: 56,
-    paddingHorizontal: 18,
-    justifyContent: 'flex-end',
+  panelWrap: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: PANEL_RADIUS,
+    borderTopRightRadius: PANEL_RADIUS,
+    overflow: 'hidden',
   },
-  headerTextWrap: { paddingBottom: 10 },
-  h1: {
-    color: '#fff',
-    fontSize: 28,
+  panel: { flex: 1, paddingTop: 20, paddingBottom: 20 },
+  panelImg: { opacity: 0.08 },
+
+  title: {
+    fontSize: 26,
     fontWeight: '900',
-    lineHeight: 32,
-    textShadowColor: 'rgba(0,0,0,0.25)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+    lineHeight: 30,
+    color: '#111',
+    textAlign: 'center',
   },
-  school: { color: '#f5e3e3', marginTop: 6 },
+  subtitle: {
+    textAlign: 'center',
+    color: '#6B0015',
+    marginTop: 6,
+    marginBottom: 18,
+    fontWeight: '700',
+  },
 
-  temple: { position: 'absolute', right: 16, top: 8, width: 138, height: 138, opacity: 0.95 },
-  clouds: { position: 'absolute', left: 0, right: 0, bottom: -4, height: 110, opacity: 0.35 },
-
-  cc: { flexGrow: 1 },
-  pattern: { flex: 1, paddingHorizontal: 16, paddingTop: 40, paddingBottom: 48 },
-  patternImg: { opacity: 0.12 },
-
-  sectionTitle: { fontSize: 22, fontWeight: '900', color: '#1A1A1A', marginBottom: 28 },
-  sectionSpacer: { height: 56 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#1A1A1A',
+    marginBottom: 14,
+    paddingHorizontal: 16,
+  },
 
   row: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
 
-  // Subtemas sólidos (marco negro grueso + texto blanco)
-  cardSolid: {
-    aspectRatio: 1 / 1.15,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-    borderWidth: 3,
-    borderColor: '#000',
-  },
-  cardSolidIcon: { width: 84, height: 84, marginBottom: 4 },
-  cardSolidText: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: -6,
-  },
-
-  // Actividades (marco negro)
-  cardBig: {
-    flexGrow: 1,
-    flexBasis: '30%',
-    height: 120,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 3,
-    borderWidth: 3,
-    borderColor: '#000',
-  },
-  cardBigIcon: { width: 72, height: 72, marginBottom: 6 },
-  cardBigText: { color: '#fff', fontWeight: '800', textAlign: 'center', marginTop: -4 },
-
-  // Info box
   infoBox: {
     backgroundColor: '#F6EFE3',
     borderRadius: 14,
@@ -289,9 +321,8 @@ const s = StyleSheet.create({
   infoIcon: { width: 32, height: 32 },
   infoText: { flex: 1, color: '#3b2b1b', fontWeight: '600' },
 
-  // Botón “Siguiente bloque del temario”
   nextBtn: {
-    marginTop: 20,
+    marginTop: 18,
     backgroundColor: '#111827',
     borderRadius: 16,
     paddingVertical: 14,
@@ -299,11 +330,41 @@ const s = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#000',
   },
-  nextBtnText: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 16,
-  },
+  nextBtnText: { color: '#fff', fontWeight: '900', fontSize: 16 },
 
   pressed: { transform: [{ scale: 0.98 }], opacity: 0.92 },
+});
+
+const btnGold = StyleSheet.create({
+  wrap: { position: 'relative', borderRadius: 16 },
+  body: {
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  frame: { position: 'absolute', inset: 0, borderRadius: 16 },
+  icon: { width: 70, height: 70, marginBottom: 6 },
+  text: { fontWeight: '900', fontSize: 12, textAlign: 'center', marginTop: -2 },
+});
+
+const btnRed = StyleSheet.create({
+  wrap: { borderRadius: 16 },
+  frameImg: { borderRadius: 16 },
+  body: {
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  icon: { width: 70, height: 70, marginBottom: 6 },
+  text: { fontWeight: '900', fontSize: 12, textAlign: 'center', marginTop: -2 },
 });

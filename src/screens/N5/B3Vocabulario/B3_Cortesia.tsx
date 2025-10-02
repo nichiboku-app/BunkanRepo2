@@ -2,20 +2,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Video } from "expo-av";
 import * as Speech from "expo-speech";
+import { VideoView, useVideoPlayer } from "expo-video";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
-    Animated,
-    Easing,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    Vibration,
-    View,
-    useWindowDimensions,
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  Vibration,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import type { RootStackParamList } from "../../../../types";
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
@@ -457,25 +457,38 @@ function Example({ jp, es, onSpeak }: { jp: string; es: string; onSpeak: () => v
   );
 }
 
-/* Tarjeta de video + traducción */
+/* Tarjeta de video + traducción (expo-video) */
 function VideoCard({ v, width, height }: { v: any; width: number; height: number }) {
   const [showGuide, setShowGuide] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [userText, setUserText] = useState("");
-  const ref = useRef<Video>(null);
+
+  // 🎥 expo-video
+  const player = useVideoPlayer(v.uri, (p) => {
+    // config inicial si quieres
+    p.loop = false;
+    p.muted = false;
+  });
+
+  // helpers (tolerantes a tipos)
+  const restart = () => {
+    (player as any)?.pause?.();
+    (player as any)?.seek?.(0);
+  };
 
   return (
     <View style={styles.videoWrap}>
       <Text style={styles.videoTitle}>{v.title}</Text>
-      <Video
-        ref={ref}
+      <VideoView
         style={{ width, height, backgroundColor: "#000", borderRadius: 12 }}
-        source={{ uri: v.uri }}
-        resizeMode="contain"
-        useNativeControls
+        player={player}
+        allowsFullscreen
+        allowsPictureInPicture
+        nativeControls
+        contentFit="contain"
       />
       <View style={styles.actionsRow}>
-        <Pressable style={[styles.actionBtn, styles.resetBtn]} onPress={() => ref.current?.stopAsync()}>
+        <Pressable style={[styles.actionBtn, styles.resetBtn]} onPress={restart}>
           <Ionicons name="refresh-outline" size={16} />
           <Text style={styles.actionText}>Reiniciar</Text>
         </Pressable>
@@ -491,9 +504,7 @@ function VideoCard({ v, width, height }: { v: any; width: number; height: number
 
       {showGuide && (
         <View style={styles.guideBox}>
-          <Text style={styles.hint}>
-            Palabras clave: {v.keyPhrases.join(" ・ ")}
-          </Text>
+          <Text style={styles.hint}>Palabras clave: {v.keyPhrases.join(" ・ ")}</Text>
         </View>
       )}
 

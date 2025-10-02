@@ -10,7 +10,11 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "assets:prepare": "powershell -ExecutionPolicy Bypass -File scripts/prepare_assets.ps1",
-    "kanji:webp": "node ./scripts/fetch_kanjivg_webp.mjs"
+    "kanji:webp": "node ./scripts/fetch_kanjivg_webp.mjs",
+    "fetch-kanjivg:n4": "node scripts/fetch-kanjivg-n4.mjs",
+    "kanji:fetch": "node scripts/fetch-kanjivg-n4.mjs",
+    "kanji:n4:t2": "node scripts/fetch-kanjivg-n4-t2.mjs",
+    "gen:n4:t3": "powershell -ExecutionPolicy Bypass -File scripts\\gen_kanji_n4_tema3.ps1"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-jp": "^0.4.1",
@@ -65,12 +69,13 @@
     "react-native-reanimated": "~4.1.0",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-svg": "^15.12.1",
+    "react-native-svg": "15.12.1",
     "react-native-view-shot": "4.0.3",
     "react-native-web": "^0.21.0",
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
-    "react-native-youtube-iframe": "^2.4.1"
+    "react-native-youtube-iframe": "^2.4.1",
+    "expo-video": "~3.0.11"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -80,6 +85,7 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "gtts": "^0.2.1",
+    "node-fetch": "^3.3.2",
     "p-limit": "^7.1.1",
     "react-native-svg-transformer": "^1.5.1",
     "sharp": "^0.34.4",

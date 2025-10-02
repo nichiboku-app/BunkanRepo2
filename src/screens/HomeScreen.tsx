@@ -11,6 +11,7 @@ import {
   Dimensions,
   Image,
   ImageBackground,
+  Pressable, // 👈 Importa Pressable
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -73,13 +74,14 @@ export default function HomeScreen(): React.JSX.Element {
   const [showIntro, setShowIntro] = useState(false);
 
   // =============================
-  // Animaciones de aparición (fade + slide up)
+  // Animaciones
   // =============================
   const aProgress = useRef(new Animated.Value(0)).current;
   const aPanel = useRef(new Animated.Value(0)).current;
   const aCard1 = useRef(new Animated.Value(0)).current; // N5
   const aCard2 = useRef(new Animated.Value(0)).current; // N4
   const aCard3 = useRef(new Animated.Value(0)).current; // N3 (wide)
+  const hamburgerAnim = useRef(new Animated.Value(1)).current; // ✨ Animación para la hamburguesa
 
   const fadeUpStyle = useCallback(
     (val: Animated.Value, fromY = 18) => ({
@@ -119,25 +121,20 @@ export default function HomeScreen(): React.JSX.Element {
         await Asset.loadAsync([
           require("../../assets/images/final_home_background.webp"),
           require("../../assets/images/cloud_swirl.webp"),
-
           require("../../assets/images/cursos/n5_mapache.webp"),
           require("../../assets/images/cursos/n4_zorro.webp"),
           require("../../assets/images/cursos/n3_leon.webp"),
           require("../../assets/images/cursos/n5_mapache_avance.webp"),
-          require("../../assets/images/cursos/rueda2.webp"), // aro bicolor
-
-          require("../../assets/icons/hamburger.webp"),
+          require("../../assets/images/cursos/rueda2.webp"),
+          require("../../assets/icons/hamburger.webp"), // Usaremos una versión sin fondo de esta imagen
           require("../../assets/images/avatar_formal.webp"),
           require("../../assets/images/avatar_frame.webp"),
-
           require("../../assets/images/cuadroNotas.webp"),
           require("../../assets/images/Notas.webp"),
           require("../../assets/images/Calendario.webp"),
-
           require("../../assets/icons/bell.webp"),
           require("../../assets/icons/heart.webp"),
           require("../../assets/icons/ia.webp"),
-
           require("../../assets/icons/clock.webp"),
           require("../../assets/images/gradient_red.webp"),
         ]);
@@ -181,7 +178,15 @@ export default function HomeScreen(): React.JSX.Element {
 
   const openDrawer = () => {
     const ok = openDrawerDeep(navigation as any);
-    if (__DEV__ && !ok) console.warn("No se encontró Drawer por encima de HomeScreen.");
+    if (__DEV__ && !ok) console.warn("No se pudo abrir el Drawer (verifica id='AppDrawer').");
+  };
+
+  // ✨ Handlers para la animación del botón hamburguesa
+  const handlePressIn = () => {
+    Animated.spring(hamburgerAnim, { toValue: 0.85, useNativeDriver: true }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(hamburgerAnim, { toValue: 1, useNativeDriver: true }).start();
   };
 
   // Navegación hacia el HomeStack dentro del Drawer (Main)
@@ -224,9 +229,11 @@ export default function HomeScreen(): React.JSX.Element {
   }
 
   const avatarUri = getAvatarUri(userDoc);
-  const displayName =
-    userDoc?.displayName || auth.currentUser?.displayName || "Mapache";
+  const displayName = userDoc?.displayName || auth.currentUser?.displayName || "Mapache";
   const firstName = (displayName || "Mapache").split(" ")[0];
+
+  const RED_START = "#7E0D18";
+  const RED_END = "#C05360";
 
   return (
     <View style={{ flex: 1 }}>
@@ -240,13 +247,32 @@ export default function HomeScreen(): React.JSX.Element {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {/* Header propio */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.hamburger} activeOpacity={0.7} onPress={openDrawer}>
-              <Image source={require("../../assets/icons/hamburger.webp")} style={styles.hamburgerIcon} />
-            </TouchableOpacity>
+            {/* ✨ HAMBURGUESA ANIMADA, MÁS GRANDE Y SIN FONDO */}
+            <Pressable
+              style={styles.hamburger}
+              onPress={openDrawer}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              hitSlop={{ top: 24, bottom: 24, left: 24, right: 24 }}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir menú de navegación"
+            >
+              <Animated.View style={{ transform: [{ scale: hamburgerAnim }] }}>
+                <Image
+                  source={require("../../assets/icons/hamburger.webp")} // Asegúrate que esta imagen sea PNG/WEBP con fondo transparente
+                  style={styles.hamburgerIcon}
+                />
+              </Animated.View>
+            </Pressable>
 
             <Text style={styles.headerTitle}>Hola, {firstName}</Text>
 
-            <TouchableOpacity onPress={() => (navigation as any).getParent?.()?.navigate("Perfil" as never)}>
+            <TouchableOpacity
+              onPress={() => (navigation as any).getParent?.()?.navigate("Perfil" as never)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Ir a mi perfil"
+            >
               <AvatarWithFrame size={80} uri={avatarUri} />
             </TouchableOpacity>
           </View>
@@ -309,8 +335,8 @@ export default function HomeScreen(): React.JSX.Element {
           <View style={styles.cardsGrid}>
             <Animated.View style={[fadeUpStyle(aCard1, 24), { width: (width - 16 * 2 - 12) / 2 }]}>
               <CourseCard
-                from="#8B0F1D"
-                to="#C05360"
+                from={RED_START}
+                to={RED_END}
                 title="Tanuki: Nivel N5"
                 minutes="50 minutos"
                 image={require("../../assets/images/cursos/n5_mapache.webp")}
@@ -319,20 +345,21 @@ export default function HomeScreen(): React.JSX.Element {
             </Animated.View>
 
             <Animated.View style={[fadeUpStyle(aCard2, 24), { width: (width - 16 * 2 - 12) / 2 }]}>
-              <CourseCard
-                from="#7A0C19"
-                to="#C05360"
-                title="Kitsune: Nivel N4"
-                minutes="50 minutos"
-                image={require("../../assets/images/cursos/n4_zorro.webp")}
-                onPress={() => go("CursoN4")}
-              />
+             <CourseCard
+  from={RED_START}
+  to={RED_END}
+  title="Kitsune: Nivel N4"
+  minutes="50 minutos"
+  image={require("../../assets/images/cursos/n4_zorro.webp")}
+  onPress={() => go("N4Intro")} // 👈 antes: go("CursoN4")
+/>
+
             </Animated.View>
 
             <Animated.View style={[fadeUpStyle(aCard3, 24), { width: "100%" }]}>
               <CourseWide
-                from="#A23B4E"
-                to="#C05360"
+                from={RED_START}
+                to={RED_END}
                 title="Ryū: Nivel N3"
                 minutes="50 minutos"
                 image={require("../../assets/images/cursos/n3_leon.webp")}
@@ -448,13 +475,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  hamburger: { width: 72, height: 72, alignItems: "center", justifyContent: "center" },
-  hamburgerIcon: { width: 56, height: 56, resizeMode: "contain" },
-  headerTitle: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800", color: "#5C0A14" },
+
+  // ⬇️ AJUSTES CLAVE: botón más grande, sin fondo y con área táctil cómoda.
+  hamburger: {
+    width: 120, // Aumentado para área táctil
+    height: 120, // Aumentado para área táctil
+    alignItems: "center",
+    justifyContent: "center",
+    // backgroundColor: "rgba(255,255,255,0.9)", // 🗑️ Fondo eliminado
+  },
+  hamburgerIcon: {
+    width: 112, // Duplicado del tamaño original (56*2)
+    height: 112, // Duplicado del tamaño original (56*2)
+    resizeMode: "contain",
+  },
+
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#5C0A14",
+  },
 
   // ==== Tarjeta Progreso - rojos reforzados ====
   progressCard: {
-    backgroundColor: "#7E0D18", // rojo profundo
+    backgroundColor: "#7E0D18",
     marginHorizontal: 16,
     marginTop: 12,
     borderRadius: 18,
@@ -514,7 +560,7 @@ const styles = StyleSheet.create({
   actionIcon: { width: 26, height: 26, resizeMode: "contain" },
   actionText: { fontWeight: "800", fontSize: 16, color: "#6B0F17" },
 
-  // Cards niveles (rojos y gradientes)
+  // Cards niveles (MISMO rojo que progreso)
   cardsGrid: {
     marginTop: 16,
     paddingHorizontal: 16,
@@ -546,7 +592,7 @@ const styles = StyleSheet.create({
   wideIcon: { width: 105, height: 105, resizeMode: "contain" },
   wideTitle: { color: "#fff", fontWeight: "800", fontSize: 16, marginBottom: 6 },
 
-  // Barra inferior (más oscura con tinte rojo)
+  // Barra inferior
   bottomBarFixed: {
     position: "absolute",
     left: 0,
