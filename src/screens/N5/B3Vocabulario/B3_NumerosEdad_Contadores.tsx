@@ -1,17 +1,17 @@
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-    Alert,
-    Linking,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { useB3Score } from "../../../context/B3ScoreContext";
 
@@ -70,12 +70,14 @@ const COUNTER_LABEL: Record<CounterType, string> = {
   sai: "Edad（〜歳）", tsu: "Cosas（〜つ）", nin: "Personas（〜人）",
 };
 const ICON_BY_TYPE: Record<CounterType, string> = { sai: "🎂", tsu: "🍎", nin: "🧒" };
-const readingFor = (t: CounterType, n: number) => t === "sai" ? ageReading(n) : t === "tsu" ? tsuCounter(n) : peopleCounter(n);
-const labelES = (t: CounterType, n: number) => t === "sai" ? `${n} años` : t === "tsu" ? `${n} cosa${n===1?"":"s"}` : `${n} persona${n===1?"":"s"}`;
+const readingFor = (t: CounterType, n: number) =>
+  t === "sai" ? ageReading(n) : t === "tsu" ? tsuCounter(n) : peopleCounter(n);
+const labelES = (t: CounterType, n: number) =>
+  t === "sai" ? `${n} años` : t === "tsu" ? `${n} cosa${n === 1 ? "" : "s"}` : `${n} persona${n === 1 ? "" : "s"}`;
 
 /* ===== Screen ===== */
 export default function B3_NumerosEdad_Contadores() {
-  const { total, addPoints } = useB3Score(); // ⭐ total global y suma con tope 100
+  const { total, addPoints } = useB3Score();
   const [type, setType] = useState<CounterType>("sai");
   const [showGuide, setShowGuide] = useState(true);
 
@@ -86,29 +88,48 @@ export default function B3_NumerosEdad_Contadores() {
 
   useEffect(() => {
     (async () => {
-      try { await Audio.setAudioModeAsync({ playsInSilentModeIOS: true }); } catch {}
+      try {
+        // ✅ Acceso dinámico para que compile en todas las versiones del SDK
+        const A: any = Audio;
+        await (A.setAudioModeAsync?.({
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+          staysActiveInBackground: false,
+          allowsRecordingIOS: false,
+          // Solo pasamos interruptionMode* si existen
+          ...(A.INTERRUPTION_MODE_IOS_DUCK_OTHERS !== undefined && {
+            interruptionModeIOS: A.INTERRUPTION_MODE_IOS_DUCK_OTHERS,
+          }),
+          ...(A.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS !== undefined && {
+            interruptionModeAndroid: A.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
+          }),
+        }) as Promise<void>);
+      } catch {}
       try {
         const voices: any[] = await Speech.getAvailableVoicesAsync();
-        const v = voices.find((x) => (x.language || "").toLowerCase().startsWith("ja")) ||
-                  voices.find((x) => (x.identifier || x.voiceURI || "").toLowerCase().includes("ja"));
+        const v =
+          voices.find((x) => (x.language || "").toLowerCase().startsWith("ja")) ||
+          voices.find((x) => (x.identifier || x.voiceURI || "").toLowerCase().includes("ja"));
         const id = (v?.identifier as string) ?? (v?.voiceURI as string) ?? undefined;
-        setJpVoice(id); setHasJaVoice(!!v);
+        setJpVoice(id);
+        setHasJaVoice(!!v);
       } catch {}
     })();
-    return () => Speech.stop();
+    return () => {
+      Speech.stop();
+    };
   }, []);
 
   const maybeWarn = () => {
-    if (hasJaVoice) return;
-    if (!warnedOnce.current) {
-      warnedOnce.current = true;
-      Alert.alert(
-        "Instala voz japonesa",
-        Platform.OS === "android"
-          ? "Ajustes → Administración general → Idioma y entrada → Salida de texto a voz → Motor de Google → Instalar datos de voz → 日本語."
-          : "iOS: Ajustes → Accesibilidad → Contenido hablado → Voces → Japonés."
-      );
-    }
+    if (hasJaVoice || warnedOnce.current) return;
+    warnedOnce.current = true;
+    Alert.alert(
+      "Instala voz japonesa",
+      Platform.OS === "android"
+        ? "Ajustes → Administración general → Idioma y entrada → Salida de texto a voz → Motor de Google → Instalar datos de voz → 日本語."
+        : "iOS: Ajustes → Accesibilidad → Contenido hablado → Voces → Japonés."
+    );
   };
 
   const speakJP = (t: string) => {
@@ -138,11 +159,11 @@ export default function B3_NumerosEdad_Contadores() {
   }, [type]);
 
   /* ===== Quiz ===== */
-  const [qNumber, setQNumber] = useState(1 + Math.floor(Math.random() * 10)); // 1–10
+  const [qNumber, setQNumber] = useState(1 + Math.floor(Math.random() * 10));
   const [choices, setChoices] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [localScore, setLocalScore] = useState(0); // opcional: marcador de esta pantalla
+  const [localScore, setLocalScore] = useState(0);
   const correct = readingFor(type, qNumber);
 
   useEffect(() => {
@@ -150,8 +171,13 @@ export default function B3_NumerosEdad_Contadores() {
     while (pool.size < 4) pool.add(1 + Math.floor(Math.random() * 10));
     const arr = Array.from(pool);
     const opts = arr.map((n) => readingFor(type, n));
-    for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
-    setChoices(opts); setSelected(null); setIsCorrect(null);
+    for (let i = opts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    setChoices(opts);
+    setSelected(null);
+    setIsCorrect(null);
   }, [qNumber, type]);
 
   const submitChoice = (c: string) => {
@@ -159,7 +185,7 @@ export default function B3_NumerosEdad_Contadores() {
     setSelected(c); setIsCorrect(ok);
     if (ok) {
       speakJP(correct);
-      const gained = addPoints("contadores", 10); // ⭐ suma respetando tope 100
+      const gained = addPoints("contadores", 10);
       setLocalScore((s) => s + gained);
     }
   };
@@ -234,7 +260,7 @@ export default function B3_NumerosEdad_Contadores() {
         <View style={s.rowBetween}>
           <Text style={s.h1}>Aprende（1–10）— {COUNTER_LABEL[type]}</Text>
           <Pressable onPress={() => speakJP(`${ICON_BY_TYPE[type]} ${COUNTER_LABEL[type]}`)}>
-            <Ionicons name="musical-notes" size={18} color="#B32133" />
+            <Ionicons name="musical-notes" size={18} />
           </Pressable>
         </View>
 
@@ -250,7 +276,7 @@ export default function B3_NumerosEdad_Contadores() {
               <View style={[s.tdRow, { flex: 0.5 }]}>
                 <Text style={s.tdJP}>{r.jp}</Text>
                 <Pressable style={s.spkBtnSm} onPress={() => speakJP(r.jp)}>
-                  <Ionicons name="musical-notes" size={14} color="#B32133" />
+                  <Ionicons name="musical-notes" size={14} />
                 </Pressable>
               </View>
               <Text style={[s.td, { flex: 0.3 }]}>{r.es}</Text>
@@ -292,9 +318,9 @@ export default function B3_NumerosEdad_Contadores() {
               active && isCorrect === false ? s.chipWrong : undefined;
             return (
               <Pressable
-                key={c + Math.random()}
+                key={c}
                 style={[s.chip, stateStyle as any]}
-                disabled={!!selected || total >= 100} // ⭐ no deja seleccionar si ya llegó al tope global
+                disabled={!!selected || total >= 100}
                 onPress={() => submitChoice(c)}
               >
                 <Text style={[s.chipTxt, selected && c === correct ? s.chipTxtOn : undefined]}>{c}</Text>
@@ -344,10 +370,10 @@ export default function B3_NumerosEdad_Contadores() {
           </View>
           <View style={s.freeBtns}>
             <Pressable onPress={() => speakJP(freeRead)} style={s.spkBtn}>
-              <Ionicons name="musical-notes" size={18} color="#B32133" />
+              <Ionicons name="musical-notes" size={18} />
             </Pressable>
             <Pressable onPress={() => speakBoth(freeRead, freeLabel)} style={s.spkBtn}>
-              <Ionicons name="volume-high" size={18} color="#B32133" />
+              <Ionicons name="volume-high" size={18} />
             </Pressable>
           </View>
         </View>
@@ -451,6 +477,22 @@ const s = StyleSheet.create({
     width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center",
     backgroundColor: "#fff5f5", borderWidth: 1, borderColor: "#f2c9cf",
   },
+
+  // ⭐ Estilos que usas en el render
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "#FFFDF3",
+    borderWidth: 1,
+    borderColor: "#F3E8C9",
+    borderRadius: 999,
+  },
+  badgeTxt: { color: "#6B7280", fontWeight: "900" },
+  ok: { color: "#0f5132", fontWeight: "900" },
+  bad: { color: "#842029", fontWeight: "900" },
 });
 
 /* Chips del selector */

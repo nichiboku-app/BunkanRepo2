@@ -1,5 +1,4 @@
 // src/screens/IntroJaponesScreen.tsx
-import { Audio } from 'expo-av';
 import { Image as ExpoImage } from 'expo-image';
 import React, { useEffect, useRef } from 'react';
 import {
@@ -15,13 +14,16 @@ import {
 } from 'react-native';
 import { awardAchievement } from '../services/achievements';
 
-// Firestore (si no quieres volver a otorgar logros aquí, puedes quitar esta parte)
+// Firestore
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
 
 // 👇 Navegación
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// ✅ Nueva API de audio
+import { useAudioPlayer } from 'expo-audio';
 
 // --- Rutas que este screen necesita ---
 type RootStackParamList = {
@@ -44,82 +46,86 @@ export default function IntroJaponesScreen() {
   // Animación del logro (0 oculto → 1 visible)
   const ach = useRef(new Animated.Value(0)).current;
 
+  // 🎧 Reproductor de audio ligado al ciclo de vida del componente
+  const player = useAudioPlayer(SOUND);
+
   useEffect(() => {
-    let sound: Audio.Sound | undefined;
+    // Reproduce al montar; si ya terminó antes, reinicia a 0.
+    player.seekTo(0);
+    player.play();
 
-    const run = async () => {
-      try {
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-        });
-
-        sound = new Audio.Sound();
-        await sound.loadAsync(SOUND);
-        await sound.playAsync();
-      } catch {}
-
-      // Animación general
-      Animated.parallel([
-        Animated.timing(fade, {
-          toValue: 1,
-          duration: 650,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(slide, {
-          toValue: 0,
-          duration: 650,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          friction: 7,
-          tension: 90,
-          useNativeDriver: true,
-        }),
-      ]).start();
-
-      // 🌸 Mostrar logro (aparece → espera → desaparece)
-      ach.setValue(0);
-      Animated.timing(ach, {
+    // Animación general
+    Animated.parallel([
+      Animated.timing(fade, {
         toValue: 1,
-        duration: 420,
-        easing: Easing.out(Easing.cubic),
+        duration: 650,
+        easing: Easing.out(Easing.quad),
         useNativeDriver: true,
-      }).start(() => {
-        setTimeout(() => {
-          Animated.timing(ach, {
-            toValue: 0,
-            duration: 280,
-            easing: Easing.in(Easing.cubic),
-            useNativeDriver: true,
-          }).start();
-        }, 2400);
-      });
+      }),
+      Animated.timing(slide, {
+        toValue: 0,
+        duration: 650,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 7,
+        tension: 90,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-      // 🏆 (Opcional) Otorgar logro UNA sola vez
+    // 🌸 Mostrar logro (aparece → espera → desaparece)
+    ach.setValue(0);
+    Animated.timing(ach, {
+      toValue: 1,
+      duration: 420,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      setTimeout(() => {
+        Animated.timing(ach, {
+          toValue: 0,
+          duration: 280,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }).start();
+      }, 2400);
+    });
+
+    // 🏆 (Opcional) Otorgar logro UNA sola vez
+    (async () => {
       try {
         const u = auth.currentUser;
         if (u) {
           const ref = doc(db, 'Usuarios', u.uid, 'logros', 'forja_destino');
           const snap = await getDoc(ref);
           if (!snap.exists()) {
-            await awardAchievement('forja_destino', { sub: 'N5', xp: 10 });
+            // ✅ Opción A: pasar los campos requeridos por AchievementPayload
+            await awardAchievement(
+              'forja_destino',
+              {
+                title: 'Forja tu destino',
+                description: 'Has iniciado el nivel N5 (Mapache).',
+                icon: 'mapache_n5',       // Ajusta al formato que uses (id/URL/require)
+                badgeColor: '#5A0012',    // Color del badge (vino oscuro)
+                sub: 'N5',
+                xp: 10,
+              } as any // ← Permite compilar si tu tipo exige más campos; luego alínealo
+            );
           }
         }
       } catch (e) {
         console.warn('No se pudo otorgar el logro:', e);
       }
-    };
+    })();
 
-    run();
+    // Limpia el reproductor al desmontar
     return () => {
-      if (sound) sound.unloadAsync().catch(() => {});
+      player.release();
     };
-  }, []);
+  }, [player, fade, slide, scale, ach]);
 
   // 👉 Tap en cualquier parte: ir a EntradaActividadesN5
   const handleTapAnywhere = () => navigation.navigate('EntradaActividadesN5');

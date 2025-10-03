@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
 import React, { useEffect, useRef, useState } from "react";
@@ -118,7 +118,19 @@ export default function B3_Familia_Tarjetas() {
 
   useEffect(() => {
     (async () => {
-      try { await Audio.setAudioModeAsync({ playsInSilentModeIOS: true }); } catch {}
+      try {
+        // ✅ Expo Audio: suena en silencio (iOS), ducking en Android, altavoz
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+          staysActiveInBackground: false,
+          allowsRecordingIOS: false,
+          interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DUCK_OTHERS,
+          interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
+        });
+      } catch {}
+
       try {
         const voices: any[] = await Speech.getAvailableVoicesAsync();
         const v =

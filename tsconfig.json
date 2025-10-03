@@ -1,20 +1,29 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+
+    "jsx": "react-jsx",
     "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
+      "@/*": ["./*"]
+    },
+
+    "types": ["react", "react-native", "expo"]
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     "src/screens/OnboardingScreen.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "src/types/**/*.d.ts"   // <- para d.ts propios si los usas
   ]
 }

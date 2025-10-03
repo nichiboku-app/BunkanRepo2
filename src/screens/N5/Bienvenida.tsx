@@ -1,7 +1,6 @@
 // src/screens/N5/Bienvenida.tsx
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Audio, AVPlaybackStatusSuccess } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import React, { useEffect, useRef } from 'react';
 import {
@@ -17,6 +16,8 @@ import {
   View,
 } from 'react-native';
 
+// ✅ Nueva API de audio
+import { useAudioPlayer } from 'expo-audio';
 
 type RootStackParamList = {
   N5Bienvenida: undefined;
@@ -106,7 +107,6 @@ const PETALS_INLINE: any = {
   }))
 };
 
-/* ================== Ken Burns + DOS Lotties (robusto) ================== */
 /* ================== Ken Burns + HUMO + PÉTALOS (con controles) ================== */
 function KenBurnsImage({
   source,
@@ -118,11 +118,9 @@ function KenBurnsImage({
   height = HERO_HEIGHT,
   debug = false,
   lottieRenderMode = (Platform.OS === 'android' ? 'HARDWARE' : 'AUTOMATIC') as 'AUTOMATIC' | 'HARDWARE' | 'SOFTWARE',
-
-  // << NUEVOS CONTROLES >>
-  smokeScale = 10,     // ⬅️ humo más grande (1.0 = normal)
-  smokeSpeed = 0.3,    // ⬅️ más lento => dura más tiempo (0.35 ≈ 3x más)
-  smokeOpacity = 25,  // ⬅️ un poco más visible
+  smokeScale = 10,
+  smokeSpeed = 0.3,
+  smokeOpacity = 25,
   petalsOpacity = 0.35,
 }: {
   source: ImageSourcePropType;
@@ -168,7 +166,7 @@ function KenBurnsImage({
         style={[styles.heroImg, { transform: [{ scale }, { translateX: tx }, { translateY: ty }], zIndex: 1 }]}
       />
 
-      {/* Capa 2: HUMO (más grande + más lento) */}
+      {/* Capa 2: HUMO */}
       <View
         pointerEvents="none"
         style={[styles.layerWrap, { zIndex: 2, elevation: 2 }, debug && { backgroundColor: 'rgba(0,255,0,0.08)' }]}
@@ -179,12 +177,11 @@ function KenBurnsImage({
           loop
           resizeMode="cover"
           renderMode={lottieRenderMode}
-          speed={smokeSpeed} // ⬅️ más lento => dura más tiempo
+          speed={smokeSpeed}
           style={[
             StyleSheet.absoluteFillObject,
             {
               opacity: smokeOpacity,
-              // ⬇️ humo más grande
               transform: [{ scale: smokeScale }],
             },
           ]}
@@ -216,35 +213,21 @@ function KenBurnsImage({
   );
 }
 
-
 /* ================== Pantalla ================== */
 export default function Bienvenida() {
   const navigation = useNavigation<Nav>();
 
-  // Sonido al entrar
-  const introSound = useRef<Audio.Sound | null>(null);
+  // 🎧 Sonido al entrar (expo-audio)
+  const introPlayer = useAudioPlayer(require('../../../assets/sounds/InicioN5.mp3'));
+
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const { sound, status } = await Audio.Sound.createAsync(
-          require('../../../assets/sounds/InicioN5.mp3'),
-          { shouldPlay: true, volume: 0.9 }
-        );
-        if (!mounted) return;
-        introSound.current = sound;
-        const st = status as AVPlaybackStatusSuccess;
-        if (!st.isLoaded) return;
-      } catch { /* silencio si falla */ }
-    })();
+    introPlayer.seekTo(0);
+    introPlayer.play();
+
     return () => {
-      mounted = false;
-      if (introSound.current) {
-        introSound.current.unloadAsync().catch(() => {});
-        introSound.current = null;
-      }
+      introPlayer.release();
     };
-  }, []);
+  }, [introPlayer]);
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 28 }}>
@@ -394,7 +377,6 @@ const styles = StyleSheet.create({
   },
   heroImg: { width: '100%', height: '100%' },
 
-  // Contenedor genérico para capas Lottie (zIndex/elevation Android)
   layerWrap: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 2,

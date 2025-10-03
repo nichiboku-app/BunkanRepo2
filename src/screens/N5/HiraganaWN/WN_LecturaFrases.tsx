@@ -1,6 +1,6 @@
 // src/screens/N5/HiraganaWN/WN_LecturaFrases.tsx
 import { Asset } from "expo-asset";
-import { Audio } from "expo-av";
+import { createAudioPlayer, type AudioPlayer } from "expo-audio";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, G, Line, Rect, Text as SvgText } from "react-native-svg";
@@ -55,7 +55,7 @@ function TraceFrame({
   char: string;
   showGrid?: boolean;
   showGuide?: boolean;
-  showNumbers?: boolean; // ⬅️ si es false: oculta NÚMEROS y CÍRCULOS
+  showNumbers?: boolean; // si es false: oculta NÚMEROS y CÍRCULOS
   size?: number;
 }) {
   const grid = [1, 2, 3].map((i) => (i * size) / 4);
@@ -94,7 +94,6 @@ function TraceFrame({
             {char}
           </SvgText>
         )}
-        {/* ⬇️ Ahora solo renderizamos CÍRCULO + número si showNumbers es true */}
         {showGuide && showNumbers && hints.map((h, i) => (
           <G key={`hint-${i}`} opacity={0.96}>
             <Circle cx={h.x * size} cy={h.y * size} r={12} fill="#DC2626" />
@@ -119,70 +118,54 @@ function TraceFrame({
   );
 }
 
-/* ===================== Audio helpers ===================== */
-async function ensurePlaybackMode() {
-  await Audio.setIsEnabledAsync(true);
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-    interruptionModeAndroid: 1,
-    interruptionModeIOS: 1,
-  });
-}
-
+/* ===================== Audio helpers (expo-audio) ===================== */
 function useBankAudio<T extends string>(bank: Record<T, any>) {
-  const soundsRef = useRef<Partial<Record<T, Audio.Sound>>>({});
-  const currentRef = useRef<Audio.Sound | null>(null);
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const sourcesRef = useRef<Partial<Record<T, { uri: string }>>>({});
   const [ready, setReady] = useState(false);
-  const busyRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        await ensurePlaybackMode();
+        // Prepara las fuentes (asegura localUri para web)
         for (const key of Object.keys(bank) as T[]) {
-          const mod = bank[key];
-          const asset = Asset.fromModule(mod);
+          const asset = Asset.fromModule(bank[key]);
           await asset.downloadAsync();
-          const s = new Audio.Sound();
-          await s.loadAsync({ uri: asset.localUri || asset.uri }, { shouldPlay: false, volume: 1.0 });
-          soundsRef.current[key] = s;
+          sourcesRef.current[key] = { uri: asset.localUri ?? asset.uri };
         }
-        if (!cancelled) setReady(true);
+        if (!cancelled) {
+          playerRef.current = createAudioPlayer();
+          setReady(true);
+        }
       } catch (e) {
         console.warn("[WN_LecturaFrases] preload error:", e);
         if (!cancelled) setReady(true);
       }
     })();
+
     return () => {
       cancelled = true;
-      (async () => {
-        try { await currentRef.current?.unloadAsync(); } catch {}
-        const all = Object.values(soundsRef.current).filter(Boolean) as Audio.Sound[];
-        for (const s of all) { try { await s.unloadAsync(); } catch {} }
-        soundsRef.current = {};
-        currentRef.current = null;
-      })();
+      const p = playerRef.current;
+      if (p) {
+        try {
+          p.pause();
+          p.seekTo(0);
+        } catch {}
+      }
     };
-  }, []);
+  }, [bank]);
 
   const play = useCallback(async (key: T) => {
-    const s = soundsRef.current[key];
-    if (!s || busyRef.current) return;
-    busyRef.current = true;
+    const src = sourcesRef.current[key];
+    const p = playerRef.current;
+    if (!src || !p) return;
     try {
-      await ensurePlaybackMode();
-      if (currentRef.current && currentRef.current !== s) {
-        try { await currentRef.current.stopAsync(); } catch {}
-      }
-      currentRef.current = s;
-      await s.playFromPositionAsync(0);
-    } finally {
-      setTimeout(() => { busyRef.current = false; }, 120);
+      await p.replace(src);
+      p.seekTo(0);
+      await p.play();
+    } catch (e) {
+      console.warn("[WN_LecturaFrases] play error:", e);
     }
   }, []);
 
@@ -196,10 +179,7 @@ const DISTRACTORS_POOL = ["わ","を","ん","ら","り","る","れ","ろ","や",
 function normalizeJP(s: string): string {
   return s.replace(/[ \u3000。、・〜ー\.！!？?]/g, "");
 }
-
-function uid() {
-  return Math.random().toString(36).slice(2, 9);
-}
+const uid = () => Math.random().toString(36).slice(2, 9);
 
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
@@ -220,7 +200,7 @@ export default function WN_LecturaFrases() {
 
   // Controles de trazos (globales)
   const [bigFrames, setBigFrames] = useState(false);
-  const [showNumbers, setShowNumbers] = useState(true); // ⬅️ controla círculos y números
+  const [showNumbers, setShowNumbers] = useState(true);
 
   // Objetivo (sin pistas en hiragana)
   const target = useMemo(() => Array.from(normalizeJP(phrase.jp)), [phrase.jp]);

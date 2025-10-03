@@ -1,11 +1,10 @@
 // app.config.js
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 /**
- * Nota Firebase:
- * - Corrige "authDoMain" -> "authDomain".
- * - El bucket de Storage normalmente es "<project-id>.appspot.com".
- *   Si tu consola muestra otro, cámbialo aquí.
+ * Config de Firebase:
+ * - "authDomain" corregido.
+ * - El bucket suele ser "<project-id>.appspot.com".
  */
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY || "AIzaSyAbJi5h4-YnWZ5Nq0_QGf0W-IhLCdnKyHM",
@@ -20,7 +19,7 @@ module.exports = {
   expo: {
     name: "Escuela Nichiboku",
     slug: "escuela-nichiboku-app",
-    scheme: "nichiboku", // para deep links (expo-router / auth redirects)
+    scheme: "nichiboku", // deep links
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -29,6 +28,11 @@ module.exports = {
     ios: {
       bundleIdentifier: "com.nichiboku.app",
       supportsTablet: true,
+      // Permiso de micrófono para grabación con expo-audio
+      infoPlist: {
+        NSMicrophoneUsageDescription:
+          "Necesitamos acceso al micrófono para actividades de pronunciación y grabación de audio.",
+      },
     },
 
     android: {
@@ -37,11 +41,9 @@ module.exports = {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff",
       },
-      // Edge-to-edge está siempre activo en SDK 54
-      navigationBar: {
-        visible: "leanback", // opcional
-      },
-      // predictiveBackGestureEnabled: true, // activa si quieres probarlo
+      navigationBar: { visible: "leanback" },
+      // Permisos necesarios para grabar con expo-audio
+      permissions: ["android.permission.RECORD_AUDIO"],
     },
 
     web: {
@@ -66,6 +68,17 @@ module.exports = {
           backgroundColor: "#ffffff",
         },
       ],
+      /**
+       * ✅ Reemplazo de expo-av (SDK 54+):
+       * Usa expo-audio + expo-video.
+       * Añadimos mensaje del permiso de micrófono (Android)
+       * vía el plugin de expo-audio.
+       */
+      ["expo-audio", {
+        microphonePermission:
+          "Permite que Nichiboku use el micrófono para prácticas de pronunciación.",
+      }],
+      "expo-video",
     ],
 
     experiments: {

@@ -1,7 +1,6 @@
 // src/screens/N5/HiraganaYR/YR_CompletarPalabras.tsx
 import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
 import { Asset } from "expo-asset";
-import { Audio } from "expo-av";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
@@ -135,69 +134,61 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /* =========================================================
-   Audio helpers (palabra)
+   Audio helpers con expo-audio (player único)
 ========================================================= */
-async function ensurePlaybackMode() {
-  await Audio.setIsEnabledAsync(true);
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-  });
-}
+import { createAudioPlayer, type AudioPlayer } from "expo-audio";
 
 function useWordAudio() {
-  const bankRef = useRef<Record<string, Audio.Sound>>({});
-  const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const sourcesRef = useRef<Record<string, { uri: string } | number>>({});
   const [ready, setReady] = useState(false);
-  const currentRef = useRef<Audio.Sound | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        await ensurePlaybackMode();
+        // Prepara fuentes (asegura localUri en web)
         const ids = Object.keys(AUDIO_BANK);
         for (const id of ids) {
           const asset = Asset.fromModule(AUDIO_BANK[id]);
           await asset.downloadAsync();
-          const s = new Audio.Sound();
-          await s.loadAsync({ uri: asset.localUri || asset.uri }, { shouldPlay: false, volume: 1.0 });
-          bankRef.current[id] = s;
+          sourcesRef.current[id] = { uri: asset.localUri ?? asset.uri };
         }
         if (!cancelled) {
-          setLoadedIds(new Set(ids));
+          playerRef.current = createAudioPlayer();
           setReady(true);
         }
       } catch (e) {
-        console.warn("[useWordAudio]", e);
+        console.warn("[useWordAudio] preload error:", e);
         if (!cancelled) setReady(true);
       }
     })();
+
     return () => {
       cancelled = true;
-      (async () => {
-        try { await currentRef.current?.unloadAsync(); } catch {}
-        for (const s of Object.values(bankRef.current)) {
-          try { await s.unloadAsync(); } catch {}
-        }
-      })();
+      const p = playerRef.current;
+      if (p) {
+        try {
+          p.pause();
+          p.seekTo(0);
+        } catch {}
+      }
     };
   }, []);
 
-  const hasAudio = useCallback((id: string) => loadedIds.has(id), [loadedIds]);
+  const hasAudio = useCallback((id: string) => !!sourcesRef.current[id], []);
 
   const play = useCallback(async (id: string) => {
-    const s = bankRef.current[id];
-    if (!s) return;
-    await ensurePlaybackMode();
-    if (currentRef.current && currentRef.current !== s) {
-      try { await currentRef.current.stopAsync(); } catch {}
+    const src = sourcesRef.current[id];
+    const p = playerRef.current;
+    if (!src || !p) return;
+    try {
+      await p.replace(src);
+      p.seekTo(0);
+      await p.play();
+    } catch (e) {
+      console.warn("[useWordAudio] play error:", e);
     }
-    currentRef.current = s;
-    try { await s.playFromPositionAsync(0); } catch {}
   }, []);
 
   return { ready, hasAudio, play };

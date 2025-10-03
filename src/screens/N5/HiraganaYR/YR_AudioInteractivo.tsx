@@ -1,17 +1,26 @@
 // src/screens/N5/HiraganaYR/YR_AudioInteractivo.tsx
 import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
-import { Asset } from "expo-asset";
-import { Audio, AVPlaybackStatusSuccess } from "expo-av";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import Svg, { Circle, G, Line, Rect, Text as SvgText } from "react-native-svg";
+
+/* ===== expo-audio ===== */
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioRecorder,
+  useAudioRecorderState,
+  type RecordingOptions,
+} from "expo-audio";
 
 /* =========================================================
    Tipos
@@ -99,7 +108,7 @@ const WORDS: WordItem[] = [
 ];
 
 /* =========================================================
-   MP3 locales (colócalos en assets/audio/n5/yr/)
+   MP3 locales (assets/audio/n5/yr/)
 ========================================================= */
 const WORD_AUDIO: Record<WordItem["id"], any> = {
   yama: require("../../../../assets/audio/n5/yr/yama.mp3"),
@@ -125,11 +134,10 @@ const YR_FAMILY: KanaPart[] = [
 ];
 
 /* =========================================================
-   Puntos-guía (0..1) y nº de trazos (aprox) para las letras usadas
+   Puntos-guía y nº de trazos (aprox)
 ========================================================= */
 type XY = { x: number; y: number };
 const HINTS: Record<string, XY[]> = {
-  // Y–R
   "や": [{ x: 0.45, y: 0.28 }, { x: 0.52, y: 0.62 }],
   "ゆ": [{ x: 0.42, y: 0.28 }, { x: 0.60, y: 0.58 }],
   "よ": [{ x: 0.46, y: 0.32 }, { x: 0.62, y: 0.58 }],
@@ -139,7 +147,6 @@ const HINTS: Record<string, XY[]> = {
   "れ": [{ x: 0.40, y: 0.32 }, { x: 0.62, y: 0.58 }],
   "ろ": [{ x: 0.50, y: 0.56 }],
 
-  // Extra usados en palabras
   "ま": [{ x: 0.40, y: 0.30 }, { x: 0.60, y: 0.30 }, { x: 0.50, y: 0.60 }],
   "き": [{ x: 0.40, y: 0.30 }, { x: 0.64, y: 0.30 }, { x: 0.52, y: 0.58 }],
   "ん": [{ x: 0.54, y: 0.46 }],
@@ -147,7 +154,6 @@ const HINTS: Record<string, XY[]> = {
   "い": [{ x: 0.44, y: 0.34 }, { x: 0.60, y: 0.58 }],
   "お": [{ x: 0.42, y: 0.26 }, { x: 0.42, y: 0.54 }, { x: 0.62, y: 0.62 }],
   "う": [{ x: 0.54, y: 0.40 }, { x: 0.50, y: 0.64 }],
-  // con dakuten (punto de referencia)
   "ご": [{ x: 0.38, y: 0.32 }, { x: 0.62, y: 0.62 }, { x: 0.78, y: 0.22 }],
   "ぞ": [{ x: 0.38, y: 0.30 }, { x: 0.62, y: 0.60 }, { x: 0.78, y: 0.22 }],
 };
@@ -156,76 +162,6 @@ const STROKE_COUNT: Record<string, number> = {
   や: 2, ゆ: 2, よ: 2, ら: 2, り: 2, る: 1, れ: 2, ろ: 1,
   ま: 3, き: 3, ん: 1, こ: 2, い: 2, お: 3, う: 2, ご: 3, ぞ: 3,
 };
-
-/* =========================================================
-   Helpers de audio: precargar y reproducir
-========================================================= */
-async function ensurePlaybackMode() {
-  await Audio.setIsEnabledAsync(true);
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-  });
-}
-
-function useWordAudio() {
-  const bankRef = useRef<Partial<Record<WordItem["id"], Audio.Sound>>>({});
-  const currentRef = useRef<Audio.Sound | null>(null);
-  const [ready, setReady] = useState(false);
-  const busyRef = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        await ensurePlaybackMode();
-        for (const key of Object.keys(WORD_AUDIO) as WordItem["id"][]) {
-          const mod = WORD_AUDIO[key];
-          const asset = Asset.fromModule(mod);
-          await asset.downloadAsync();
-          const s = new Audio.Sound();
-          await s.loadAsync({ uri: asset.localUri || asset.uri }, { shouldPlay: false, volume: 1.0 });
-          bankRef.current[key] = s;
-        }
-        if (!cancelled) setReady(true);
-      } catch (e) {
-        console.warn("[useWordAudio] preload error:", e);
-        if (!cancelled) setReady(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      (async () => {
-        try { await currentRef.current?.unloadAsync(); } catch {}
-        const all = Object.values(bankRef.current).filter(Boolean) as Audio.Sound[];
-        for (const s of all) { try { await s.unloadAsync(); } catch {} }
-        bankRef.current = {};
-        currentRef.current = null;
-      })();
-    };
-  }, []);
-
-  const playById = useCallback(async (id: WordItem["id"]) => {
-    const s = bankRef.current[id];
-    if (!s || busyRef.current) return;
-    busyRef.current = true;
-    try {
-      await ensurePlaybackMode();
-      if (currentRef.current && currentRef.current !== s) {
-        try { await currentRef.current.stopAsync(); } catch {}
-      }
-      currentRef.current = s;
-      await s.playFromPositionAsync(0);
-    } finally {
-      setTimeout(() => { busyRef.current = false; }, 120);
-    }
-  }, []);
-
-  return { ready, playById };
-}
 
 /* =========================================================
    Marco de trazos
@@ -308,79 +244,60 @@ function TraceFrame({
 }
 
 /* =========================================================
-   Grabación compartida (repite)
+   Grabador (expo-audio)
 ========================================================= */
 function useRecorder() {
-  const recRef = useRef<Audio.Recording | null>(null);
-  const [recURI, setRecURI] = useState<string | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+  // Preset recomendado por Expo (ver docs): m4a/aac en iOS y mpeg4/aac en Android
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY as RecordingOptions);
+  const recState = useAudioRecorderState(recorder);
+
+  const [uri, setUri] = useState<string | null>(null);
   const [isPlayingBack, setIsPlayingBack] = useState(false);
+
+  // Player para reproducir MI grabación
+  const playMyVoice = useAudioPlayer(null);
 
   useEffect(() => {
     (async () => {
-      try {
-        await Audio.requestPermissionsAsync();
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-          shouldDuckAndroid: true,
-          staysActiveInBackground: false,
-          playThroughEarpieceAndroid: false,
-        });
-      } catch (e) {
-        console.warn("[recorder] audioMode error:", e);
-      }
+      // Permisos + modo audio (silencio y grabación)
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      if (!status.granted) return;
+
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: true,
+      });
     })();
   }, []);
 
   const start = useCallback(async () => {
-    if (isRecording) return;
-    const rec = new Audio.Recording();
-    try {
-      await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      await rec.startAsync();
-      recRef.current = rec;
-      setIsRecording(true);
-    } catch (e) {
-      console.warn("[recorder] start error:", e);
-    }
-  }, [isRecording]);
+    await recorder.prepareToRecordAsync();
+    recorder.record();
+  }, [recorder]);
 
   const stop = useCallback(async () => {
-    if (!isRecording || !recRef.current) return;
-    try {
-      await recRef.current.stopAndUnloadAsync();
-      setRecURI(recRef.current.getURI() ?? null);
-    } catch (e) {
-      console.warn("[recorder] stop error:", e);
-    } finally {
-      recRef.current = null;
-      setIsRecording(false);
-    }
-  }, [isRecording]);
+    await recorder.stop(); // la URI queda en recorder.uri
+    setUri(recorder.uri ?? null);
+  }, [recorder]);
 
   const play = useCallback(async () => {
-    if (!recURI) return;
+    if (!uri) return;
+    await playMyVoice.replace({ uri }); // carga la fuente
+    playMyVoice.seekTo(0);
     setIsPlayingBack(true);
-    let sound: Audio.Sound | null = null;
-    try {
-      const created = await Audio.Sound.createAsync({ uri: recURI }, { shouldPlay: true });
-      sound = created.sound;
-      sound.setOnPlaybackStatusUpdate((st) => {
-        const s = st as AVPlaybackStatusSuccess;
-        if (s.isLoaded && s.didJustFinish) {
-          setIsPlayingBack(false);
-          setTimeout(() => sound?.unloadAsync().catch(() => {}), 0);
-        }
-      });
-    } catch (e) {
-      console.warn("[recorder] playback error:", e);
-      setIsPlayingBack(false);
-      try { await sound?.unloadAsync(); } catch {}
-    }
-  }, [recURI]);
+    await playMyVoice.play();
+    // Nota: expo-audio deja el cursor al final; no hay callback de "ended".
+    setTimeout(() => setIsPlayingBack(false), 300); // feedback ligero
+  }, [uri, playMyVoice]);
 
-  return { recURI, isRecording, isPlayingBack, start, stop, play };
+  return {
+    recURI: uri,
+    isRecording: recState.isRecording,
+    isPlayingBack,
+    start,
+    stop,
+    play,
+  };
 }
 
 /* =========================================================
@@ -392,17 +309,27 @@ export default function YR_AudioInteractivo() {
   const [showGrid, setShowGrid] = useState(true);
   const [showGuide, setShowGuide] = useState(true);
 
-  const { ready, playById } = useWordAudio();
-  const recorder = useRecorder();
+  // Player para reproducir palabras (usa expo-audio)
+  const wordPlayer = useAudioPlayer(null);
+  const playWord = useCallback(
+    async (id: WordItem["id"]) => {
+      await wordPlayer.replace(WORD_AUDIO[id]);
+      wordPlayer.seekTo(0);
+      await wordPlayer.play();
+    },
+    [wordPlayer]
+  );
 
-  const howTo = "Escucha la palabra, toca los chips para ver cómo se escribe cada letra y luego repite grabando tu voz.";
+  const recorder = useRecorder();
+  const howTo =
+    "Escucha la palabra, toca los chips para ver cómo se escribe cada letra y luego repite grabando tu voz.";
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }}>
       <Text style={styles.title}>Audio interactivo — Y・R（や・ゆ・よ・ら・り・る・れ・ろ）</Text>
       <Text style={styles.subtitle}>{howTo}</Text>
 
-      {/* ===== Selector y frame dinámico arriba ===== */}
+      {/* ===== Selector y frame dinámico ===== */}
       <Text style={styles.sectionTitle}>Letras Y–R</Text>
 
       <View style={styles.selectorRowWrap}>
@@ -433,7 +360,7 @@ export default function YR_AudioInteractivo() {
         </View>
       </View>
 
-      {/* ===== Palabras (escuchar, tocar y repetir) ===== */}
+      {/* ===== Palabras ===== */}
       {WORDS.map((w) => (
         <View key={w.id} style={styles.card}>
           <Text style={styles.jp}>{w.jp}</Text>
@@ -442,22 +369,17 @@ export default function YR_AudioInteractivo() {
 
           <View style={styles.row}>
             <Pressable
-              onPress={() => playById(w.id)}
-              disabled={!ready}
-              style={({ pressed }) => [styles.btnDark, (pressed || !ready) && styles.btnPressed]}
+              onPress={() => playWord(w.id)}
+              style={({ pressed }) => [styles.btnDark, pressed && styles.btnPressed]}
             >
-              <Text style={styles.btnText}>{ready ? "▶︎ Escuchar" : "Cargando audio…"}</Text>
+              <Text style={styles.btnText}>▶︎ Escuchar</Text>
             </Pressable>
           </View>
 
           <Text style={styles.sectionSmall}>Letra por letra</Text>
           <View style={styles.kanaWrap}>
             {w.kanaBreak.map((k, idx) => (
-              <LetterChip
-                key={`${w.id}-${k.kana}-${idx}`}
-                part={k}
-                onOpen={(kana) => setCurrentKana(kana)}
-              />
+              <LetterChip key={`${w.id}-${k.kana}-${idx}`} part={k} onOpen={(kana) => setCurrentKana(kana)} />
             ))}
           </View>
 
@@ -469,7 +391,7 @@ export default function YR_AudioInteractivo() {
               </Pressable>
             ) : (
               <Pressable style={[styles.btnOutline, styles.btnStop]} onPress={recorder.stop}>
-                <Text style={[styles.btnText]}>■ Detener</Text>
+                <Text style={styles.btnText}>■ Detener</Text>
               </Pressable>
             )}
             <Pressable
@@ -488,7 +410,7 @@ export default function YR_AudioInteractivo() {
   );
 }
 
-/* ====== Chip con modal de trazo ====== */
+/* ===== Chip con modal de trazo ===== */
 function LetterChip({ part, onOpen }: { part: KanaPart; onOpen: (kana: string) => void }) {
   const [open, setOpen] = useState(false);
   const [fontsLoaded] = useFonts({ NotoSansJP_700Bold });
@@ -538,13 +460,7 @@ const styles = StyleSheet.create({
 
   sectionTitle: { fontSize: 18, fontWeight: "800", marginTop: 8, marginBottom: 6, paddingHorizontal: 16, color: "#1f2937" },
 
-  selectorRowWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    paddingHorizontal: 16,
-    marginTop: 6,
-  },
+  selectorRowWrap: { flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 16, marginTop: 6 },
   kanaBtnSmall: {
     width: "22%",
     borderRadius: 14,
@@ -556,23 +472,11 @@ const styles = StyleSheet.create({
     borderColor: "#111",
     backgroundColor: "#b32133",
   },
-  kanaBtnActive: {
-    transform: [{ translateY: -2 }],
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 5 },
-  },
+  kanaBtnActive: { transform: [{ translateY: -2 }], shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 8, shadowOffset: { width: 0, height: 5 } },
   kanaGlyphSmall: { fontSize: 30, color: "#fff", fontWeight: "900", lineHeight: 32 },
   kanaLabel: { fontSize: 12, color: "#fff", marginTop: 4, opacity: 0.9 },
 
-  frameRow: {
-    paddingHorizontal: 16,
-    marginTop: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 14,
-  },
+  frameRow: { paddingHorizontal: 16, marginTop: 8, flexDirection: "row", alignItems: "center", columnGap: 14 },
   frameControls: { rowGap: 8 },
 
   pill: {
@@ -641,21 +545,8 @@ const styles = StyleSheet.create({
   btnTextDark: { color: "#111", fontWeight: "800" },
   btnStop: { backgroundColor: "#111", borderColor: "#111" },
 
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  modalCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 18,
-    width: "100%",
-    maxWidth: 420,
-    alignItems: "center",
-  },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 },
+  modalCard: { backgroundColor: "#fff", borderRadius: 16, padding: 18, width: "100%", maxWidth: 420, alignItems: "center" },
   modalKana: { fontSize: 60, lineHeight: 62, fontWeight: "900", color: INK },
   modalRomaji: { marginTop: 4, fontWeight: "800", color: "#4b5563" },
   modalTitle: { marginTop: 10, fontWeight: "900", color: "#111827" },

@@ -1,22 +1,26 @@
+// src/screens/N5/FamiliaN/NLecturaGuiadaScreen.tsx
 import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
 import Slider from "@react-native-community/slider";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from "expo-av";
+import { Asset } from "expo-asset";
 import { Image as ExpoImage } from "expo-image";
 import * as Speech from "expo-speech";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    Vibration,
-    View,
-    useWindowDimensions,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  Vibration,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { State as RNGHState, TapGestureHandler } from "react-native-gesture-handler";
 import type { RootStackParamList } from "../../../../types";
+
+// ✅ Nueva API de audio
+import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
 
 /* ===== Navegación ===== */
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -36,9 +40,9 @@ const KANA: { key: KanaKey; glyph: string; romaji: string; color: string; sample
 const FALLBACK_EN: Record<KanaKey, string> = {
   na: "nah",
   ni: "nee",
-  nu: "noo",   // evita que lo lea como “new”
-  ne: "neh",   // evita “knee”
-  no: "noh",   // evita “naw”
+  nu: "noo",
+  ne: "neh",
+  no: "noh",
 };
 
 /* ===== Imágenes de orden de trazo ===== */
@@ -52,53 +56,50 @@ const STROKE_ORDER_IMAGE: Partial<Record<KanaKey, any>> = {
 
 /* ===== Hook: sonidos de feedback (correcto / incorrecto) ===== */
 function useQuizSfx() {
-  const correctRef = useRef<Audio.Sound | null>(null);
-  const wrongRef = useRef<Audio.Sound | null>(null);
+  const [okUri, setOkUri] = useState<string | undefined>(undefined);
+  const [badUri, setBadUri] = useState<string | undefined>(undefined);
+
+  const ok = useAudioPlayer(okUri);
+  const bad = useAudioPlayer(badUri);
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
     (async () => {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
-        });
-
-        const [correct, wrong] = await Promise.all([
-          Audio.Sound.createAsync(require("../../../../assets/sounds/correct.mp3")),
-          Audio.Sound.createAsync(require("../../../../assets/sounds/wrong.mp3")),
-        ]);
-        if (!mounted) {
-          correct.sound.unloadAsync();
-          wrong.sound.unloadAsync();
-          return;
+        const okA = Asset.fromModule(require("../../../../assets/sounds/correct.mp3"));
+        const badA = Asset.fromModule(require("../../../../assets/sounds/wrong.mp3"));
+        await okA.downloadAsync();
+        await badA.downloadAsync();
+        if (!cancelled) {
+          setOkUri(okA.localUri || okA.uri);
+          setBadUri(badA.localUri || badA.uri);
         }
-        correctRef.current = correct.sound;
-        wrongRef.current = wrong.sound;
-        await correctRef.current.setVolumeAsync(0.7);
-        await wrongRef.current.setVolumeAsync(0.7);
       } catch (e) {
         console.warn("SFX init error", e);
       }
     })();
     return () => {
-      mounted = false;
-      correctRef.current?.unloadAsync();
-      wrongRef.current?.unloadAsync();
+      cancelled = true;
     };
   }, []);
 
   const playCorrect = useCallback(async () => {
-    try { await correctRef.current?.replayAsync(); } catch {}
-  }, []);
+    try {
+      Vibration.vibrate(8);
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+      ok.seekTo(0);
+      ok.play();
+    } catch {}
+  }, [ok]);
+
   const playWrong = useCallback(async () => {
-    try { await wrongRef.current?.replayAsync(); } catch {}
-  }, []);
+    try {
+      Vibration.vibrate(8);
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+      bad.seekTo(0);
+      bad.play();
+    } catch {}
+  }, [bad]);
 
   return { playCorrect, playWrong };
 }
@@ -244,7 +245,7 @@ export default function NLecturaGuiadaScreen() {
   const [kanaIdx, setKanaIdx] = useState(0);
   const [showRomaji, setShowRomaji] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
-  const [rate, setRate] = useState(0.9); // velocidad TTS
+  const [rate, setRate] = useState(0.9);
   const [randomOrder, setRandomOrder] = useState(false);
   const [order, setOrder] = useState<number[]>(KANA.map((_, i) => i));
 
@@ -260,16 +261,7 @@ export default function NLecturaGuiadaScreen() {
   const speak = useCallback(
     async (text: string, kanaKey?: KanaKey) => {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
-        });
-
+        await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
         Speech.stop();
 
         if (jaVoiceId) {
@@ -280,7 +272,6 @@ export default function NLecturaGuiadaScreen() {
             rate,
           });
         } else {
-          // Fallback fonético
           const fallback = kanaKey ? FALLBACK_EN[kanaKey] : "neh";
           Speech.speak(fallback, {
             language: "en-US",
@@ -306,7 +297,6 @@ export default function NLecturaGuiadaScreen() {
   const next = () => setKanaIdx((i) => Math.min(order.length - 1, i + 1));
   const prev = () => setKanaIdx((i) => Math.max(0, i - 1));
 
-  // mantener orden aleatorio si se activa
   useEffect(() => {
     setOrder(randomOrder ? shuffle(KANA.map((_, i) => i)) : KANA.map((_, i) => i));
     setKanaIdx(0);

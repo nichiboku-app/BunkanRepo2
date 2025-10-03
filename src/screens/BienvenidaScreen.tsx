@@ -1,17 +1,19 @@
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Audio } from 'expo-av';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
 import {
-    Dimensions,
-    ImageBackground,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    Vibration,
-    View,
+  Dimensions,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Vibration,
+  View,
 } from 'react-native';
-import { RootStackParamList } from '../../types'; // Asegúrate que la ruta esté correcta
+import { RootStackParamList } from '../../types';
+
+// ✅ Nueva API de audio
+import { useAudioPlayer } from 'expo-audio';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,24 +22,25 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Bienvenida'
 export default function BienvenidaScreen() {
   const navigation = useNavigation<NavigationProp>();
 
-  useEffect(() => {
-    const playSound = async () => {
-      try {
-        const { sound } = await Audio.Sound.createAsync(
-          require('../../assets/sounds/bienvenida_sound.mp3')
-        );
-        await sound.playAsync();
-      } catch (error) {
-        console.warn('Error al reproducir sonido de bienvenida:', error);
-      }
-    };
+  // Crea el reproductor vinculado al ciclo de vida del componente.
+  // Si tu audio es remoto, podrías pasar la URL como string.
+  const player = useAudioPlayer(require('../../assets/sounds/bienvenida_sound.mp3'));
 
+  useEffect(() => {
     Vibration.vibrate(300);
-    playSound();
-  }, []);
+
+    // Reproduce al montar; si ya terminó antes, reinicia a 0.
+    player.seekTo(0);
+    player.play();
+
+    // Libera recursos al desmontar.
+    return () => {
+      player.release();
+    };
+  }, [player]);
 
   const handleEntrar = () => {
-    navigation.replace("Home"); // o 'Home' si no estás usando Drawer aún
+    navigation.replace('Home'); // o la ruta que corresponda en tu stack/drawer
   };
 
   return (

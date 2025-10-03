@@ -1,6 +1,6 @@
 // src/screens/N5/HiraganaWN/WN_PracticaNFinal.tsx
 import { Asset } from "expo-asset";
-import { Audio } from "expo-av";
+import { createAudioPlayer, type AudioPlayer } from "expo-audio";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
@@ -14,11 +14,9 @@ const KANA_BASE = [
   "な","に","ぬ","ね","の",
   "は","ひ","ふ","へ","ほ",
   "ま","み","む","め","も",
-  "や","ゆ","よ",            // ← grandes, OK
+  "や","ゆ","よ",
   "ら","り","る","れ","ろ",
   "わ","を","ん",
-  // "ゃ","ゅ","ょ",         // ← EXCLUIDAS (no yōon todavía)
-  // "っ",                   // ← EXCLUIDA (tsu pequeña)
 ];
 const KANA_DAKU = [
   "が","ぎ","ぐ","げ","ご",
@@ -30,7 +28,6 @@ const KANA_DAKU = [
 const MASTER_KANA = [...KANA_BASE, ...KANA_DAKU];
 
 /* ===================== Datos — Palabras para construir ===================== */
-/** Sin contracciones del tipo きゃ/しゃ/りょ (yōon) y sin っ. */
 type ExamWord = { id: string; jp: string; romaji: string; es?: string };
 const EXAM_WORDS: ExamWord[] = [
   { id: "yama",     jp: "やま",       romaji: "yama",    es: "montaña" },
@@ -68,43 +65,29 @@ const AUDIO: Record<string, any> = {
   ame: require("../../../../assets/audio/n5/wn/ame.mp3"),
   sakana: require("../../../../assets/audio/n5/wn/sakana.mp3"),
   hayai: require("../../../../assets/audio/n5/wn/hayai.mp3"),
-  // neko / mizu sin audio → mostrará “Sin audio”
+  // neko / mizu sin audio → “Sin audio”
 };
 
-/* ===================== Audio helpers ===================== */
-async function ensurePlaybackMode() {
-  await Audio.setIsEnabledAsync(true);
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-    interruptionModeAndroid: 1,
-    interruptionModeIOS: 1,
-  });
-}
+/* ===================== Audio helpers (expo-audio) ===================== */
 function useBankAudio<T extends string>(bank: Record<T, any>) {
-  const soundsRef = useRef<Partial<Record<T, Audio.Sound>>>({});
-  const currentRef = useRef<Audio.Sound | null>(null);
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const sourcesRef = useRef<Partial<Record<T, { uri: string }>>>({});
   const [ready, setReady] = useState(false);
-  const [loadedIds, setLoadedIds] = useState<Set<string>>(new Set());
-  const busyRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        await ensurePlaybackMode();
-        const ids = Object.keys(bank) as T[];
-        for (const id of ids) {
-          const asset = Asset.fromModule(bank[id]);
+        // Descarga/resolve de los assets -> { uri } reproducible
+        for (const key of Object.keys(bank) as T[]) {
+          const asset = Asset.fromModule(bank[key]);
           await asset.downloadAsync();
-          const s = new Audio.Sound();
-          await s.loadAsync({ uri: asset.localUri || asset.uri }, { shouldPlay: false, volume: 1.0 });
-          soundsRef.current[id] = s;
+          sourcesRef.current[key] = { uri: asset.localUri ?? asset.uri };
         }
-        if (!cancelled) { setLoadedIds(new Set(Object.keys(bank))); setReady(true); }
+        if (!cancelled) {
+          playerRef.current = createAudioPlayer();
+          setReady(true);
+        }
       } catch (e) {
         console.warn("[Exam preload error]", e);
         if (!cancelled) setReady(true);
@@ -112,26 +95,28 @@ function useBankAudio<T extends string>(bank: Record<T, any>) {
     })();
     return () => {
       cancelled = true;
-      (async () => {
-        try { await currentRef.current?.unloadAsync(); } catch {}
-        for (const s of Object.values(soundsRef.current)) { try { await s?.unloadAsync(); } catch {} }
-      })();
+      const p = playerRef.current;
+      if (p) {
+        try {
+          p.pause();
+          p.seekTo(0);
+        } catch {}
+      }
     };
-  }, []);
+  }, [bank]);
 
-  const hasAudio = useCallback((id: string) => loadedIds.has(id), [loadedIds]);
+  const hasAudio = useCallback((id: string) => !!sourcesRef.current[id as T], []);
 
   const play = useCallback(async (id: T) => {
-    const s = soundsRef.current[id];
-    if (!s || busyRef.current) return;
-    busyRef.current = true;
+    const src = sourcesRef.current[id];
+    const p = playerRef.current;
+    if (!src || !p) return;
     try {
-      await ensurePlaybackMode();
-      if (currentRef.current && currentRef.current !== s) { try { await currentRef.current.stopAsync(); } catch {} }
-      currentRef.current = s;
-      await s.playFromPositionAsync(0);
-    } finally {
-      setTimeout(() => { busyRef.current = false; }, 120);
+      await p.replace(src);
+      p.seekTo(0);
+      await p.play();
+    } catch (e) {
+      console.warn("[Exam play error]", e);
     }
   }, []);
 
@@ -139,9 +124,9 @@ function useBankAudio<T extends string>(bank: Record<T, any>) {
 }
 
 /* ===================== Utils ===================== */
-function uid() { return Math.random().toString(36).slice(2, 9); }
+const uid = () => Math.random().toString(36).slice(2, 9);
 function shuffle<T>(arr: T[]): T[] { const a = arr.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-function normalizeJP(s: string) { return s.replace(/[ \u3000。、・〜ー\.！!？?]/g, ""); }
+const normalizeJP = (s: string) => s.replace(/[ \u3000。、・〜ー\.！!？?]/g, "");
 const MAX_OPTIONS = 18;
 
 /* ===================== Subvista única: Dictado (construir) ===================== */

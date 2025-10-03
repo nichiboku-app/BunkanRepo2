@@ -1,7 +1,21 @@
 // src/screens/N5/HiraganaM/M_PracticaVoz.tsx
-import { Audio, AVPlaybackStatusSuccess } from "expo-av";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+
+/**
+ * ✅ expo-audio (SDK 54+)
+ * - useAudioPlayer para reproducir (muestras y tu grabación)
+ * - useAudioRecorder para grabar (reemplaza Audio.Recording de expo-av)
+ */
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from "expo-audio";
+
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
 
 /* =================== STT opcional (react-native-voice) =================== */
@@ -31,57 +45,21 @@ const onlyKana = (s: string) =>
 const H2K: Record<string, string> = { ま: "マ", み: "ミ", む: "ム", め: "メ", も: "モ" };
 const hiraToKata = (s: string) => s.split("").map((ch) => H2K[ch] ?? ch).join("");
 
-/* =================== Player one-shot para las muestras =================== */
-function useOneShot() {
-  const ref = useRef<Audio.Sound | null>(null);
-
-  const unload = useCallback(async () => {
-    try {
-      if (ref.current) {
-        await ref.current.unloadAsync();
-        ref.current.setOnPlaybackStatusUpdate(null);
-        ref.current = null;
-      }
-    } catch {}
-  }, []);
-
-  const play = useCallback(
-    async (source: any, { onEnd }: { onEnd?: () => void } = {}) => {
-      await unload();
-      try {
-        const { sound } = await Audio.Sound.createAsync(source, { shouldPlay: true });
-        ref.current = sound;
-        sound.setOnPlaybackStatusUpdate((st) => {
-          const s = st as AVPlaybackStatusSuccess;
-          if (s.isLoaded && s.didJustFinish) onEnd?.();
-        });
-        await sound.playAsync();
-      } catch (e) {
-        console.warn("[oneShot] play error:", e);
-      }
-    },
-    [unload]
-  );
-
-  useEffect(() => () => void unload(), [unload]);
-  return { play };
-}
-
 /* =================== Pantalla =================== */
 export default function M_PracticaVoz() {
   const [selected, setSelected] = useState<KanaItem>(KANA_M[0]);
 
-  // reproducción de muestra
-  const { play } = useOneShot();
-
-  // grabación
-  const recRef = useRef<Audio.Recording | null>(null);
+  // ✅ Reproductores: uno para la muestra y otro para tu grabación
+  // El hook recarga al cambiar la "source" (selected.audio o recURI)
+  const samplePlayer = useAudioPlayer(selected.audio);
   const [recURI, setRecURI] = useState<string | null>(null);
-  const [recTimeMs, setRecTimeMs] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPlayingBack, setIsPlayingBack] = useState(false);
+  const playbackPlayer = useAudioPlayer(recURI ? { uri: recURI } : null);
 
-  // SFX de acierto/error
+  // ✅ Grabación con expo-audio
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recState = useAudioRecorderState(recorder); // isRecording, etc.
+
+  // SFX de acierto/error (tu hook existente)
   const { playCorrect, playWrong } = useFeedbackSounds();
 
   // STT (si existe)
@@ -89,17 +67,21 @@ export default function M_PracticaVoz() {
   const [recognized, setRecognized] = useState<string>("");
   const [matchResult, setMatchResult] = useState<"idle" | "ok" | "bad">("idle");
 
-  /* -------- permisos y modo de audio -------- */
+  /* -------- permisos y modo de audio --------
+   * Nota: con expo-audio los nombres cambian:
+   * - requestRecordingPermissionsAsync (NO requestPermissionsAsync)
+   * - setAudioModeAsync({ playsInSilentMode, allowsRecording })
+   */
   useEffect(() => {
     (async () => {
       try {
-        await Audio.requestPermissionsAsync(); // mic
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
+        const perm = await AudioModule.requestRecordingPermissionsAsync();
+        if (!perm.granted) {
+          console.warn("[audio] Mic permission not granted");
+        }
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          allowsRecording: true,
         });
       } catch (e) {
         console.warn("[audio] setAudioMode error:", e);
@@ -127,17 +109,22 @@ export default function M_PracticaVoz() {
 
   /* -------- reproducción de muestra -------- */
   const playSample = useCallback(async () => {
-    await play(selected.audio);
-  }, [play, selected]);
+    try {
+      // expo-audio NO reinicia solo al finalizar; para "replay":
+      samplePlayer.seekTo(0);
+      await samplePlayer.play();
+    } catch (e) {
+      console.warn("[sample] play error:", e);
+    }
+  }, [samplePlayer]);
 
   /* -------- grabar -------- */
   const startRecording = useCallback(async () => {
-    if (isRecording) return;
+    if (recState.isRecording) return;
 
     setMatchResult("idle");
     setRecognized("");
     setRecURI(null);
-    setRecTimeMs(0);
 
     // STT en vivo (opcional)
     if (sttAvailable) {
@@ -145,62 +132,38 @@ export default function M_PracticaVoz() {
       try { await Voice.start?.("ja-JP"); } catch (e) { console.warn("[STT] start error:", e); }
     }
 
-    const rec = new Audio.Recording();
-    rec.setOnRecordingStatusUpdate((st) => {
-      if (!st.canRecord) return;
-      setRecTimeMs(st.durationMillis ?? 0);
-    });
-
     try {
-      // ✅ preset multiplataforma
-      await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      await rec.startAsync();
-
-      recRef.current = rec;
-      setIsRecording(true);
+      await recorder.prepareToRecordAsync(); // con las opciones del preset
+      recorder.record();                    // comienza a grabar
     } catch (e) {
-      console.warn("[rec] start error:", e);
+      console.warn("[recorder] start error:", e);
     }
-  }, [isRecording, sttAvailable]);
+  }, [recState.isRecording, sttAvailable, recorder]);
 
   const stopRecording = useCallback(async () => {
-    if (!isRecording || !recRef.current) return;
+    if (!recState.isRecording) return;
     try {
-      await recRef.current.stopAndUnloadAsync();
-      const uri = recRef.current.getURI();
-      setRecURI(uri ?? null);
+      await recorder.stop(); // la URI queda en recorder.uri
+      setRecURI(recorder.uri ?? null);
     } catch (e) {
-      console.warn("[rec] stop error:", e);
+      console.warn("[recorder] stop error:", e);
     } finally {
-      recRef.current = null;
-      setIsRecording(false);
       if (sttAvailable) {
         try { await Voice.stop?.(); } catch {}
       }
     }
-  }, [isRecording, sttAvailable]);
+  }, [recState.isRecording, recorder, sttAvailable]);
 
   /* -------- reproducir mi grabación -------- */
   const playRecording = useCallback(async () => {
     if (!recURI) return;
-    setIsPlayingBack(true);
-    let sound: Audio.Sound | null = null;
     try {
-      const created = await Audio.Sound.createAsync({ uri: recURI }, { shouldPlay: true });
-      sound = created.sound;
-      sound.setOnPlaybackStatusUpdate((st) => {
-        const s = st as AVPlaybackStatusSuccess;
-        if (s.isLoaded && s.didJustFinish) {
-          setIsPlayingBack(false);
-          setTimeout(() => sound?.unloadAsync().catch(() => {}), 0);
-        }
-      });
+      playbackPlayer.seekTo(0);
+      await playbackPlayer.play();
     } catch (e) {
       console.warn("[rec] playback error:", e);
-      setIsPlayingBack(false);
-      try { await sound?.unloadAsync(); } catch {}
     }
-  }, [recURI]);
+  }, [recURI, playbackPlayer]);
 
   /* -------- evaluar (si hay STT) -------- */
   const evaluate = useCallback(async () => {
@@ -250,7 +213,7 @@ export default function M_PracticaVoz() {
           <Text style={s.btnText}>🔊 Muestra ({selected.char})</Text>
         </Pressable>
 
-        {!isRecording ? (
+        {!recState.isRecording ? (
           <Pressable style={[s.btn, s.btnGold]} onPress={startRecording}>
             <Text style={s.btnText}>● Grabar</Text>
           </Pressable>
@@ -263,10 +226,10 @@ export default function M_PracticaVoz() {
         <Pressable
           style={[s.btn, s.btnOutline]}
           onPress={playRecording}
-          disabled={!recURI || isPlayingBack}
+          disabled={!recURI}
         >
           <Text style={[s.btnText, s.btnTextDark]}>
-            {isPlayingBack ? "Reproduciendo…" : "▶︎ Mi grabación"}
+            {recURI ? "▶︎ Mi grabación" : "Sin grabación"}
           </Text>
         </Pressable>
       </View>
@@ -297,7 +260,7 @@ export default function M_PracticaVoz() {
         </View>
       )}
 
-      {/* Curiosidad de Japón */}
+      {/* Curiosidad */}
       <Text style={s.trivia}>
         Curiosidad: en Japón los trenes son tan puntuales que, si se retrasan,
         a veces entregan un certificado de tardanza para presentarlo en el trabajo o la escuela.

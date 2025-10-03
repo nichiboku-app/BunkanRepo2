@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { RouteProp } from "@react-navigation/native";
 import { useRoute } from "@react-navigation/native";
 import { Asset } from "expo-asset";
-import { Audio } from "expo-av";
+import { createAudioPlayer, type AudioPlayer } from "expo-audio";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, G, Line, Rect, Text as SvgText } from "react-native-svg";
@@ -134,32 +134,21 @@ const AUDIO_BY_ROMAJI: Record<string, any> = {
   n: require("../../../assets/audio/katakana/n.mp3"),
 };
 
-/* ===================== Audio perezoso (on-demand) ===================== */
-async function ensurePlaybackMode() {
-  await Audio.setIsEnabledAsync(true);
-  await Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: false,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false,
-    interruptionModeAndroid: 1,
-    interruptionModeIOS: 1,
-  });
-}
-
+/* ===================== Audio perezoso (expo-audio) ===================== */
 function useLazyAudio<T extends string>(bank: Record<T, any>) {
-  const cacheRef = useRef(new Map<T, Audio.Sound>());
-  const currentRef = useRef<Audio.Sound | null>(null);
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const sourcesRef = useRef<Map<T, { uri: string }>>(new Map());
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    playerRef.current = createAudioPlayer();
     return () => {
-      (async () => {
-        try { await currentRef.current?.unloadAsync(); } catch {}
-        for (const s of cacheRef.current.values()) { try { await s.unloadAsync(); } catch {} }
-        cacheRef.current.clear();
-      })();
+      const p = playerRef.current;
+      if (!p) return;
+      try {
+        p.pause();
+        p.seekTo(0);
+      } catch {}
     };
   }, []);
 
@@ -168,27 +157,18 @@ function useLazyAudio<T extends string>(bank: Record<T, any>) {
     if (!mod || busy) return;
     setBusy(true);
     try {
-      await ensurePlaybackMode();
-
-      let sound = cacheRef.current.get(key);
-      if (!sound) {
+      let src = sourcesRef.current.get(key);
+      if (!src) {
         const asset = Asset.fromModule(mod);
         await asset.downloadAsync();
-        const { sound: s } = await Audio.Sound.createAsync(
-          { uri: asset.localUri || asset.uri },
-          { shouldPlay: false, volume: 1.0 }
-        );
-        cacheRef.current.set(key, s);
-        sound = s;
+        src = { uri: asset.localUri ?? asset.uri };
+        sourcesRef.current.set(key, src);
       }
-
-      if (currentRef.current && currentRef.current !== sound) {
-        try { await currentRef.current.stopAsync(); } catch {}
-      }
-      currentRef.current = sound;
-
-      await sound.setPositionAsync(0);
-      await sound.playAsync();
+      const p = playerRef.current;
+      if (!p) return;
+      await p.replace(src);
+      p.seekTo(0);
+      await p.play();
     } finally {
       setTimeout(() => setBusy(false), 120);
     }
@@ -224,17 +204,14 @@ const STROKE_COUNT: Record<string, number> = {
   "ワ": 2, "ヲ": 3, "ン": 2,
 };
 
-/* Pistas manuales (globos rojos) para varias letras.
-   Si una letra no está aquí, generamos posiciones automáticamente. */
+/* Pistas manuales (globos rojos) para varias letras */
 const HINTS: Record<string, XY[]> = {
-  // Familia A (completa)
   "ア": [{ x: 0.34, y: 0.28 }, { x: 0.60, y: 0.28 }, { x: 0.52, y: 0.56 }],
   "イ": [{ x: 0.50, y: 0.24 }, { x: 0.58, y: 0.54 }],
   "ウ": [{ x: 0.52, y: 0.24 }, { x: 0.38, y: 0.46 }, { x: 0.62, y: 0.60 }],
   "エ": [{ x: 0.40, y: 0.30 }, { x: 0.58, y: 0.30 }, { x: 0.48, y: 0.56 }],
   "オ": [{ x: 0.44, y: 0.24 }, { x: 0.60, y: 0.24 }, { x: 0.50, y: 0.56 }],
 
-  // Confusiones típicas
   "シ": [{ x: 0.38, y: 0.26 }, { x: 0.46, y: 0.40 }, { x: 0.54, y: 0.56 }],
   "ツ": [{ x: 0.44, y: 0.24 }, { x: 0.58, y: 0.24 }, { x: 0.66, y: 0.56 }],
   "ソ": [{ x: 0.46, y: 0.26 }, { x: 0.62, y: 0.56 }],
@@ -280,9 +257,7 @@ function TraceFrameKata({
   return (
     <View style={styles.frameWrap}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Fondo y borde */}
         <Rect x={0} y={0} width={size} height={size} rx={16} fill="#FFF6C2" stroke="#EAD48A" strokeWidth={2} />
-        {/* Cuadrícula */}
         {showGrid && (
           <>
             {grid.map((p, i) => (
@@ -295,7 +270,6 @@ function TraceFrameKata({
             <Line x1={10} y1={size / 2} x2={size - 10} y2={size / 2} stroke="#E0B94A" strokeDasharray="6 8" strokeWidth={2} />
           </>
         )}
-        {/* Glyph exacto como guía */}
         {showGuide && (
           <SvgText
             x={size / 2}
@@ -311,7 +285,6 @@ function TraceFrameKata({
             {char}
           </SvgText>
         )}
-        {/* Globos con números */}
         {showHints &&
           hints.map((h, i) => (
             <G key={`hint-${i}`} opacity={0.96}>
@@ -337,7 +310,7 @@ function TraceFrameKata({
   );
 }
 
-/* ===================== Pantalla (diseño anterior) ===================== */
+/* ===================== Pantalla ===================== */
 export default function KatakanaRow() {
   const route = useRoute<Route>();
   const rowKey = route.params?.row ?? "A";
@@ -349,7 +322,7 @@ export default function KatakanaRow() {
 
   const current = data[index];
 
-  // Audio on-demand
+  // Audio on-demand con expo-audio
   const { busy: isAudioBusy, playRomaji } = useLazyAudio(AUDIO_BY_ROMAJI);
   const hasAudio = !!AUDIO_BY_ROMAJI[current.romaji];
   const hasHints = !!(HINTS[current.kana] || STROKE_COUNT[current.kana]);
@@ -359,7 +332,6 @@ export default function KatakanaRow() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Katakana — {rowKey} 行</Text>
         <Text style={styles.subtitle}>
@@ -367,7 +339,6 @@ export default function KatakanaRow() {
         </Text>
       </View>
 
-      {/* Navegación */}
       <View style={styles.navRow}>
         <Pressable onPress={goPrev} disabled={index === 0} style={[styles.navBtn, index === 0 && styles.navBtnDisabled]}>
           <Ionicons name="chevron-back" size={20} />
@@ -385,7 +356,6 @@ export default function KatakanaRow() {
         </Pressable>
       </View>
 
-      {/* Cómo se escribe */}
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Ionicons name="create" size={18} />
@@ -409,7 +379,6 @@ export default function KatakanaRow() {
         </View>
       </View>
 
-      {/* Pronunciación */}
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Ionicons name="volume-high" size={18} />
@@ -433,14 +402,12 @@ export default function KatakanaRow() {
         </View>
       </View>
 
-      {/* Paginación */}
       <View style={styles.pagination}>
         {data.map((_, i) => (
           <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
         ))}
       </View>
 
-      {/* Modal ampliado */}
       <Modal transparent animationType="fade" visible={modalOpen} onRequestClose={() => setModalOpen(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
@@ -464,7 +431,7 @@ export default function KatakanaRow() {
   );
 }
 
-/* ===================== Estilos (mismo look & feel de antes) ===================== */
+/* ===================== Estilos ===================== */
 const PAPER = "#FAF7F0";
 const INK = "#1F2937";
 const GOLD = "#C6A15B";
@@ -522,7 +489,6 @@ const styles = StyleSheet.create({
 
   row: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 },
 
-  // Botón rojo (como antes)
   btn: {
     flexDirection: "row",
     alignItems: "center",

@@ -1,7 +1,7 @@
 // src/screens/N5/HiraganaM/M_Dictado.tsx
 import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
-import { Audio, AVPlaybackStatusSuccess } from "expo-av";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Asset } from "expo-asset";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -12,6 +12,10 @@ import {
   View,
 } from "react-native";
 import Svg, { Circle, G, Line, Rect, Text as SvgText } from "react-native-svg";
+
+// ✅ Nueva API de audio
+import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
+
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
 
 /* =================== Tipos =================== */
@@ -25,33 +29,32 @@ type KanaItem = {
 type XY = { x: number; y: number };
 
 /* =================== Hints (coordenadas 0..1) y conteo =================== */
-/** Ajusta estos puntos si quieres mover el numerito de inicio de cada trazo. */
 const HINTS_M: Record<string, XY[]> = {
   // M — ま・み・む・め・も
   "ま": [
-    { x: 0.22, y: 0.28 }, // ① barra/curva superior (inicio izq)
-    { x: 0.46, y: 0.22 }, // ② vertical central (arriba)
-    { x: 0.58, y: 0.50 }, // ③ bucle/curva derecha
+    { x: 0.22, y: 0.28 },
+    { x: 0.46, y: 0.22 },
+    { x: 0.58, y: 0.50 },
   ],
   "み": [
-    { x: 0.22, y: 0.34 }, // ① curva alta
-    { x: 0.38, y: 0.48 }, // ② ondulación media
-    { x: 0.28, y: 0.64 }, // ③ remate inferior
+    { x: 0.22, y: 0.34 },
+    { x: 0.38, y: 0.48 },
+    { x: 0.28, y: 0.64 },
   ],
   "む": [
-    { x: 0.18, y: 0.34 }, // ① barra superior
-    { x: 0.50, y: 0.36 }, // ② caída izquierda del óvalo
-    { x: 0.50, y: 0.78 }, // ③ subida derecha (cierra gota)
+    { x: 0.18, y: 0.34 },
+    { x: 0.50, y: 0.36 },
+    { x: 0.50, y: 0.78 },
   ],
   "め": [
-    { x: 0.24, y: 0.26 }, // ① barra superior
-    { x: 0.36, y: 0.26 }, // ② vertical/bucle
-    { x: 0.30, y: 0.60 }, // ③ arrastre inferior
+    { x: 0.24, y: 0.26 },
+    { x: 0.36, y: 0.26 },
+    { x: 0.30, y: 0.60 },
   ],
   "も": [
-    { x: 0.18, y: 0.28 }, // ① barra superior
-    { x: 0.52, y: 0.24 }, // ② vertical
-    { x: 0.30, y: 0.56 }, // ③ barra media
+    { x: 0.18, y: 0.28 },
+    { x: 0.52, y: 0.24 },
+    { x: 0.30, y: 0.56 },
   ],
 };
 const STROKE_COUNT_M: Record<string, number> = {
@@ -62,41 +65,44 @@ const STROKE_COUNT_M: Record<string, number> = {
   "も": 3,
 };
 
-/* =================== One-shot player para audio del kana =================== */
-function useOneShotSound() {
-  const soundRef = useRef<Audio.Sound | null>(null);
-
-  const unload = useCallback(async () => {
-    try {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current.setOnPlaybackStatusUpdate(null);
-        soundRef.current = null;
-      }
-    } catch {}
-  }, []);
+/* =================== One-shot player (expo-audio) =================== */
+function useOneShotPlayer() {
+  const [uri, setUri] = useState<string | null>(null);
+  const player = useAudioPlayer(uri ?? undefined);
 
   const play = useCallback(
-    async (source: any, { onEnd }: { onEnd?: () => void } = {}) => {
-      await unload();
+    async (moduleRequire: any, { onEnd }: { onEnd?: () => void } = {}) => {
       try {
-        const { sound } = await Audio.Sound.createAsync(source, { shouldPlay: true });
-        soundRef.current = sound;
-        sound.setOnPlaybackStatusUpdate((st) => {
-          const s = st as AVPlaybackStatusSuccess;
-          if (s.isLoaded && s.didJustFinish) onEnd?.();
-        });
-        await sound.playAsync();
+        await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+        // prepara el asset local y toma su URI
+        const asset = Asset.fromModule(moduleRequire);
+        await asset.downloadAsync();
+        const nextUri = asset.localUri || asset.uri;
+        setUri(nextUri);
+
+        // da un “tick” para que el hook vincule la nueva fuente y reproduce
+        setTimeout(() => {
+          try {
+            player.seekTo(0);
+            player.play();
+          } catch {}
+          // No tenemos callback nativo “ended” aquí; usamos un temporizador corto
+          // (estos clips son breves; ajusta si tus audios duran más).
+          if (onEnd) setTimeout(onEnd, 1000);
+        }, 10);
       } catch (e) {
-        console.warn("No se pudo reproducir audio del kana:", e);
+        console.warn("No se pudo reproducir el audio:", e);
+        onEnd?.();
       }
     },
-    [unload]
+    [player]
   );
 
-  useEffect(() => {
-    return () => { unload(); };
-  }, [unload]);
+  const unload = useCallback(() => {
+    try {
+      player.pause();
+    } catch {}
+  }, [player]);
 
   return { play, unload };
 }
@@ -167,7 +173,7 @@ function TraceFrame({
         {hints.map((h, i) => {
           const cx = h.x * size;
           const cy = h.y * size;
-          const active = i === 0; // si quieres resaltar el 1º, cámbialo
+          const active = i === 0;
           return (
             <G key={`hint-${i}`} opacity={0.96}>
               <Circle cx={cx} cy={cy} r={12} fill={active ? "#111827" : "#B32133"} />
@@ -203,7 +209,7 @@ export default function M_Dictado() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [modalKana, setModalKana] = useState<KanaItem | null>(null);
 
-  const { play: playOne, unload } = useOneShotSound();
+  const { play: playOne, unload } = useOneShotPlayer();
   const { playCorrect, playWrong } = useFeedbackSounds();
 
   const randomKana = useCallback(() => KANA_M[Math.floor(Math.random() * KANA_M.length)], []);
@@ -246,11 +252,10 @@ export default function M_Dictado() {
   }, [result]);
 
   useEffect(() => {
-    Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: false,
+    }).catch(() => {});
     return () => { unload(); };
   }, [unload]);
 
