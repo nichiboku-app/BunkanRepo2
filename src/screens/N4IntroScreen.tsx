@@ -2,12 +2,21 @@
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Audio } from "expo-av";
-import React, { useEffect, useRef } from "react";
-import { ImageBackground, Pressable, StyleSheet, View } from "react-native";
+import { Image as ExpoImage } from "expo-image";
+import { useEffect, useRef } from "react";
+import {
+  Animated,
+  Easing,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 type RootStackParamList = {
   N4Intro: undefined;
-  CursoN4: undefined; // ← pantalla donde están todos los temas (tu lista del nivel N4)
+  CursoN4: undefined; // lista del nivel N4
 };
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "N4Intro">;
@@ -16,44 +25,63 @@ export default function N4IntroScreen() {
   const navigation = useNavigation<Nav>();
   const soundRef = useRef<Audio.Sound | null>(null);
 
-  // ⏯️ Reproduce audio (si lo agregas) y navega automáticamente al terminar.
+  // Animaciones sutiles
+  const fade = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.96)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 900,
+        delay: 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 900,
+        delay: 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fade, scale]);
+
+  // Reproduce audio (opcional) y navega automáticamente
   useEffect(() => {
     let mounted = true;
+    let t: ReturnType<typeof setTimeout> | null = null;
 
     (async () => {
       try {
-        // 🔊 Cuando tengas el archivo, descomenta las 2 líneas de "require".
-         const { sound } = await Audio.Sound.createAsync(
-          require("../../assets/audio/sakurajapanese2.mp3") // <-- coloca aquí tu mp3
-         );
-         soundRef.current = sound;
-         await sound.playAsync();
+        const { sound } = await Audio.Sound.createAsync(
+          require("../../assets/audio/sakurajapanese2.mp3")
+        );
+        soundRef.current = sound;
+        await sound.playAsync();
 
-        // ⏱️ Navegación automática con o sin audio (fallback 3.5s)
-        const t = setTimeout(() => {
+        t = setTimeout(() => {
           if (mounted) navigation.navigate("CursoN4");
         }, 3500);
 
-        // Si decides usar el audio, puedes navegar al terminar:
-         sound.setOnPlaybackStatusUpdate((status) => {
-           if (!mounted) return;
-           if (status.isLoaded && status.didJustFinish) {
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (!mounted) return;
+          if ("didJustFinish" in status && status.didJustFinish) {
+            if (t) clearTimeout(t);
             navigation.navigate("CursoN4");
           }
-         });
-
-        return () => clearTimeout(t);
-      } catch (e) {
-        // Si falla audio, hacemos fallback rápido
-        const t = setTimeout(() => {
+        });
+      } catch {
+        t = setTimeout(() => {
           if (mounted) navigation.navigate("CursoN4");
         }, 1500);
-        return () => clearTimeout(t);
       }
     })();
 
     return () => {
       mounted = false;
+      if (t) clearTimeout(t);
       if (soundRef.current) {
         soundRef.current.stopAsync().catch(() => {});
         soundRef.current.unloadAsync().catch(() => {});
@@ -62,17 +90,49 @@ export default function N4IntroScreen() {
     };
   }, [navigation]);
 
-  // 👆 Un toque en la imagen también avanza de inmediato
-  const handleTap = () => navigation.navigate("CursoN4");
+  // Tap para saltar inmediatamente
+  const handleTap = async () => {
+    if (soundRef.current) {
+      try {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+      } catch {}
+      soundRef.current = null;
+    }
+    navigation.navigate("CursoN4");
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
       <Pressable style={{ flex: 1 }} onPress={handleTap}>
         <ImageBackground
-          source={require("../../assets/images/n4.webp")} // coloca aquí tu n4.webp
+          source={require("../../assets/images/n4.webp")}
           style={styles.full}
           imageStyle={{ resizeMode: "cover" }}
-        />
+        >
+          {/* Overlay centrado (no bloquea el tap) */}
+          <View pointerEvents="none" style={styles.centerOverlay}>
+            <Animated.View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: fade,
+                transform: [
+                  { scale },
+                  { translateX: -250 }, // ⬅️ 250 px a la izquierda
+                  { translateY: -150 },  // ⬆️ 30 px hacia arriba
+                ],
+              }}
+            >
+              <ExpoImage
+                source={require("../../assets/images/zorron4.webp")}
+                style={styles.logo}
+                contentFit="contain"
+              />
+              <Text style={styles.title}>Nivel Zorro N4</Text>
+            </Animated.View>
+          </View>
+        </ImageBackground>
       </Pressable>
     </View>
   );
@@ -80,4 +140,22 @@ export default function N4IntroScreen() {
 
 const styles = StyleSheet.create({
   full: { flex: 1, width: "100%", height: "100%" },
+  centerOverlay: {
+    position: "absolute",
+    top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  logo: {
+    width: 120,   // mitad del tamaño original
+    height: 120,
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 14, // mitad del tamaño original
+    fontWeight: "800",
+    color: "#000",
+    letterSpacing: 0.4,
+  },
 });

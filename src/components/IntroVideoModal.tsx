@@ -1,7 +1,7 @@
-// src/components/IntroVideoModal.tsx
-import { Audio } from 'expo-av';
-import { VideoView, useVideoPlayer } from 'expo-video';
-import React, { useEffect, useRef, useState } from 'react';
+// ✅ Audio/video en SDK 54
+import { setAudioModeAsync } from "expo-audio";
+import { VideoView, useVideoPlayer } from "expo-video";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -11,9 +11,9 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
+} from "react-native";
 
-const DRAGON = require('../../assets/ui/dragon_frame_red.png');
+const DRAGON = require("../../assets/ui/dragon_frame_red.png");
 
 type Props = {
   visible: boolean;
@@ -34,21 +34,21 @@ function InlineVideo({
     p.muted = false;
   });
 
-  // Autoplay cuando está listo. No hacemos pause/seek en cleanup para
-  // evitar "shared object already released" en Android.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Autoplay al montar
   useEffect(() => {
     player.play();
     const t = setTimeout(() => onBecameReady?.(), 180);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <VideoView
-      key={uri} // fuerza una instancia nueva si cambia la fuente
+      key={uri}
       player={player}
       nativeControls
-      allowsFullscreen
+      // 🔄 reemplazo del prop deprecado `allowsFullscreen`
+      fullscreenOptions={{ enable: true }}
       allowsPictureInPicture
       contentFit="contain"
       style={styles.video}
@@ -69,14 +69,15 @@ export default function IntroVideoModal({
   useEffect(() => {
     const setMode = async (on: boolean) => {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          staysActiveInBackground: false,
-          playsInSilentModeIOS: on,
-          shouldDuckAndroid: true,
-          playThroughEarpieceAndroid: false,
+        await setAudioModeAsync({
+          // 🔁 nueva API: `playsInSilentMode` (sin sufijo IOS)
+          playsInSilentMode: on,
+          // Mantener grabación desactivada
+          allowsRecording: false,
         });
-      } catch {}
+      } catch {
+        // no-op
+      }
     };
     setMode(visible);
     return () => {
@@ -112,9 +113,7 @@ export default function IntroVideoModal({
               </View>
             )}
 
-            {sourceUrl ? (
-              <InlineVideo uri={sourceUrl} onBecameReady={handleReady} />
-            ) : null}
+            {sourceUrl ? <InlineVideo uri={sourceUrl} onBecameReady={handleReady} /> : null}
 
             {/* Marco decorativo */}
             <View pointerEvents="none" style={styles.frame}>
@@ -124,10 +123,7 @@ export default function IntroVideoModal({
 
           {/* Controles */}
           <View style={styles.row}>
-            <Pressable
-              style={({ pressed }) => [styles.btn, pressed && { opacity: 0.85 }]}
-              onPress={onClose}
-            >
+            <Pressable style={({ pressed }) => [styles.btn, pressed && { opacity: 0.85 }]} onPress={onClose}>
               <Text style={styles.btnTxt}>Cerrar</Text>
             </Pressable>
 
@@ -149,54 +145,54 @@ export default function IntroVideoModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(17,24,39,0.65)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(17,24,39,0.65)",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 18,
   },
   card: {
-    width: '100%',
-    backgroundColor: '#0b0b0d',
+    width: "100%",
+    backgroundColor: "#0b0b0d",
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#4b0a0a',
+    borderColor: "#4b0a0a",
     padding: 12,
   },
   videoWrap: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 16 / 9,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     borderRadius: 14,
-    overflow: 'hidden',
+    overflow: "hidden",
     borderWidth: 2,
-    borderColor: '#7a0c0c',
+    borderColor: "#7a0c0c",
   },
-  video: { width: '100%', height: '100%' },
-  frame: { position: 'absolute', left: -2, top: -2, right: -2, bottom: -2 },
-  frameImg: { width: '100%', height: '100%' },
-  row: { marginTop: 12, flexDirection: 'row', gap: 10, justifyContent: 'space-between' },
+  video: { width: "100%", height: "100%" },
+  frame: { position: "absolute", left: -2, top: -2, right: -2, bottom: -2 },
+  frameImg: { width: "100%", height: "100%" },
+  row: { marginTop: 12, flexDirection: "row", gap: 10, justifyContent: "space-between" },
   btn: {
-    backgroundColor: '#B3001B',
+    backgroundColor: "#B3001B",
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderWidth: 2,
-    borderColor: '#000',
+    borderColor: "#000",
     flexGrow: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  btnTxt: { color: '#fff', fontWeight: '900' },
+  btnTxt: { color: "#fff", fontWeight: "900" },
   btnGhost: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderWidth: 2,
-    borderColor: '#B3001B',
+    borderColor: "#B3001B",
     flexGrow: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  btnGhostTxt: { color: '#fff', fontWeight: '800' },
-  loader: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  loaderText: { color: '#e5e7eb', marginTop: 6 },
+  btnGhostTxt: { color: "#fff", fontWeight: "800" },
+  loader: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
+  loaderText: { color: "#e5e7eb", marginTop: 6 },
 });
