@@ -124,48 +124,16 @@ import B3_ColoresAdjetivos from "./src/screens/N5/B3Vocabulario/B3_ColoresAdjeti
 import B3_ComidaBebidas from "./src/screens/N5/B3Vocabulario/B3_ComidaBebidas";
 import B3_Cortesia from "./src/screens/N5/B3Vocabulario/B3_Cortesia";
 
-// B4 gramática
-import B4_Adjetivos from "./src/screens/N5/B4Gramatica/B4_Adjetivos";
-import B4_ArimasuImasu from "./src/screens/N5/B4Gramatica/B4_ArimasuImasu";
-import B4_De from "./src/screens/N5/B4Gramatica/B4_De";
-import B4_Desu from "./src/screens/N5/B4Gramatica/B4_Desu";
-import B4_DesuNeg from "./src/screens/N5/B4Gramatica/B4_DesuNeg";
-import B4_KoreSoreAre from "./src/screens/N5/B4Gramatica/B4_KoreSoreAre";
-import B4_MasuIntro from "./src/screens/N5/B4Gramatica/B4_MasuIntro";
-import B4_MasuNeg from "./src/screens/N5/B4Gramatica/B4_MasuNeg";
-import B4_Mo from "./src/screens/N5/B4Gramatica/B4_Mo";
-import B4_NiHe from "./src/screens/N5/B4Gramatica/B4_NiHe";
-import B4_NoModifier from "./src/screens/N5/B4Gramatica/B4_NoModifier";
-import B4_PregKa from "./src/screens/N5/B4Gramatica/B4_PregKa";
-import B4_Tiempo from "./src/screens/N5/B4Gramatica/B4_Tiempo";
-import B4_WaGa from "./src/screens/N5/B4Gramatica/B4_WaGa";
-import B4_Wo from "./src/screens/N5/B4Gramatica/B4_Wo";
-
-// B5 gramática
-import B5_AdverbiosFrecuencia from "./src/screens/N5/B5Gramatica/B5_AdverbiosFrecuencia";
-import B5_Contadores from "./src/screens/N5/B5Gramatica/B5_Contadores";
-import B5_DiasMeses from "./src/screens/N5/B5Gramatica/B5_DiasMeses";
-import B5_Frecuencia from "./src/screens/N5/B5Gramatica/B5_Frecuencia";
-import B5_HorariosRutina from "./src/screens/N5/B5Gramatica/B5_HorariosRutina";
-import B5_ParticulasTiempo from "./src/screens/N5/B5Gramatica/B5_ParticulasTiempo";
-import B5_TiempoDuracion from "./src/screens/N5/B5Gramatica/B5_TiempoDuracion";
-import B5_TiempoPuntos from "./src/screens/N5/B5Gramatica/B5_TiempoPuntos";
-import B5_VecesContador from "./src/screens/N5/B5Gramatica/B5_VecesContador";
-
 // === N4 ===
 import CursoN4Screen from "./src/screens/N4/CursoN4Screen";
 import N4TemaScreen from "./src/screens/N4/N4TemaScreen"; // ⬅️ pantalla unificada por tema
 import N4IntroScreen from "./src/screens/N4IntroScreen";
 
-// === Vida cotidiana (B6) ===
-import B6_Compras from "./src/screens/N5/B6Vida/B6_Compras";
-import B6_Dinero from "./src/screens/N5/B6Vida/B6_Dinero";
-import B6_Direcciones from "./src/screens/N5/B6Vida/B6_Direcciones";
-import B6_Emergencias from "./src/screens/N5/B6Vida/B6_Emergencias";
-import B6_Hotel from "./src/screens/N5/B6Vida/B6_Hotel";
-import B6_Restaurante from "./src/screens/N5/B6Vida/B6_Restaurante";
-import B6_Tiendas from "./src/screens/N5/B6Vida/B6_Tiendas";
-import B6_Transporte from "./src/screens/N5/B6Vida/B6_Transporte";
+// === N3 ===
+import CursoN3Screen from "./src/screens/N3/CursoN3Screen";
+import N3_Block1_Unit2Screen from "./src/screens/N3/N3_Block1_Unit2Screen";
+import N3_UnitScreen from "./src/screens/N3/N3_UnitScreen";
+import N3IntroScreen from "./src/screens/N3IntroScreen"; // o "./src/screens/N3/N3IntroScreen" si lo mueves
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -174,7 +142,7 @@ function Placeholder({ title }: { title: string }) {
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
       <Text style={{ fontSize: 22, fontWeight: "900", marginBottom: 8 }}>{title}</Text>
       <Text style={{ opacity: 0.7, textAlign: "center" }}>
-        Pantalla aún no implementada. Crea {title}.tsx en /src/screens/N5/ y actualiza App.tsx.
+        Pantalla aún no implementada. Crea {title}.tsx en /src/screens/ y actualiza App.tsx.
       </Text>
     </View>
   );
@@ -527,98 +495,26 @@ export default function App() {
                 options={{ headerShown: true, title: "B3 — Cortesía" }}
               />
 
-              <Stack.Screen name="B4_Desu" component={B4_Desu} />
-              <Stack.Screen name="B4_DesuNeg" component={B4_DesuNeg} />
-              <Stack.Screen name="B4_PregKa" component={B4_PregKa} />
-              <Stack.Screen name="B4_KoreSoreAre" component={B4_KoreSoreAre} />
-              <Stack.Screen name="B4_NoModifier" component={B4_NoModifier} />
-              <Stack.Screen name="B4_WaGa" component={B4_WaGa} />
-              <Stack.Screen name="B4_Wo" component={B4_Wo} />
-              <Stack.Screen name="B4_NiHe" component={B4_NiHe} />
-              <Stack.Screen name="B4_De" component={B4_De} />
-              <Stack.Screen name="B4_ArimasuImasu" component={B4_ArimasuImasu} />
-              <Stack.Screen name="B4_Adjetivos" component={B4_Adjetivos} />
-              <Stack.Screen name="B4_Mo" component={B4_Mo} />
-              <Stack.Screen name="B4_Tiempo" component={B4_Tiempo} />
-              <Stack.Screen name="B4_MasuIntro" component={B4_MasuIntro} />
-              <Stack.Screen name="B4_MasuNeg" component={B4_MasuNeg} />
-
-              <Stack.Screen
-                name="B5_Contadores"
-                component={B5_Contadores}
-                options={{ headerShown: true, title: "B5 — Contadores（助数詞）" }}
-              />
-              <Stack.Screen
-                name="B5_TiempoPuntos"
-                component={B5_TiempoPuntos}
-                options={{ headerShown: true, title: "B5 — Tiempo: puntos (に)" }}
-              />
-              <Stack.Screen
-                name="B5_TiempoDuracion"
-                component={B5_TiempoDuracion}
-                options={{ headerShown: true, title: "B5 — Tiempo: duración（～間／から／まで）" }}
-              />
-              <Stack.Screen
-                name="B5_Frecuencia"
-                component={B5_Frecuencia}
-                options={{ headerShown: true, title: "B5 — Frecuencia" }}
-              />
-              <Stack.Screen
-                name="B5_AdverbiosFrecuencia"
-                component={B5_AdverbiosFrecuencia}
-                options={{ headerShown: true, title: "B5 — Adverbios de frecuencia" }}
-              />
-              <Stack.Screen
-                name="B5_DiasMeses"
-                component={B5_DiasMeses}
-                options={{ headerShown: true, title: "B5 — Días y meses" }}
-              />
-              <Stack.Screen
-                name="B5_HorariosRutina"
-                component={B5_HorariosRutina}
-                options={{ headerShown: true, title: "B5 — Horarios y rutina（に／から／まで）" }}
-              />
-              <Stack.Screen
-                name="B5_VecesContador"
-                component={B5_VecesContador}
-                options={{ headerShown: true, title: "B5 — Veces: ～回" }}
-              />
-              <Stack.Screen
-                name="B5_ParticulasTiempo"
-                component={B5_ParticulasTiempo}
-                options={{ headerShown: true, title: "B5 — Partículas de tiempo（に・から・まで・ごろ・ぐらい）" }}
-              />
-
-              {/* === Vida cotidiana === */}
-              <Stack.Screen name="B6_Compras" component={B6_Compras} options={{ headerShown: true, title: "Compras" }} />
-              <Stack.Screen
-                name="B6_Restaurante"
-                component={B6_Restaurante}
-                options={{ headerShown: true, title: "Restaurante" }}
-              />
-              <Stack.Screen
-                name="B6_Transporte"
-                component={B6_Transporte}
-                options={{ headerShown: true, title: "Transporte" }}
-              />
-              <Stack.Screen name="B6_Dinero" component={B6_Dinero} options={{ headerShown: true, title: "Dinero" }} />
-              <Stack.Screen
-                name="B6_Direcciones"
-                component={B6_Direcciones}
-                options={{ headerShown: true, title: "Direcciones" }}
-              />
-              <Stack.Screen name="B6_Tiendas" component={B6_Tiendas} options={{ headerShown: true, title: "Tiendas" }} />
-              <Stack.Screen name="B6_Hotel" component={B6_Hotel} options={{ headerShown: true, title: "Hotel" }} />
-              <Stack.Screen
-                name="B6_Emergencias"
-                component={B6_Emergencias}
-                options={{ headerShown: true, title: "Emergencias" }}
-              />
-
               {/* === N4 === */}
               <Stack.Screen name="N4Intro" component={N4IntroScreen} options={{ headerShown: false }} />
               <Stack.Screen name="CursoN4" component={CursoN4Screen} options={{ headerShown: false }} />
               <Stack.Screen name="N4_Tema" component={N4TemaScreen} options={{ headerShown: false }} />
+
+              {/* === N3 === */}
+              <Stack.Screen
+                name="N3Intro"
+                component={N3IntroScreen}
+                options={{ headerShown: false, contentStyle: { backgroundColor: "#000" } }}
+              />
+              <Stack.Screen
+                name="CursoN3"
+                component={CursoN3Screen}
+                options={{ headerShown: false, contentStyle: { backgroundColor: "#f5f6f8" } }}
+              />
+
+              {/* ✅ N3 Bloque 1: rutas correctas */}
+              <Stack.Screen name="N3_Unit" component={N3_UnitScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_Block1_Unit2" component={N3_Block1_Unit2Screen} options={{ headerShown: false }} />
             </Stack.Navigator>
           </NavigationContainer>
         </B3ScoreProvider>

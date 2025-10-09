@@ -1,13 +1,16 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
 
     "jsx": "react-jsx",
     "strict": true,
+    "noEmit": true,
+
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
 
@@ -21,9 +24,8 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "src/screens/OnboardingScreen.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "src/types/**/*.d.ts"   // <- para d.ts propios si los usas
+    "src/types/**/*.d.ts"
   ]
 }

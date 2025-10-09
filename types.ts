@@ -157,7 +157,16 @@ B4_MasuNeg: undefined;         // ません negativo
   B6_Emergencias: undefined;
 
   N4Intro: undefined;
-
+  
+    // N3
+  N3Intro: undefined;
+  CursoN3: undefined;
+  N3_Unit: { block: number; unit: number; title: string } | undefined;
+N3_MetasFinalidad: undefined;
+N3_DecisionesCambios: undefined;
+N3_HabitosRutinas: undefined;
+N3_AccionesSin: undefined;
+N3_ReglasPermisos: undefined;
 };
 
 declare global {

@@ -50,6 +50,8 @@ type RootStackParamList = {
   Notificaciones: undefined;
   Chat: undefined;
   ActividadesN5?: undefined;
+ N3Intro: undefined;   // 👈 agrega
+ N4Intro: undefined;   // 👈 si vas a ir a N4Intro (ya lo usas)
 };
 
 type HomeNav = NativeStackNavigationProp<RootStackParamList, "Home">;
@@ -363,7 +365,7 @@ export default function HomeScreen(): React.JSX.Element {
                 title="Ryū: Nivel N3"
                 minutes="50 minutos"
                 image={require("../../assets/images/cursos/n3_leon.webp")}
-                onPress={() => go("CursoN3")}
+                 onPress={() => go("N3Intro")} 
               />
             </Animated.View>
           </View>
