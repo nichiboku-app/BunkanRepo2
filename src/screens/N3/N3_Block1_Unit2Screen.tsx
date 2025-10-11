@@ -1,6 +1,6 @@
 // src/screens/N3/N3_Block1_Unit2Screen.tsx
 // Kanji propuestos (hex): 670d, 5225, 610f, 9078, 7d9a, 7d50, 5a5a, 7531, 90fd, 90e8
-// Genera assets como assets/kanjivg/n3/<hex>_web.webp y luego rellena REQ.
+// Asegúrate de tener los assets como assets/kanjivg/n3/<hex>_web.webp
 
 import { MaterialCommunityIcons as MCI } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -10,12 +10,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Speech from "expo-speech";
 import { useRef, useState } from "react";
 import {
-    Animated,
-    Pressable,
-    StatusBar,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Pressable,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { useFeedbackSounds } from "../../../src/hooks/useFeedbackSounds";
 
@@ -28,6 +28,7 @@ type Q = { id: number; stem: string; options: string[]; answer: string; explain:
 type Kanji = { hex: string; char: string; gloss: string; sample: string };
 type OrderQ = { id: number; jp: string; romaji: string; es: string; tokens: string[] };
 
+// =================== Datos: Kanji ===================
 const KANJI: Kanji[] = [
   { hex: "670d", char: "服", gloss: "ropa / obedecer",   sample: "制服（せいふく）" },
   { hex: "5225", char: "別", gloss: "separar / distinto", sample: "特別（とくべつ）" },
@@ -41,6 +42,7 @@ const KANJI: Kanji[] = [
   { hex: "90e8", char: "部", gloss: "sección / club",     sample: "部長（ぶちょう）" },
 ];
 
+// =================== Datos: Ejemplos ===================
 const EXAMPLES: Ex[] = [
   { jp: "来年日本に留学することにしました。", romaji: "rainen nihon ni ryūgaku suru koto ni shimashita", es: "Decidí estudiar en Japón el próximo año." },
   { jp: "会議は来週の月曜日に行うことになった。", romaji: "kaigi wa raishū no getsuyōbi ni okonau koto ni natta", es: "Se decidió que la reunión será el lunes próximo." },
@@ -59,6 +61,7 @@ const EXAMPLES: Ex[] = [
   { jp: "大学では経済を専攻することにしました。", romaji: "daigaku de wa keizai o senkō suru koto ni shimashita", es: "Decidí especializarme en economía." },
 ];
 
+// =================== Datos: Ordenar y Quiz ===================
 const ORDERS: OrderQ[] = [
   { id: 1, jp: "来年日本に留学することにしました。", romaji: "rainen nihon ni ryūgaku suru koto ni shimashita", es: "Decidí estudiar en Japón el próximo año.", tokens: ["来年","日本","に","留学","する","ことに","しました。"] },
   { id: 2, jp: "会議は来週の月曜日に行うことになった。", romaji: "kaigi wa raishū no getsuyōbi ni okonau koto ni natta", es: "Se decidió que la reunión será el lunes próximo.", tokens: ["会議","は","来週","の","月曜日","に","行う","ことに","なった。"] },
@@ -85,6 +88,69 @@ const QUIZ: Q[] = [
   { id: 15, stem: "健康診断の結果、しばらく運動を控える___。",      options: ["ことにする","ことになる","ことにしている"], answer: "ことになる", explain: "Resultado impuesto por el médico → ことになる" },
 ];
 
+// =================== Datos: Gramática como en primaria ===================
+const PRIMARIA = {
+  definiciones: [
+    { tag: "ことにする", simple: "Yo decido.", extra: "Decisión personal, voluntaria.", ej: "来月から走ることにする。→ \"(Yo) decido correr desde el mes que viene\"." },
+    { tag: "ことになる", simple: "Otros deciden / la situación decide.", extra: "Regla, orden, resultado inevitable.", ej: "雨で試合は中止することになった。→ \"Por la lluvia, se decidió suspender el partido\"." },
+    { tag: "ことにしている", simple: "Hábito por decisión propia.", extra: "Una decisión que mantienes en el tiempo.", ej: "毎朝６時に起きることにしている。→ \"Tengo por costumbre levantarme a las 6\"." },
+    { tag: "ことになっている", simple: "Regla/hábito institucional.", extra: "Norma establecida por un sistema.", ej: "この会社では土曜も出勤することになっている。→ \"En esta empresa se trabaja los sábados\"." },
+    { tag: "こととなる", simple: "Forma formal de ことになる.", extra: "Aparece en anuncios/escritos formales.", ej: "本件は来月より適用されることとなる。→ \"Esto pasará a aplicarse desde el próximo mes\"." },
+  ],
+  cuandoUsar: [
+    { k: "¿Quién toma la decisión?", v: "Yo/grupo con hablante → ことにする.  Otros/reglas/hechos → ことになる." },
+    { k: "¿Es costumbre?", v: "Personal → ことにしている.  Institucional → ことになっている." },
+    { k: "¿Tono formal?", v: "Usa こととなる (≈ ことになる formal)." },
+  ],
+  señalesDeTexto: [
+    "会社の方針で… / 規則で… / 上司の判断で… → ことになる",
+    "〜ため（de salud/dinero/ambiente）に（自分）… → ことにする／ことにしている",
+    "結果 / 都合 / 事情 / 天候 / 不具合 → ことになる",
+  ],
+  conj: [
+    { rotulo: "ことにする（decisión propia）", filas: [
+      { patron: "V dic. + ことにする", ejemplo: "留学することにする（decidir estudiar fuera）" },
+      { patron: "V-ない + ことにする", ejemplo: "食べないことにする（decidir no comer）" },
+      { patron: "Pasado (decisión tomada)", ejemplo: "〜ことにした（ya decidí）" },
+      { patron: "Formal", ejemplo: "〜ことにします（decido / decidiré）" },
+    ]},
+    { rotulo: "ことになる（decisión externa/resultado）", filas: [
+      { patron: "V dic. + ことになる", ejemplo: "中止することになる（se decidirá suspender）" },
+      { patron: "V-ない + ことになる", ejemplo: "行かないことになる（se decidirá no ir）" },
+      { patron: "Pasado (ya decidido por otros)", ejemplo: "〜ことになった" },
+      { patron: "Muy formal", ejemplo: "〜こととなる" },
+    ]},
+    { rotulo: "Hábito", filas: [
+      { patron: "（personal）V dic./V-ない + ことにしている", ejemplo: "走る／走らないことにしている" },
+      { patron: "（regla）V dic./V-ない + ことになっている", ejemplo: "休む／休まないことになっている" },
+    ]},
+  ],
+  contrastes: [
+    { a: "ことにする", b: "ことになる", diff: "¿Quién decide? Yo vs. otros/las circunstancias." },
+    { a: "ことにしている", b: "ことになっている", diff: "Hábito personal vs. regla del sistema." },
+    { a: "ことになる", b: "こととなる", diff: "Neutro coloquial vs. formal (documentos/comunicados)." },
+  ],
+  errores: [
+    "❌ Decir ことにする cuando claramente decide la empresa/otra persona. ✔ Usa ことになる / ことになっている.",
+    "❌ Usar ことになる para hábito personal. ✔ Usa ことにしている.",
+    "❌ Mezclar pasado/actual: 〜ことにした (decisión ya tomada) vs 〜ことにする (decido ahora).",
+  ],
+  arbol: [
+    { q: "¿Decido YO ahora?", r: "→ ことにする / （pasado）ことにした" },
+    { q: "¿Lo decidió OTRO / es regla / fue el clima?", r: "→ ことになる / （pasado）ことになった" },
+    { q: "¿Es costumbre MÍA?", r: "→ ことにしている" },
+    { q: "¿Es regla de la escuela/empresa?", r: "→ ことになっている" },
+    { q: "¿Necesito tono muy formal?", r: "→ こととなる" },
+  ],
+  miniPares: [
+    { jpA: "来月から禁煙することにした。", esA: "Decidí dejar de fumar desde el mes que viene.",
+      jpB: "健康診断の結果、禁煙することになった。", esB: "Por el resultado médico, se decidió que deje de fumar." },
+    { jpA: "毎朝走ることにしている。", esA: "Tengo por costumbre correr cada mañana.",
+      jpB: "この部活では毎朝走ることになっている。", esB: "En este club hay la regla de correr cada mañana." },
+  ],
+};
+
+// =================== Pantalla ===================
 export default function N3_Block1_Unit2Screen() {
   const navigation = useNavigation<Nav>();
   const { playCorrect, playWrong } = useFeedbackSounds();
@@ -120,6 +186,7 @@ export default function N3_Block1_Unit2Screen() {
           <View style={styles.chipsRow}>
             <View style={styles.chip}><Text style={styles.chipTxt}>ことになる</Text></View>
             <View style={styles.chip}><Text style={styles.chipTxt}>ことにする</Text></View>
+            <View style={styles.chip}><Text style={styles.chipTxt}>ことにしている</Text></View>
           </View>
         </View>
       </Animated.View>
@@ -130,23 +197,24 @@ export default function N3_Block1_Unit2Screen() {
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
-        {/* RESUMEN */}
+        {/* RESUMEN RÁPIDO */}
         <View style={styles.card}>
           <Text style={styles.h2}>📌 En una línea</Text>
           <Text style={styles.p}>
             <Text style={styles.bold}>ことにする</Text> = decisión propia.{"  "}
-            <Text style={styles.bold}>ことになる</Text> = decisión externa / resultado inevitable / regla.{"  "}
-            <Text style={styles.bold}>ことにしている</Text> = hábito (decisión sostenida).
+            <Text style={styles.bold}>ことになる</Text> = decisión externa / resultado / regla.{"  "}
+            <Text style={styles.bold}>ことにしている</Text> = hábito personal.{"  "}
+            <Text style={styles.bold}>ことになっている</Text> = regla establecida.
           </Text>
 
           <Text style={[styles.h3, { marginTop: 12 }]}>🧩 Patrones clave</Text>
           {[
-            "V（辞書形）＋ことにする",
-            "V（ない形）＋ことにする",
-            "V（辞書形）＋ことになる",
-            "V（ない形）＋ことになる",
-            "V（辞書形）＋ことにしている",
+            "V（辞書形）＋ことにする ／ V（ない形）＋ことにする",
+            "V（辞書形）＋ことになる ／ V（ない形）＋ことになる",
+            "V（辞書形/ない）＋ことにしている",
+            "V（辞書形/ない）＋ことになっている",
             "（フォーマル）〜こととなる",
+            "過去：〜ことにした／〜ことになった",
           ].map((p, i) => (
             <View key={i} style={styles.codeBlock}>
               <Text style={styles.code}>{p}</Text>
@@ -155,16 +223,93 @@ export default function N3_Block1_Unit2Screen() {
 
           <Text style={[styles.h3, { marginTop: 12 }]}>🔤 Mini-guía</Text>
           {[
-            { k: "¿Quién decide?", v: "Propio→ことにする / Externo→ことになる" },
-            { k: "Hábito", v: "〜ことにしている" },
-            { k: "Tiempo", v: "Pasado: 〜ことにした／〜ことになった" },
-            { k: "Señales", v: "会社の方針で／上司の判断で／規則で → ことになる" },
+            { k: "¿Quién decide?", v: "Yo→ことにする / Otros・regla→ことになる" },
+            { k: "Hábito", v: "Personal→ことにしている / Institucional→ことになっている" },
+            { k: "Formalidad", v: "Documento oficial→こととなる" },
           ].map((it, i) => (
             <Text key={i} style={styles.p}><Text style={styles.bold}>{it.k}:</Text> {it.v}</Text>
           ))}
         </View>
 
-        {/* EJEMPLOS */}
+        {/* 💡 GRAMÁTICA COMO EN PRIMARIA (NUEVO) */}
+        <View style={styles.card}>
+          <Text style={styles.h2}>💡 Gramática como en primaria</Text>
+
+          {/* Definiciones */}
+          <Text style={styles.h3}>1) Definiciones fáciles</Text>
+          {PRIMARIA.definiciones.map((d, i) => (
+            <View key={i} style={styles.blockRow}>
+              <Text style={styles.tag}>{d.tag}</Text>
+              <Text style={styles.p}><Text style={styles.bold}>{d.simple}</Text> — {d.extra}</Text>
+              <Text style={styles.gray}>{d.ej}</Text>
+            </View>
+          ))}
+
+          {/* Cuándo usar */}
+          <Text style={styles.h3}>2) ¿Cuándo usar cada una?</Text>
+          {PRIMARIA.cuandoUsar.map((x, i) => (
+            <Text key={i} style={styles.p}><Text style={styles.bold}>{x.k}:</Text> {x.v}</Text>
+          ))}
+
+          {/* Señales de texto */}
+          <Text style={styles.h3}>3) Señales que te ayudan a elegir</Text>
+          {PRIMARIA.señalesDeTexto.map((s, i) => (
+            <View key={i} style={styles.liDot}><Text style={styles.p}>{s}</Text></View>
+          ))}
+
+          {/* Conjugación práctica */}
+          <Text style={styles.h3}>4) Conjugación práctica (patrones + ejemplo)</Text>
+          {PRIMARIA.conj.map((tbl, i) => (
+            <View key={i} style={[styles.table, { marginTop: 6 }]}>
+              <Text style={styles.tableTitle}>{tbl.rotulo}</Text>
+              {tbl.filas.map((f, j) => (
+                <View key={j} style={styles.tr}>
+                  <Text style={[styles.td, { flex: 1.1 }]}>{f.patron}</Text>
+                  <Text style={[styles.td, { flex: 1 }]}>{f.ejemplo}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+
+          {/* Contrastes */}
+          <Text style={styles.h3}>5) Diferencias importantes</Text>
+          {PRIMARIA.contrastes.map((c, i) => (
+            <View key={i} style={styles.contrastRow}>
+              <Text style={[styles.tag, { backgroundColor: "#F1F5F9", color: "#0E1015" }]}>{c.a}</Text>
+              <Text style={styles.vs}>vs</Text>
+              <Text style={[styles.tag, { backgroundColor: "#F1F5F9", color: "#0E1015" }]}>{c.b}</Text>
+              <Text style={[styles.p, { marginTop: 6 }]}>{c.diff}</Text>
+            </View>
+          ))}
+
+          {/* Errores comunes */}
+          <Text style={styles.h3}>6) Errores comunes</Text>
+          {PRIMARIA.errores.map((e, i) => (
+            <View key={i} style={styles.liCross}><Text style={styles.p}>{e}</Text></View>
+          ))}
+
+          {/* Árbol rápido */}
+          <Text style={styles.h3}>7) Árbol rápido de decisión</Text>
+          {PRIMARIA.arbol.map((a, i) => (
+            <View key={i} style={styles.treeRow}>
+              <Text style={styles.treeQ}>{a.q}</Text>
+              <Text style={styles.treeA}>{a.r}</Text>
+            </View>
+          ))}
+
+          {/* Pares mínimos (comparar significado) */}
+          <Text style={styles.h3}>8) Pares mínimos (mismo tema, distinto matiz)</Text>
+          {PRIMARIA.miniPares.map((p, i) => (
+            <View key={i} style={styles.miniPair}>
+              <Text style={styles.jp}>{p.jpA}</Text>
+              <Text style={styles.es}>→ {p.esA}</Text>
+              <Text style={[styles.jp, { marginTop: 6 }]}>{p.jpB}</Text>
+              <Text style={styles.es}>→ {p.esB}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* EJEMPLOS CON AUDIO */}
         <View style={styles.card}>
           <Text style={styles.h2}>🗣️ Ejemplos (toca el altavoz)</Text>
           {EXAMPLES.map((ex, i) => (
@@ -218,23 +363,23 @@ export default function N3_Block1_Unit2Screen() {
   );
 }
 
-/* KanjiCard */
+/* ============ Subcomponentes ============ */
 function KanjiCard({ k, onSpeak }: { k: Kanji; onSpeak: () => void }) {
   const [showStroke, setShowStroke] = useState(false);
 
-  // ⚠️ Rellena con require(...) solo de archivos que EXISTAN.
+  // ⚠️ Asegúrate de que estos archivos EXISTAN.
   const REQ: Record<string, any> = {
-  "670d": require("../../../assets/kanjivg/n3/670d_web.webp"),
-  "5225": require("../../../assets/kanjivg/n3/5225_web.webp"),
-  "610f": require("../../../assets/kanjivg/n3/610f_web.webp"),
-  "9078": require("../../../assets/kanjivg/n3/9078_web.webp"),
-  "7d9a": require("../../../assets/kanjivg/n3/7d9a_web.webp"),
-  "7d50": require("../../../assets/kanjivg/n3/7d50_web.webp"),
-  "5a5a": require("../../../assets/kanjivg/n3/5a5a_web.webp"),
-  "7531": require("../../../assets/kanjivg/n3/7531_web.webp"),
-  "90fd": require("../../../assets/kanjivg/n3/90fd_web.webp"),
-  "90e8": require("../../../assets/kanjivg/n3/90e8_web.webp"),
-};
+    "670d": require("../../../assets/kanjivg/n3/670d_web.webp"),
+    "5225": require("../../../assets/kanjivg/n3/5225_web.webp"),
+    "610f": require("../../../assets/kanjivg/n3/610f_web.webp"),
+    "9078": require("../../../assets/kanjivg/n3/9078_web.webp"),
+    "7d9a": require("../../../assets/kanjivg/n3/7d9a_web.webp"),
+    "7d50": require("../../../assets/kanjivg/n3/7d50_web.webp"),
+    "5a5a": require("../../../assets/kanjivg/n3/5a5a_web.webp"),
+    "7531": require("../../../assets/kanjivg/n3/7531_web.webp"),
+    "90fd": require("../../../assets/kanjivg/n3/90fd_web.webp"),
+    "90e8": require("../../../assets/kanjivg/n3/90e8_web.webp"),
+  };
 
   const src = REQ[k.hex];
 
@@ -265,7 +410,6 @@ function KanjiCard({ k, onSpeak }: { k: Kanji; onSpeak: () => void }) {
   );
 }
 
-/* OrderQuestion */
 function OrderQuestion({ q, onCorrect }: { q: OrderQ; onCorrect: () => void }) {
   const [picked, setPicked] = useState<string[]>([]);
   const [done, setDone] = useState<null | boolean>(null); // null = en curso; true ok; false mal
@@ -330,7 +474,6 @@ function OrderQuestion({ q, onCorrect }: { q: OrderQ; onCorrect: () => void }) {
   );
 }
 
-/* Quiz item */
 function QuizItem({ q, idx, onResult }: { q: Q; idx: number; onResult: (ok:boolean)=>void }) {
   const [sel, setSel] = useState<string | null>(null);
   const done = sel !== null;
@@ -367,6 +510,7 @@ function QuizItem({ q, idx, onResult }: { q: Q; idx: number; onResult: (ok:boole
   );
 }
 
+// =================== Estilos ===================
 const R = 16;
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#0B0C0F" },
@@ -387,6 +531,21 @@ const styles = StyleSheet.create({
   gray: { color: "#6B7280" },
   codeBlock: { backgroundColor: "#0b0c0f", borderColor: "rgba(255,255,255,0.08)", borderWidth: 1, borderRadius: 12, padding: 10, marginTop: 6 },
   code: { color: "#fff", fontWeight: "800", marginBottom: 4 },
+
+  blockRow: { paddingVertical: 6, borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.06)" },
+  tag: { alignSelf: "flex-start", backgroundColor: "#0E1015", color: "#fff", fontWeight: "900", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 6 },
+  liDot: { paddingLeft: 10, borderLeftWidth: 3, borderLeftColor: "#E5E7EB", marginVertical: 4 },
+  liCross: { paddingLeft: 10, borderLeftWidth: 3, borderLeftColor: "#FCA5A5", marginVertical: 4 },
+
+  table: { borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", borderRadius: 10, overflow: "hidden" },
+  tableTitle: { backgroundColor: "#F8FAFC", paddingHorizontal: 10, paddingVertical: 8, fontWeight: "900", color: "#0E1015" },
+  tr: { flexDirection: "row", gap: 10, paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.06)" },
+  td: { color: "#1f2330", flexWrap: "wrap" },
+  contrastRow: { marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.06)" },
+  vs: { marginHorizontal: 8, fontWeight: "900", color: "#6B7280" },
+  treeRow: { paddingVertical: 6, borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.06)" },
+  treeQ: { fontWeight: "900", color: "#0E1015" },
+  treeA: { color: "#1f2330" },
 
   exampleRow: { flexDirection: "row", gap: 10, alignItems: "center", marginTop: 10 },
   playBtn: { width: 34, height: 34, borderRadius: 8, backgroundColor: "#111827", alignItems: "center", justifyContent: "center" },

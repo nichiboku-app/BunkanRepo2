@@ -132,9 +132,17 @@ import N4IntroScreen from "./src/screens/N4IntroScreen";
 // === N3 ===
 import CursoN3Screen from "./src/screens/N3/CursoN3Screen";
 import N3_Block1_Unit2Screen from "./src/screens/N3/N3_Block1_Unit2Screen";
+import N3_Block1_Unit3Screen from "./src/screens/N3/N3_Block1_Unit3Screen";
+import N3_Block1_Unit4Screen from "./src/screens/N3/N3_Block1_Unit4Screen";
+import N3_Block1_Unit5Screen from "./src/screens/N3/N3_Block1_Unit5Screen";
 import N3_UnitScreen from "./src/screens/N3/N3_UnitScreen";
-import N3IntroScreen from "./src/screens/N3IntroScreen"; // o "./src/screens/N3/N3IntroScreen" si lo mueves
+import N3IntroScreen from "./src/screens/N3IntroScreen";
 
+import N3_B2_U1_Screen from "./src/screens/N3/B2/N3_B2_U1_Screen";
+
+
+
+// Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function Placeholder({ title }: { title: string }) {
@@ -209,25 +217,17 @@ export default function App() {
                 component={EjemplosGrupoA}
                 options={{ headerShown: true, title: "Ejemplos — Grupo A" }}
               />
-
-              {/* === Vocabulario K (REAL, ÚNICO) === */}
               <Stack.Screen
                 name="VocabularioGrupoK"
                 component={VocabularioGrupoK}
                 options={{ headerShown: true, title: "Vocabulario — Grupo K" }}
               />
-
-              {/* === Flashcards educativas === */}
               <Stack.Screen name="ATarjetas" component={AtarjetasScreen} options={{ headerShown: false }} />
-
-              {/* === Matching K REAL === */}
               <Stack.Screen
                 name="MatchingGrupoK"
                 component={MatchingGrupoK}
                 options={{ headerShown: true, title: "Matching — Grupo K" }}
               />
-
-              {/* === Otros N5 === */}
               <Stack.Screen
                 name="GifSaludo"
                 component={GifSaludo}
@@ -265,15 +265,11 @@ export default function App() {
                 component={PronunciacionGrupoA}
                 options={{ headerShown: true, title: "Pronunciación — Grupo A" }}
               />
-
-              {/* === Implementadas === */}
               <Stack.Screen
                 name="ATrazoAnimado"
                 component={ATrazoAnimado}
                 options={{ headerShown: true, title: "Trazo animado" }}
               />
-
-              {/* === Dictado visual (REAL) === */}
               <Stack.Screen name="ADictadoVisual" component={ADictadoVisual} options={{ headerShown: false }} />
 
               {/* === Placeholders varios === */}
@@ -328,6 +324,7 @@ export default function App() {
                 component={TQuizEscucha}
                 options={{ headerShown: true, title: "Quiz de escucha (T)" }}
               />
+
               <Stack.Screen name="FamiliaNH" component={FamiliaNHScreen} options={{ title: "Familias N y H" }} />
               <Stack.Screen name="NLecturaGuiada" component={NLecturaGuiadaScreen} options={{ title: "Lectura guiada (N)" }} />
               <Stack.Screen name="HRoleplaySaludo" component={HRoleplaySaludoScreen} options={{ title: "Roleplay: me llamo..." }} />
@@ -339,14 +336,11 @@ export default function App() {
                 component={HiraganaYRMenu}
                 options={{ title: "Hiragana Y–R (やゆよ・らりるれろ)" }}
               />
-              {/* ✅ NUEVO: W–N */}
               <Stack.Screen
                 name="HiraganaWNMenu"
                 component={HiraganaWNMenu}
                 options={{ title: "Hiragana W–N (わ・を・ん / contracciones)" }}
               />
-
-              {/* opcional: subpantallas */}
               <Stack.Screen name="M_Dictado" component={M_Dictado} options={{ title: "Dictado (M)" }} />
               <Stack.Screen name="M_PracticaVoz" component={M_PracticaVoz} options={{ title: "Práctica con voz (M)" }} />
               <Stack.Screen
@@ -360,7 +354,6 @@ export default function App() {
                 options={{ title: "Completar palabras (Y–R)" }}
               />
 
-              {/* ✅ Subpantallas W–N nuevas */}
               <Stack.Screen
                 name="WN_LecturaFrases"
                 component={WN_LecturaFrases}
@@ -374,16 +367,8 @@ export default function App() {
 
               {/* === Katakana === */}
               <Stack.Screen name="KatakanaMenu" component={KatakanaMenu} options={{ title: "Katakana — Menú" }} />
-              <Stack.Screen
-                name="KatakanaRow"
-                component={KatakanaRow}
-                options={{ title: "Katakana — Práctica por fila" }}
-              />
-              <Stack.Screen
-                name="KatakanaChallenge"
-                component={KatakanaChallenge}
-                options={{ title: "Katakana — Challenge" }}
-              />
+              <Stack.Screen name="KatakanaRow" component={KatakanaRow} options={{ title: "Katakana — Práctica por fila" }} />
+              <Stack.Screen name="KatakanaChallenge" component={KatakanaChallenge} options={{ title: "Katakana — Challenge" }} />
 
               {/* === Bloques premium / examen === */}
               <Stack.Screen name="B3VocabularioMenu" component={B3VocabularioMenu} options={{ title: "Bloque 3" }} />
@@ -392,108 +377,32 @@ export default function App() {
               <Stack.Screen name="B6VidaCotidianaMenu" component={B6VidaCotidianaMenu} options={{ title: "Bloque 6" }} />
               <Stack.Screen name="B7LecturaPracticaMenu" component={B7LecturaPracticaMenu} options={{ title: "Bloque 7" }} />
               <Stack.Screen name="B8EvaluacionesLogrosMenu" component={B8EvaluacionesLogrosMenu} options={{ title: "Bloque 8" }} />
-              <Stack.Screen
-                name="ExamenFinalMapacheN5"
-                component={ExamenFinalMapacheN5}
-                options={{ title: "Examen final N5" }}
-              />
+              <Stack.Screen name="ExamenFinalMapacheN5" component={ExamenFinalMapacheN5} options={{ title: "Examen final N5" }} />
 
               {/* ✅ Bloque 3: pantallas reales */}
-              <Stack.Screen
-                name="B3_NumerosEdad"
-                component={B3_NumerosEdad}
-                options={{ headerShown: true, title: "B3 — Números y edad" }}
-              />
-              <Stack.Screen
-                name="B3_NumerosEdad_Roleplay"
-                component={B3_NumerosEdad_Roleplay}
-                options={{ headerShown: true, title: "Roleplay — Números y edad" }}
-              />
-              <Stack.Screen
-                name="B3_NumerosEdad_Tarjetas"
-                component={B3_NumerosEdad_Tarjetas}
-                options={{ headerShown: true, title: "Tarjetas animadas — Números y edad" }}
-              />
-              <Stack.Screen
-                name="B3_NumerosEdad_Contadores"
-                component={B3_NumerosEdad_Contadores}
-                options={{ headerShown: true, title: "Contadores — Números y edad" }}
-              />
+              <Stack.Screen name="B3_NumerosEdad" component={B3_NumerosEdad} options={{ headerShown: true, title: "B3 — Números y edad" }} />
+              <Stack.Screen name="B3_NumerosEdad_Roleplay" component={B3_NumerosEdad_Roleplay} options={{ headerShown: true, title: "Roleplay — Números y edad" }} />
+              <Stack.Screen name="B3_NumerosEdad_Tarjetas" component={B3_NumerosEdad_Tarjetas} options={{ headerShown: true, title: "Tarjetas animadas — Números y edad" }} />
+              <Stack.Screen name="B3_NumerosEdad_Contadores" component={B3_NumerosEdad_Contadores} options={{ headerShown: true, title: "Contadores — Números y edad" }} />
 
               <Stack.Screen name="B3_Familia" component={B3_Familia} />
-              <Stack.Screen
-                name="B3_Familia_Roleplay"
-                component={B3_Familia_Roleplay}
-                options={{ title: "Roleplay (Familia)" }}
-              />
-              <Stack.Screen
-                name="B3_Familia_Tarjetas"
-                component={B3_Familia_Tarjetas}
-                options={{ title: "Tarjetas (Familia)" }}
-              />
-              <Stack.Screen
-                name="B3_Familia_Arbol"
-                component={B3_Familia_Arbol}
-                options={{ title: "Árbol familiar" }}
-              />
+              <Stack.Screen name="B3_Familia_Roleplay" component={B3_Familia_Roleplay} options={{ title: "Roleplay (Familia)" }} />
+              <Stack.Screen name="B3_Familia_Tarjetas" component={B3_Familia_Tarjetas} options={{ title: "Tarjetas (Familia)" }} />
+              <Stack.Screen name="B3_Familia_Arbol" component={B3_Familia_Arbol} options={{ title: "Árbol familiar" }} />
 
-              <Stack.Screen
-                name="B3_Profesiones"
-                component={B3_Profesiones}
-                options={{ headerShown: true, title: "B3 — Profesiones" }}
-              />
-              <Stack.Screen
-                name="B3_Profesiones_Tarjetas"
-                component={B3_Profesiones_Tarjetas}
-                options={{ headerShown: true, title: "Tarjetas — Profesiones" }}
-              />
-              <Stack.Screen
-                name="B3_Profesiones_Roleplay"
-                component={B3_Profesiones_Roleplay}
-                options={{ headerShown: true, title: "Roleplay — Profesiones" }}
-              />
-              <Stack.Screen
-                name="B3_Profesiones_Oraciones"
-                component={B3_Profesiones_Oraciones}
-                options={{ headerShown: true, title: "Oraciones — Profesiones" }}
-              />
-              <Stack.Screen
-                name="B3_Profesiones_Dialogo"
-                component={B3_Profesiones_Dialogo}
-                options={{ headerShown: true, title: "Diálogo y traducción" }}
-              />
+              <Stack.Screen name="B3_Profesiones" component={B3_Profesiones} options={{ headerShown: true, title: "B3 — Profesiones" }} />
+              <Stack.Screen name="B3_Profesiones_Tarjetas" component={B3_Profesiones_Tarjetas} options={{ headerShown: true, title: "Tarjetas — Profesiones" }} />
+              <Stack.Screen name="B3_Profesiones_Roleplay" component={B3_Profesiones_Roleplay} options={{ headerShown: true, title: "Roleplay — Profesiones" }} />
+              <Stack.Screen name="B3_Profesiones_Oraciones" component={B3_Profesiones_Oraciones} options={{ headerShown: true, title: "Oraciones — Profesiones" }} />
+              <Stack.Screen name="B3_Profesiones_Dialogo" component={B3_Profesiones_Dialogo} options={{ headerShown: true, title: "Diálogo y traducción" }} />
 
-              <Stack.Screen
-                name="B3_ObjetosClase"
-                component={B3_ObjetosClase}
-                options={{ headerShown: true, title: "B3 — Objetos de clase" }}
-              />
-              <Stack.Screen
-                name="B3_LugaresCiudad"
-                component={B3_LugaresCiudad}
-                options={{ headerShown: true, title: "B3 — Lugares de la ciudad" }}
-              />
-              <Stack.Screen
-                name="B3_PreguntasBasicas"
-                component={B3_PreguntasBasicas}
-                options={{ headerShown: true, title: "B3 — Preguntas básicas" }}
-              />
+              <Stack.Screen name="B3_ObjetosClase" component={B3_ObjetosClase} options={{ headerShown: true, title: "B3 — Objetos de clase" }} />
+              <Stack.Screen name="B3_LugaresCiudad" component={B3_LugaresCiudad} options={{ headerShown: true, title: "B3 — Lugares de la ciudad" }} />
+              <Stack.Screen name="B3_PreguntasBasicas" component={B3_PreguntasBasicas} options={{ headerShown: true, title: "B3 — Preguntas básicas" }} />
 
-              <Stack.Screen
-                name="B3_ComidaBebidas"
-                component={B3_ComidaBebidas}
-                options={{ headerShown: true, title: "B3 — Comida y bebidas" }}
-              />
-              <Stack.Screen
-                name="B3_ColoresAdjetivos"
-                component={B3_ColoresAdjetivos}
-                options={{ headerShown: true, title: "B3 — Colores y adjetivos" }}
-              />
-              <Stack.Screen
-                name="B3_Cortesia"
-                component={B3_Cortesia}
-                options={{ headerShown: true, title: "B3 — Cortesía" }}
-              />
+              <Stack.Screen name="B3_ComidaBebidas" component={B3_ComidaBebidas} options={{ headerShown: true, title: "B3 — Comida y bebidas" }} />
+              <Stack.Screen name="B3_ColoresAdjetivos" component={B3_ColoresAdjetivos} options={{ headerShown: true, title: "B3 — Colores y adjetivos" }} />
+              <Stack.Screen name="B3_Cortesia" component={B3_Cortesia} options={{ headerShown: true, title: "B3 — Cortesía" }} />
 
               {/* === N4 === */}
               <Stack.Screen name="N4Intro" component={N4IntroScreen} options={{ headerShown: false }} />
@@ -501,20 +410,22 @@ export default function App() {
               <Stack.Screen name="N4_Tema" component={N4TemaScreen} options={{ headerShown: false }} />
 
               {/* === N3 === */}
-              <Stack.Screen
-                name="N3Intro"
-                component={N3IntroScreen}
-                options={{ headerShown: false, contentStyle: { backgroundColor: "#000" } }}
-              />
-              <Stack.Screen
-                name="CursoN3"
-                component={CursoN3Screen}
-                options={{ headerShown: false, contentStyle: { backgroundColor: "#f5f6f8" } }}
-              />
+              <Stack.Screen name="N3Intro" component={N3IntroScreen} options={{ headerShown: false, contentStyle: { backgroundColor: "#000" } }} />
+              <Stack.Screen name="CursoN3" component={CursoN3Screen} options={{ headerShown: false, contentStyle: { backgroundColor: "#f5f6f8" } }} />
 
               {/* ✅ N3 Bloque 1: rutas correctas */}
               <Stack.Screen name="N3_Unit" component={N3_UnitScreen} options={{ headerShown: false }} />
               <Stack.Screen name="N3_Block1_Unit2" component={N3_Block1_Unit2Screen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_Block1_Unit3" component={N3_Block1_Unit3Screen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_Block1_Unit4" component={N3_Block1_Unit4Screen} options={{ headerShown: false }} />
+              {/* 👉 NUEVA */}
+              <Stack.Screen name="N3_Block1_Unit5" component={N3_Block1_Unit5Screen} options={{ headerShown: false }} />
+              <Stack.Screen
+  name="N3_B2_U1"
+  component={N3_B2_U1_Screen}
+  options={{ headerShown: false }}
+/>
+
             </Stack.Navigator>
           </NavigationContainer>
         </B3ScoreProvider>

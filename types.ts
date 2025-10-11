@@ -167,7 +167,14 @@ N3_DecisionesCambios: undefined;
 N3_HabitosRutinas: undefined;
 N3_AccionesSin: undefined;
 N3_ReglasPermisos: undefined;
+N3_Block1_Unit3: undefined; // 03 Hábitos y rutinas  ← NUEVA
+N3_Block1_Unit4: undefined | { block: number; unit: number; title?: string };
+N3_Block1_Unit5:| undefined | { block: number; unit: number; title?: string };
+
+  N3_B2_U1: undefined | { block?: 2; unit?: 1; title?: string };
+  N3_B2_U1_Practice: undefined | { from?: "N3_B2_U1" };
 };
+
 
 declare global {
   namespace ReactNavigation {

@@ -56,12 +56,12 @@ export default function CursoN3Screen() {
         [
           "N3_Unit",           // 01 Metas y finalidad  → src/screens/N3/N3_UnitScreen.tsx
           "N3_Block1_Unit2",   // 02 Decisiones & cambios → src/screens/N3/N3_Block1_Unit2Screen.tsx
-          null,                // 03 Hábitos y rutinas
-          null,                // 04 Acciones “sin…”
-          null,                // 05 Reglas y permisos
+          "N3_Block1_Unit3",                // 03 Hábitos y rutinas
+           "N3_Block1_Unit4",                // 04 Acciones “sin…”
+          "N3_Block1_Unit5",                // 05 Reglas y permisos
         ],
         // BLOQUE 2 — Opiniones...
-        [null, null, null, null, null],
+        ["N3_B2_U1", null, null, null, null],
         // BLOQUE 3 — Condicionales...
         [null, null, null, null, null],
         // BLOQUE 4 — Tiempo...
