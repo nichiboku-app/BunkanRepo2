@@ -138,10 +138,17 @@ import N3_Block1_Unit5Screen from "./src/screens/N3/N3_Block1_Unit5Screen";
 import N3_UnitScreen from "./src/screens/N3/N3_UnitScreen";
 import N3IntroScreen from "./src/screens/N3IntroScreen";
 
+import N3_B2_U10_PracticeScreen from "./src/screens/N3/B2/N3_B2_U10_PracticeScreen";
 import N3_B2_U1_Screen from "./src/screens/N3/B2/N3_B2_U1_Screen";
-
-
-
+import N3_B2_U2_PracticeScreen from "./src/screens/N3/B2/N3_B2_U2_PracticeScreen";
+import N3_B2_U3_PracticeScreen from "./src/screens/N3/B2/N3_B2_U3_PracticeScreen";
+import N3_B2_U4_PracticeScreen from "./src/screens/N3/B2/N3_B2_U4_PracticeScreen";
+import N3_B3_U1_PracticeScreen from "./src/screens/N3/B3/N3_B3_U1_PracticeScreen";
+import N3_B3_U2_PracticeScreen from "./src/screens/N3/B3/N3_B3_U2_PracticeScreen";
+import N3_B3_U3_PracticeScreen from "./src/screens/N3/B3/N3_B3_U3_PracticeScreen";
+import N3_B3_U4_PracticeScreen from "./src/screens/N3/B3/N3_B3_U4_PracticeScreen";
+import N3_B3_U5_PracticeScreen from "./src/screens/N3/B3/N3_B3_U5_PracticeScreen";
+import N3_B4_U1_PracticeScreen from "./src/screens/N3/B4/N3_B4_U1_PracticeScreen";
 // Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -157,6 +164,7 @@ function Placeholder({ title }: { title: string }) {
 }
 
 export default function App() {
+  const newLocal = "N3_B3_U1_Practice";
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -423,6 +431,49 @@ export default function App() {
               <Stack.Screen
   name="N3_B2_U1"
   component={N3_B2_U1_Screen}
+  options={{ headerShown: false }}
+/>
+<Stack.Screen name="N3_B2_U2_Practice" component={N3_B2_U2_PracticeScreen} options={{ headerShown: false }} />
+ <Stack.Screen
+          name="N3_B2_U3_Practice"
+          component={N3_B2_U3_PracticeScreen}
+          options={{ title: "B2 — 03 Práctica" }}
+        />
+<Stack.Screen
+  name="N3_B2_U4_Practice"
+  component={N3_B2_U4_PracticeScreen}
+  options={{ title: "B2 — 04 Practice" }}
+/>
+<Stack.Screen
+  name="N3_B2_U10_Practice"
+  component={N3_B2_U10_PracticeScreen}
+  options={{ title: "B2 — 10 Práctica" }}
+/>
+<Stack.Screen
+  name={newLocal}
+  component={N3_B3_U1_PracticeScreen}
+  options={{ title: "B3 — 01 Práctica" }}
+/>
+<Stack.Screen
+  name="N3_B3_U2_Practice"
+  component={N3_B3_U2_PracticeScreen}
+  options={{ headerShown: false, title: "B3 — 02 Práctica" }}
+/>
+ <Stack.Screen name="N3_B3_U3_Practice" component={N3_B3_U3_PracticeScreen} />
+ <Stack.Screen
+          name="N3_B3_U4_Practice"
+          component={N3_B3_U4_PracticeScreen}
+        />
+
+        <Stack.Screen
+  name="N3_B3_U5_Practice"
+  component={N3_B3_U5_PracticeScreen}
+  options={{ headerShown: false }}
+/>
+
+<Stack.Screen
+  name="N3_B4_U1_Practice"
+  component={N3_B4_U1_PracticeScreen}
   options={{ headerShown: false }}
 />
 

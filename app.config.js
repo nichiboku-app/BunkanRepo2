@@ -68,17 +68,17 @@ module.exports = {
           backgroundColor: "#ffffff",
         },
       ],
-      /**
-       * ✅ Reemplazo de expo-av (SDK 54+):
-       * Usa expo-audio + expo-video.
-       * Añadimos mensaje del permiso de micrófono (Android)
-       * vía el plugin de expo-audio.
-       */
-      ["expo-audio", {
-        microphonePermission:
-          "Permite que Nichiboku use el micrófono para prácticas de pronunciación.",
-      }],
+      // ✅ Reemplazo de expo-av (SDK 54+): usa expo-audio + expo-video
+      [
+        "expo-audio",
+        {
+          microphonePermission:
+            "Permite que Nichiboku use el micrófono para prácticas de pronunciación.",
+        },
+      ],
       "expo-video",
+      // ✅ Lo que pedía Expo para poder escribir la config
+      "expo-web-browser",
     ],
 
     experiments: {
