@@ -55,12 +55,12 @@ import TrazosGrupoK from "./src/screens/N5/TrazosGrupoK";
 import FamiliaSScreen from "./src/screens/N5/FamiliaS/SEscrituraGrupoS";
 import TrazosFamiliaSZ from "./src/screens/N5/FamiliaS/TrazosFamiliaSZ";
 
-// ✅ Familia S: pantallas auxiliares
+// ✅ Familia S: auxiliares
 import SCaligrafiaDigital from "./src/screens/N5/FamiliaS/SCaligrafiaDigital";
 import SEjemplosGrupoS from "./src/screens/N5/FamiliaS/SEjemplosGrupoS";
 import SLecturaSilabas from "./src/screens/N5/FamiliaS/SLecturaSilabas";
 
-// ✅ Familia T: pantallas auxiliares
+// ✅ Familia T: auxiliares
 import TQuizEscucha from "./src/screens/N5/FamiliaS/TQuizEscucha";
 import TTrazoGif from "./src/screens/N5/FamiliaS/TTrazoGif";
 
@@ -126,18 +126,10 @@ import B3_Cortesia from "./src/screens/N5/B3Vocabulario/B3_Cortesia";
 
 // === N4 ===
 import CursoN4Screen from "./src/screens/N4/CursoN4Screen";
-import N4TemaScreen from "./src/screens/N4/N4TemaScreen"; // ⬅️ pantalla unificada por tema
+import N4TemaScreen from "./src/screens/N4/N4TemaScreen";
 import N4IntroScreen from "./src/screens/N4IntroScreen";
 
 // === N3 ===
-import CursoN3Screen from "./src/screens/N3/CursoN3Screen";
-import N3_Block1_Unit2Screen from "./src/screens/N3/N3_Block1_Unit2Screen";
-import N3_Block1_Unit3Screen from "./src/screens/N3/N3_Block1_Unit3Screen";
-import N3_Block1_Unit4Screen from "./src/screens/N3/N3_Block1_Unit4Screen";
-import N3_Block1_Unit5Screen from "./src/screens/N3/N3_Block1_Unit5Screen";
-import N3_UnitScreen from "./src/screens/N3/N3_UnitScreen";
-import N3IntroScreen from "./src/screens/N3IntroScreen";
-
 import N3_B2_U10_PracticeScreen from "./src/screens/N3/B2/N3_B2_U10_PracticeScreen";
 import N3_B2_U1_Screen from "./src/screens/N3/B2/N3_B2_U1_Screen";
 import N3_B2_U2_PracticeScreen from "./src/screens/N3/B2/N3_B2_U2_PracticeScreen";
@@ -149,6 +141,32 @@ import N3_B3_U3_PracticeScreen from "./src/screens/N3/B3/N3_B3_U3_PracticeScreen
 import N3_B3_U4_PracticeScreen from "./src/screens/N3/B3/N3_B3_U4_PracticeScreen";
 import N3_B3_U5_PracticeScreen from "./src/screens/N3/B3/N3_B3_U5_PracticeScreen";
 import N3_B4_U1_PracticeScreen from "./src/screens/N3/B4/N3_B4_U1_PracticeScreen";
+import N3_B4_U20_PracticeScreen from "./src/screens/N3/B4/N3_B4_U20_PracticeScreen";
+import N3_B4_U2_PracticeScreen from "./src/screens/N3/B4/N3_B4_U2_PracticeScreen";
+import N3_B4_U3_PracticeScreen from "./src/screens/N3/B4/N3_B4_U3_PracticeScreen";
+import N3_B4_U4_PracticeScreen from "./src/screens/N3/B4/N3_B4_U4_PracticeScreen";
+
+import CursoN3Screen from "./src/screens/N3/CursoN3Screen";
+import N3_Block1_Unit2Screen from "./src/screens/N3/N3_Block1_Unit2Screen";
+import N3_Block1_Unit3Screen from "./src/screens/N3/N3_Block1_Unit3Screen";
+import N3_Block1_Unit4Screen from "./src/screens/N3/N3_Block1_Unit4Screen";
+import N3_Block1_Unit5Screen from "./src/screens/N3/N3_Block1_Unit5Screen";
+import N3_UnitScreen from "./src/screens/N3/N3_UnitScreen";
+import N3IntroScreen from "./src/screens/N3IntroScreen";
+
+import n3_B5_U1Screen from "./src/screens/N3/B5/N3_B5_U1";
+import N3_B5_U2_PracticeScreen from "./src/screens/N3/B5/N3_B5_U2_PracticeScreen";
+import N3_B5_U3_PracticeScreen from "./src/screens/N3/B5/N3_B5_U3_PracticeScreen";
+import N3_B5_U4_PracticeScreen from "./src/screens/N3/B5/N3_B5_U4_PracticeScreen";
+import N3_B5_U5_PracticeScreen from "./src/screens/N3/B5/N3_B5_U5_PracticeScreen";
+
+import N3_B6_U2_PracticeScreen from "./src/screens/N3/B6/N3_B6_U2_PracticeScreen";
+import N3_B6_U3_PracticeScreen from "./src/screens/N3/B6/N3_B6_U3_PracticeScreen";
+import N3_B6_U4_PracticeScreen from "./src/screens/N3/B6/N3_B6_U4_PracticeScreen";
+import N3_B6_U5_PracticeScreen from "./src/screens/N3/B6/N3_B6_U5_PracticeScreen";
+import N3_B6_U6_PracticeScreen from "./src/screens/N3/B6/N3_B6_U6_PracticeScreen";
+import N3_FinalExamScreen from "./src/screens/N3/N3_FinalExamScreen";
+
 // Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -168,7 +186,6 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        {/* ⭐ Provider de puntaje global (tope 100 pt para B3) */}
         <B3ScoreProvider>
           <NavigationContainer>
             <Stack.Navigator
@@ -426,57 +443,45 @@ export default function App() {
               <Stack.Screen name="N3_Block1_Unit2" component={N3_Block1_Unit2Screen} options={{ headerShown: false }} />
               <Stack.Screen name="N3_Block1_Unit3" component={N3_Block1_Unit3Screen} options={{ headerShown: false }} />
               <Stack.Screen name="N3_Block1_Unit4" component={N3_Block1_Unit4Screen} options={{ headerShown: false }} />
-              {/* 👉 NUEVA */}
               <Stack.Screen name="N3_Block1_Unit5" component={N3_Block1_Unit5Screen} options={{ headerShown: false }} />
-              <Stack.Screen
-  name="N3_B2_U1"
-  component={N3_B2_U1_Screen}
-  options={{ headerShown: false }}
-/>
-<Stack.Screen name="N3_B2_U2_Practice" component={N3_B2_U2_PracticeScreen} options={{ headerShown: false }} />
- <Stack.Screen
-          name="N3_B2_U3_Practice"
-          component={N3_B2_U3_PracticeScreen}
-          options={{ title: "B2 — 03 Práctica" }}
-        />
-<Stack.Screen
-  name="N3_B2_U4_Practice"
-  component={N3_B2_U4_PracticeScreen}
-  options={{ title: "B2 — 04 Practice" }}
-/>
-<Stack.Screen
-  name="N3_B2_U10_Practice"
-  component={N3_B2_U10_PracticeScreen}
-  options={{ title: "B2 — 10 Práctica" }}
-/>
-<Stack.Screen
-  name={newLocal}
-  component={N3_B3_U1_PracticeScreen}
-  options={{ title: "B3 — 01 Práctica" }}
-/>
-<Stack.Screen
-  name="N3_B3_U2_Practice"
-  component={N3_B3_U2_PracticeScreen}
-  options={{ headerShown: false, title: "B3 — 02 Práctica" }}
-/>
- <Stack.Screen name="N3_B3_U3_Practice" component={N3_B3_U3_PracticeScreen} />
- <Stack.Screen
-          name="N3_B3_U4_Practice"
-          component={N3_B3_U4_PracticeScreen}
-        />
 
-        <Stack.Screen
-  name="N3_B3_U5_Practice"
-  component={N3_B3_U5_PracticeScreen}
-  options={{ headerShown: false }}
-/>
+              {/* === N3 B2 === */}
+              <Stack.Screen name="N3_B2_U1" component={N3_B2_U1_Screen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B2_U2_Practice" component={N3_B2_U2_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B2_U3_Practice" component={N3_B2_U3_PracticeScreen} options={{ title: "B2 — 03 Práctica" }} />
+              <Stack.Screen name="N3_B2_U4_Practice" component={N3_B2_U4_PracticeScreen} options={{ title: "B2 — 04 Practice" }} />
+              <Stack.Screen name="N3_B2_U10_Practice" component={N3_B2_U10_PracticeScreen} options={{ title: "B2 — 10 Práctica" }} />
 
-<Stack.Screen
-  name="N3_B4_U1_Practice"
-  component={N3_B4_U1_PracticeScreen}
-  options={{ headerShown: false }}
-/>
+              {/* === N3 B3 === */}
+              <Stack.Screen name={newLocal} component={N3_B3_U1_PracticeScreen} options={{ title: "B3 — 01 Práctica" }} />
+              <Stack.Screen name="N3_B3_U2_Practice" component={N3_B3_U2_PracticeScreen} options={{ headerShown: false, title: "B3 — 02 Práctica" }} />
+              <Stack.Screen name="N3_B3_U3_Practice" component={N3_B3_U3_PracticeScreen} />
+              <Stack.Screen name="N3_B3_U4_Practice" component={N3_B3_U4_PracticeScreen} />
+              <Stack.Screen name="N3_B3_U5_Practice" component={N3_B3_U5_PracticeScreen} options={{ headerShown: false }} />
 
+              {/* === N3 B4 === */}
+              <Stack.Screen name="N3_B4_U1_Practice" component={N3_B4_U1_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B4_U2_Practice" component={N3_B4_U2_PracticeScreen} />
+              <Stack.Screen name="N3_B4_U3_Practice" component={N3_B4_U3_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B4_U4_Practice" component={N3_B4_U4_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B4_U20_Practice" component={N3_B4_U20_PracticeScreen} options={{ headerShown: false }} />
+
+              {/* === N3 B5 === */}
+              <Stack.Screen name="N3_B5_U1_Practice" component={n3_B5_U1Screen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B5_U2_Practice" component={N3_B5_U2_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B5_U3_Practice" component={N3_B5_U3_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B5_U4_Practice" component={N3_B5_U4_PracticeScreen} />
+              <Stack.Screen name="N3_B5_U5_Practice" component={N3_B5_U5_PracticeScreen} />
+
+              {/* === N3 B6 === */}
+              <Stack.Screen name="N3_B6_U2_Practice" component={N3_B6_U2_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B6_U3_Practice" component={N3_B6_U3_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B6_U4_Practice" component={N3_B6_U4_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B6_U5_Practice" component={N3_B6_U5_PracticeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N3_B6_U6_Practice" component={N3_B6_U6_PracticeScreen} options={{ headerShown: false }} />
+
+              {/* === EXAMEN FINAL N3 === */}
+              <Stack.Screen name="N3_FinalExam" component={N3_FinalExamScreen} options={{ headerShown: false }} />
             </Stack.Navigator>
           </NavigationContainer>
         </B3ScoreProvider>

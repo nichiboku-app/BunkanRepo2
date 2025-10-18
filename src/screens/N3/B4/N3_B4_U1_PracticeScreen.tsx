@@ -1,4 +1,4 @@
-// src/screens/N3/B4/N3_B4_U1_PracticeScreen.tsx
+// src/screens/N3/B4/N3_B4_U1_PracticeScreen.tsx 
 // ⏱ BLOQUE 4 — 1 Mientras / durante —「〜間に」「〜うちに」「〜ところ」— PRÁCTICA
 // Hero: ../../../../assets/images/n3/b4_u1.webp
 
@@ -230,7 +230,7 @@ export default function N3_B4_U1_PracticeScreen() {
         {/* 🈶 KANJI */}
         <View style={styles.card}>
           <Text style={styles.h2}>🈶 Kanji de la unidad（10）</Text>
-          <Text style={styles.p}>Toca “Trazos” para ver la imagen cuando esté disponible.</Text>
+          <Text style={styles.p}>Toca “Trazos” para ver la imagen real (si existe), o el carácter grande si la ocultas.</Text>
           <View style={styles.kanjiGrid}>
             {KANJI.map((k) => (<KanjiCard key={k.hex} k={k} />))}
           </View>
@@ -326,46 +326,54 @@ function FillItem({ f, onResult }: { f: Fill; onResult: (ok: boolean) => void })
 }
 
 /* ---------------- Kanji Card ---------------- */
-/**
- * Mientras uses los .webp de placeholder (con números grandes),
- * el botón “Trazos” se mantiene ACTIVO pero no muestra la imagen;
- * avisa por voz que faltan los trazos reales.
- * Cuando conviertas los SVG reales a *_nums.webp, marca el kanji como false
- * en PLACEHOLDER para que sí muestre la imagen.
+/** 
+ * Usa *_web.webp (trazos reales) cuando exista; si faltara, cae a *_nums.webp.
+ * Marca aquí cuáles ya tienen la versión real generada por tu script.
  */
-const PLACEHOLDER: Record<string, boolean> = {
+const HAS_WEB: Record<string, boolean> = {
   "6642": true, "9593": true, "4eca": true, "65e9": true, "6674": true,
   "671d": true, "591c": true, "663c": true, "5f8c": true, "524d": true,
 };
 
 function strokeSrc(hex: string) {
   switch (hex) {
-    case "6642": return require("../../../../assets/kanjivg/n3/6642_nums.webp");
-    case "9593": return require("../../../../assets/kanjivg/n3/9593_nums.webp");
-    case "4eca": return require("../../../../assets/kanjivg/n3/4eca_nums.webp");
-    case "65e9": return require("../../../../assets/kanjivg/n3/65e9_nums.webp");
-    case "6674": return require("../../../../assets/kanjivg/n3/6674_nums.webp");
-    case "671d": return require("../../../../assets/kanjivg/n3/671d_nums.webp");
-    case "591c": return require("../../../../assets/kanjivg/n3/591c_nums.webp");
-    case "663c": return require("../../../../assets/kanjivg/n3/663c_nums.webp");
-    case "5f8c": return require("../../../../assets/kanjivg/n3/5f8c_nums.webp");
-    case "524d": return require("../../../../assets/kanjivg/n3/524d_nums.webp");
+    case "6642": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/6642_web.webp")
+      : require("../../../../assets/kanjivg/n3/6642_nums.webp");
+    case "9593": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/9593_web.webp")
+      : require("../../../../assets/kanjivg/n3/9593_nums.webp");
+    case "4eca": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/4eca_web.webp")
+      : require("../../../../assets/kanjivg/n3/4eca_nums.webp");
+    case "65e9": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/65e9_web.webp")
+      : require("../../../../assets/kanjivg/n3/65e9_nums.webp");
+    case "6674": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/6674_web.webp")
+      : require("../../../../assets/kanjivg/n3/6674_nums.webp");
+    case "671d": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/671d_web.webp")
+      : require("../../../../assets/kanjivg/n3/671d_nums.webp");
+    case "591c": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/591c_web.webp")
+      : require("../../../../assets/kanjivg/n3/591c_nums.webp");
+    case "663c": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/663c_web.webp")
+      : require("../../../../assets/kanjivg/n3/663c_nums.webp");
+    case "5f8c": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/5f8c_web.webp")
+      : require("../../../../assets/kanjivg/n3/5f8c_nums.webp");
+    case "524d": return HAS_WEB[hex]
+      ? require("../../../../assets/kanjivg/n3/524d_web.webp")
+      : require("../../../../assets/kanjivg/n3/524d_nums.webp");
     default: return null;
   }
 }
 
 function KanjiCard({ k }: { k: Kanji }) {
   const [showStroke, setShowStroke] = useState(false);
-  const isPlaceholder = PLACEHOLDER[k.hex];
-  const src = isPlaceholder ? null : strokeSrc(k.hex);
-
-  const onToggle = () => {
-    if (isPlaceholder) {
-      Speech.speak("Faltan los trazos reales para este kanji. Sube el SVG y convierte a WebP.", { language: "es-MX", rate: 1 });
-      return;
-    }
-    setShowStroke(s => !s);
-  };
+  const src = strokeSrc(k.hex);
 
   return (
     <View style={styles.kCard}>
@@ -381,7 +389,7 @@ function KanjiCard({ k }: { k: Kanji }) {
         <Text style={styles.kSample}>{k.sample}</Text>
       </View>
       <View style={styles.kActions}>
-        <Pressable onPress={onToggle} style={[styles.kBtn, { opacity: 1 }]}>
+        <Pressable onPress={() => setShowStroke(s => !s)} style={[styles.kBtn, { opacity: src ? 1 : 0.6 }]}>
           <Text style={styles.kBtnTxt}>{showStroke ? "Ocultar trazos" : "Trazos"}</Text>
         </Pressable>
         <Pressable onPress={() => Speech.speak(k.sample, { language: "ja-JP", rate: 0.96, pitch: 1.05 })} style={styles.kIconBtn}>

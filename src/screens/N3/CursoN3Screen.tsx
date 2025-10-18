@@ -22,8 +22,7 @@ type RootStackParamList = {
   N3_Unit: { block: number; unit: number; title: string } | undefined; // 01 Metas y finalidad
   N3_Block1_Unit2: undefined; // 02 Decisiones & cambios
 
-  // Fallback genérico (si aún no hay pantalla propia)
-  // (dejamos N3_Unit como unificada para otros temas cuando falten)
+  // ✅ PRUEBA FINAL (debe existir también en App.tsx)
   N3_FinalExam: undefined;
 };
 type Nav = NativeStackNavigationProp<RootStackParamList, "CursoN3">;
@@ -48,28 +47,27 @@ export default function CursoN3Screen() {
   const navigation = useNavigation<Nav>();
 
   // ===== Mapa de rutas por Bloque/Unidad =====
-  // EXACTAMENTE los nombres de rutas que están en App.tsx
   const ROUTES = useMemo(
     () =>
       [
         // BLOQUE 1 — Propósitos, decisiones y acciones
         [
-          "N3_Unit",           // 01 Metas y finalidad  → src/screens/N3/N3_UnitScreen.tsx
-          "N3_Block1_Unit2",   // 02 Decisiones & cambios → src/screens/N3/N3_Block1_Unit2Screen.tsx
-          "N3_Block1_Unit3",                // 03 Hábitos y rutinas
-           "N3_Block1_Unit4",                // 04 Acciones “sin…”
-          "N3_Block1_Unit5",                // 05 Reglas y permisos
+          "N3_Unit",           // 01 Metas y finalidad
+          "N3_Block1_Unit2",   // 02 Decisiones & cambios
+          "N3_Block1_Unit3",   // 03 Hábitos y rutinas
+          "N3_Block1_Unit4",   // 04 Acciones “sin…”
+          "N3_Block1_Unit5",   // 05 Reglas y permisos
         ],
         // BLOQUE 2 — Opiniones...
         ["N3_B2_U1", "N3_B2_U2_Practice", "N3_B2_U3_Practice", "N3_B2_U4_Practice", "N3_B2_U10_Practice"],
         // BLOQUE 3 — Condicionales...
         ["N3_B3_U1_Practice", "N3_B3_U2_Practice", "N3_B3_U3_Practice", "N3_B3_U4_Practice", "N3_B3_U5_Practice"],
         // BLOQUE 4 — Tiempo...
-        ["N3_B4_U1_Practice", null, null, null, null],
+        ["N3_B4_U1_Practice", "N3_B4_U2_Practice", "N3_B4_U3_Practice", "N3_B4_U4_Practice", "N3_B4_U20_Practice"],
         // BLOQUE 5 — Relaciones...
-        [null, null, null, null, null],
+        ["N3_B5_U1_Practice", "N3_B5_U2_Practice", "N3_B5_U3_Practice", "N3_B5_U4_Practice", "N3_B5_U5_Practice"],
         // BLOQUE 6 — Japonés real...
-        [null, null, null, null, null],
+        ["N3_B6_U2_Practice", "N3_B6_U3_Practice", "N3_B6_U4_Practice","N3_B6_U5_Practice", "N3_B6_U6_Practice"],
       ] as const,
     []
   );
@@ -89,7 +87,6 @@ export default function CursoN3Screen() {
           { title: "Reglas y permisos", minutes: 12, icon: "shield-check-outline", color: "#3B82F6" },
         ],
       },
-      // … (los demás bloques como los tenías)
       {
         emoji: "🗣",
         title: "BLOQUE 2 — Opiniones, conjeturas y apariencias",
@@ -165,27 +162,19 @@ export default function CursoN3Screen() {
     const routeName = ROUTES[blockIdx]?.[unitIdx];
 
     if (routeName === "N3_Unit") {
-      // Metas y finalidad → pasa params a la unificada N3_Unit
-      navigation.navigate("N3_Unit", {
-        block: blockIdx + 1,
-        unit: unitIdx + 1,
-        title,
-      });
+      navigation.navigate("N3_Unit", { block: blockIdx + 1, unit: unitIdx + 1, title });
       return;
     }
 
     if (routeName) {
-      // Pantalla propia sin params
       navigation.navigate(routeName as any);
     } else {
-      // Si no hay pantalla, por ahora reutiliza la unificada
-      navigation.navigate("N3_Unit", {
-        block: blockIdx + 1,
-        unit: unitIdx + 1,
-        title,
-      });
+      navigation.navigate("N3_Unit", { block: blockIdx + 1, unit: unitIdx + 1, title });
     }
   };
+
+  // ===== Ir a la prueba final =====
+  const goToFinalExam = () => navigation.navigate("N3_FinalExam");
 
   return (
     <View style={styles.root}>
@@ -286,7 +275,7 @@ export default function CursoN3Screen() {
         ))}
 
         {/* PRUEBA FINAL */}
-        <Pressable style={styles.examCard} onPress={() => navigation.navigate("N3_FinalExam" as any)}>
+        <Pressable style={styles.examCard} onPress={goToFinalExam}>
           <LinearGradient colors={["#E31D1A", "#AF0F2A"]} style={StyleSheet.absoluteFill} />
           <Text style={styles.examTitle}>🦁 Prueba final — Nivel N3</Text>
           <Text style={styles.examSub}>Simulacro JLPT N3 • Lectura • Gramática • Audio</Text>

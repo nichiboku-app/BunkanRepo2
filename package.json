@@ -14,7 +14,8 @@
     "fetch-kanjivg:n4": "node scripts/fetch-kanjivg-n4.mjs",
     "kanji:fetch": "node scripts/fetch-kanjivg-n4.mjs",
     "kanji:n4:t2": "node scripts/fetch-kanjivg-n4-t2.mjs",
-    "gen:n4:t3": "powershell -ExecutionPolicy Bypass -File scripts\\gen_kanji_n4_tema3.ps1"
+    "gen:n4:t3": "powershell -ExecutionPolicy Bypass -File scripts\\gen_kanji_n4_tema3.ps1",
+    "kanji:n3": "node tools/kanji.mjs --level n3 --out assets/kanjivg/n3"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-jp": "^0.4.1",
@@ -87,6 +88,8 @@
     "dotenv": "^17.2.1",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "fast-glob": "^3.3.3",
+    "fs-extra": "^11.3.2",
     "gtts": "^0.2.1",
     "node-fetch": "^3.3.2",
     "p-limit": "^7.1.1",
