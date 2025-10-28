@@ -10,12 +10,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Speech from "expo-speech";
 import { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Pressable,
-    StatusBar,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Pressable,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
@@ -865,12 +865,12 @@ function KanjiCard({ k, onSpeak }: { k: Kanji; onSpeak: () => void }) {
     "5b9a": require("../../../../assets/kanjivg/n3/5b9a_nums.webp"),
     "7531": require("../../../../assets/kanjivg/n3/7531_nums.webp"),
     "7406": require("../../../../assets/kanjivg/n3/7406_nums.webp"),
-    "8a8d": require("../../../../assets/kanjivg/n3/8a8d_nums.webp"),
-    "4fe1": require("../../../../assets/kanjivg/n3/4fe1_nums.webp"),
-    "7591": require("../../../../assets/kanjivg/n3/7591_nums.webp"),
-    "771f": require("../../../../assets/kanjivg/n3/771f_nums.webp"),
-    "8a3c": require("../../../../assets/kanjivg/n3/8a3c_nums.webp"),
-    "78ba": require("../../../../assets/kanjivg/n3/78ba_nums.webp"),
+     "8a8d": require("../../../../assets/kanjivg/n3/8a8d_nums.webp"),
+  "4fe1": require("../../../../assets/kanjivg/n3/4fe1_nums.webp"),
+  "7591": require("../../../../assets/kanjivg/n3/7591_nums.webp"),
+  "771f": require("../../../../assets/kanjivg/n3/771f_nums.webp"),
+  "78ba": require("../../../../assets/kanjivg/n3/78ba_nums.webp"),
+  "8a3c": require("../../../../assets/kanjivg/n3/8a3c_nums.webp"),
   };
 
   const src = REQ[k.hex];

@@ -11,7 +11,7 @@ import {
   Dimensions,
   Image,
   ImageBackground,
-  Pressable, // 👈 Importa Pressable
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -26,17 +26,12 @@ import { auth, db } from "../config/firebaseConfig";
 import { getAvatarUri } from "../services/uploadAvatar";
 import { openDrawerDeep } from "../utils/nav";
 
-// Intro video modal
 import IntroVideoModal from "../components/IntroVideoModal";
-import {
-  getIntroVideoUrl,
-  markIntroVideoSeen,
-  wasIntroVideoSeen,
-} from "../services/introVideo";
+import { getIntroVideoUrl, markIntroVideoSeen, wasIntroVideoSeen } from "../services/introVideo";
 
 const { width } = Dimensions.get("window");
 
-// Tipos locales para navegación (autocompletado básico)
+// ==== Navegación (solo tipos locales) ====
 type RootStackParamList = {
   Home: undefined;
   ProgresoN5: undefined;
@@ -50,16 +45,16 @@ type RootStackParamList = {
   Notificaciones: undefined;
   Chat: undefined;
   ActividadesN5?: undefined;
- N3Intro: undefined;   // 👈 agrega
- N4Intro: undefined;   // 👈 si vas a ir a N4Intro (ya lo usas)
+  N3Intro: undefined;
+  N4Intro: undefined;
+  N2Intro: undefined;
+  N1Intro: undefined;
 };
-
 type HomeNav = NativeStackNavigationProp<RootStackParamList, "Home">;
 
 export default function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeNav>();
 
-  // 🔧 Oculta el header nativo del padre SOLO en Home
   useFocusEffect(
     useCallback(() => {
       const parent = (navigation as any).getParent?.();
@@ -71,7 +66,6 @@ export default function HomeScreen(): React.JSX.Element {
   const [ready, setReady] = useState(false);
   const [userDoc, setUserDoc] = useState<any>(null);
 
-  // Estado del video de introducción
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
 
@@ -80,28 +74,21 @@ export default function HomeScreen(): React.JSX.Element {
   // =============================
   const aProgress = useRef(new Animated.Value(0)).current;
   const aPanel = useRef(new Animated.Value(0)).current;
-  const aCard1 = useRef(new Animated.Value(0)).current; // N5
-  const aCard2 = useRef(new Animated.Value(0)).current; // N4
-  const aCard3 = useRef(new Animated.Value(0)).current; // N3 (wide)
-  const hamburgerAnim = useRef(new Animated.Value(1)).current; // ✨ Animación para la hamburguesa
+  const aCard1 = useRef(new Animated.Value(0)).current;
+  const aCard2 = useRef(new Animated.Value(0)).current;
+  const aCard3 = useRef(new Animated.Value(0)).current;
+  const aMore = useRef(new Animated.Value(0)).current;
+  const hamburgerAnim = useRef(new Animated.Value(1)).current;
 
   const fadeUpStyle = useCallback(
     (val: Animated.Value, fromY = 18) => ({
       opacity: val,
-      transform: [
-        {
-          translateY: val.interpolate({
-            inputRange: [0, 1],
-            outputRange: [fromY, 0],
-          }),
-        },
-      ],
+      transform: [{ translateY: val.interpolate({ inputRange: [0, 1], outputRange: [fromY, 0] }) }],
     }),
     []
   );
 
   const runAppear = useCallback(() => {
-    // Secuencia: Progreso -> Panel -> Stagger cards
     Animated.sequence([
       Animated.timing(aProgress, { toValue: 1, duration: 280, useNativeDriver: true }),
       Animated.timing(aPanel, { toValue: 1, duration: 280, useNativeDriver: true }),
@@ -110,8 +97,9 @@ export default function HomeScreen(): React.JSX.Element {
         Animated.timing(aCard2, { toValue: 1, duration: 260, useNativeDriver: true }),
         Animated.timing(aCard3, { toValue: 1, duration: 260, useNativeDriver: true }),
       ]),
+      Animated.timing(aMore, { toValue: 1, duration: 260, useNativeDriver: true }),
     ]).start();
-  }, [aProgress, aPanel, aCard1, aCard2, aCard3]);
+  }, [aProgress, aPanel, aCard1, aCard2, aCard3, aMore]);
 
   useEffect(() => {
     if (ready) runAppear();
@@ -125,10 +113,9 @@ export default function HomeScreen(): React.JSX.Element {
           require("../../assets/images/cloud_swirl.webp"),
           require("../../assets/images/cursos/n5_mapache.webp"),
           require("../../assets/images/cursos/n4_zorro.webp"),
-          require("../../assets/images/cursos/n3_leon.webp"),
-          require("../../assets/images/cursos/n5_mapache_avance.webp"),
+          require("../../assets/images/cursos/n1_dragon.webp"), // N1
           require("../../assets/images/cursos/rueda2.webp"),
-          require("../../assets/icons/hamburger.webp"), // Usaremos una versión sin fondo de esta imagen
+          require("../../assets/icons/hamburger.webp"),
           require("../../assets/images/avatar_formal.webp"),
           require("../../assets/images/avatar_frame.webp"),
           require("../../assets/images/cuadroNotas.webp"),
@@ -137,8 +124,10 @@ export default function HomeScreen(): React.JSX.Element {
           require("../../assets/icons/bell.webp"),
           require("../../assets/icons/heart.webp"),
           require("../../assets/icons/ia.webp"),
-          require("../../assets/icons/clock.webp"),
           require("../../assets/images/gradient_red.webp"),
+          // nuevos / corregidos
+          require("../../assets/images/cursos/n2_pandabueno.png"), // Panda recortado
+          require("../../assets/images/cursos/leon_blanco_transparente.webp"), // N3 (Raion)
         ]);
       } catch (e) {
         console.warn("Error precargando imágenes", e);
@@ -149,7 +138,6 @@ export default function HomeScreen(): React.JSX.Element {
     preloadImages();
   }, []);
 
-  // Mostrar video de introducción si aplica
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -169,7 +157,6 @@ export default function HomeScreen(): React.JSX.Element {
     };
   }, []);
 
-  // Suscripción al doc del usuario
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
@@ -183,7 +170,6 @@ export default function HomeScreen(): React.JSX.Element {
     if (__DEV__ && !ok) console.warn("No se pudo abrir el Drawer (verifica id='AppDrawer').");
   };
 
-  // ✨ Handlers para la animación del botón hamburguesa
   const handlePressIn = () => {
     Animated.spring(hamburgerAnim, { toValue: 0.85, useNativeDriver: true }).start();
   };
@@ -191,7 +177,6 @@ export default function HomeScreen(): React.JSX.Element {
     Animated.spring(hamburgerAnim, { toValue: 1, useNativeDriver: true }).start();
   };
 
-  // Navegación hacia el HomeStack dentro del Drawer (Main)
   const navigateToHomeStack = (
     screen: "BienvenidaCursoN5" | "Calendario" | "Notas" | "CursoN5" | "ActividadesN5",
     params?: Record<string, any>
@@ -234,8 +219,10 @@ export default function HomeScreen(): React.JSX.Element {
   const displayName = userDoc?.displayName || auth.currentUser?.displayName || "Mapache";
   const firstName = (displayName || "Mapache").split(" ")[0];
 
-  const RED_START = "#7E0D18";
-  const RED_END = "#C05360";
+  // ==== Rojos (más intensos) ====
+  const RED_START = "#9D0012"; // profundo
+  const RED_MID   = "#C7081F"; // medio saturado
+  const RED_END   = "#FF2B3B"; // vivo
 
   return (
     <View style={{ flex: 1 }}>
@@ -247,9 +234,8 @@ export default function HomeScreen(): React.JSX.Element {
 
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* Header propio */}
+          {/* Header */}
           <View style={styles.header}>
-            {/* ✨ HAMBURGUESA ANIMADA, MÁS GRANDE Y SIN FONDO */}
             <Pressable
               style={styles.hamburger}
               onPress={openDrawer}
@@ -260,10 +246,7 @@ export default function HomeScreen(): React.JSX.Element {
               accessibilityLabel="Abrir menú de navegación"
             >
               <Animated.View style={{ transform: [{ scale: hamburgerAnim }] }}>
-                <Image
-                  source={require("../../assets/icons/hamburger.webp")} // Asegúrate que esta imagen sea PNG/WEBP con fondo transparente
-                  style={styles.hamburgerIcon}
-                />
+                <Image source={require("../../assets/icons/hamburger.webp")} style={styles.hamburgerIcon} />
               </Animated.View>
             </Pressable>
 
@@ -279,25 +262,15 @@ export default function HomeScreen(): React.JSX.Element {
             </TouchableOpacity>
           </View>
 
-          {/* Card Progreso (animada) */}
+          {/* Progreso */}
           <Animated.View style={[styles.progressCard, fadeUpStyle(aProgress)]}>
-            <Image
-              source={require("../../assets/images/cloud_swirl.webp")}
-              style={styles.cloudDecor}
-              resizeMode="contain"
-            />
+            <Image source={require("../../assets/images/cloud_swirl.webp")} style={styles.cloudDecor} resizeMode="contain" />
             <View style={styles.progressRow}>
               <View style={styles.levelCircle}>
-                <ExpoImage
-                  source={require("../../assets/images/cursos/rueda2.webp")}
-                  style={styles.levelIcon}
-                  contentFit="contain"
-                />
+                <ExpoImage source={require("../../assets/images/cursos/rueda2.webp")} style={styles.levelIcon} contentFit="contain" />
               </View>
               <View style={styles.progressTextCol}>
-                <Text style={styles.progressTitle}>
-                  Consulta tu avance{"\n"}en el nivel N5
-                </Text>
+                <Text style={styles.progressTitle}>Consulta tu avance{"\n"}en el nivel N5</Text>
                 <View style={styles.dotsRow}>
                   <View style={[styles.dot, styles.dotActive]} />
                   <View style={styles.dot} />
@@ -312,7 +285,7 @@ export default function HomeScreen(): React.JSX.Element {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Panel Notas / Calendario (animado) */}
+          {/* Panel Notas / Calendario */}
           <Animated.View style={[styles.panelWrap, fadeUpStyle(aPanel)]}>
             <ImageBackground
               source={require("../../assets/images/cuadroNotas.webp")}
@@ -333,39 +306,59 @@ export default function HomeScreen(): React.JSX.Element {
             </ImageBackground>
           </Animated.View>
 
-          {/* Tarjetas de cursos (stagger) */}
+          {/* Tarjetas de cursos */}
           <View style={styles.cardsGrid}>
+            {/* N5 */}
             <Animated.View style={[fadeUpStyle(aCard1, 24), { width: (width - 16 * 2 - 12) / 2 }]}>
               <CourseCard
-                from={RED_START}
-                to={RED_END}
                 title="Tanuki: Nivel N5"
-                minutes="50 minutos"
                 image={require("../../assets/images/cursos/n5_mapache.webp")}
                 onPress={() => go("BienvenidaCursoN5")}
+                iconW={160}
+                iconH={90}
+                colors={[RED_START, RED_MID, RED_END]}
               />
             </Animated.View>
 
+            {/* N4 */}
             <Animated.View style={[fadeUpStyle(aCard2, 24), { width: (width - 16 * 2 - 12) / 2 }]}>
-             <CourseCard
-  from={RED_START}
-  to={RED_END}
-  title="Kitsune: Nivel N4"
-  minutes="50 minutos"
-  image={require("../../assets/images/cursos/n4_zorro.webp")}
-  onPress={() => go("N4Intro")} // 👈 antes: go("CursoN4")
-/>
-
+              <CourseCard
+                title="Kitsune: Nivel N4"
+                image={require("../../assets/images/cursos/n4_zorro.webp")}
+                onPress={() => go("N4Intro")}
+                iconW={160}
+                iconH={90}
+                colors={[RED_START, RED_MID, RED_END]}
+              />
             </Animated.View>
 
+            {/* N3 (wide) — Raion con león blanco */}
             <Animated.View style={[fadeUpStyle(aCard3, 24), { width: "100%" }]}>
               <CourseWide
-                from={RED_START}
-                to={RED_END}
-                title="Ryū: Nivel N3"
-                minutes="50 minutos"
-                image={require("../../assets/images/cursos/n3_leon.webp")}
-                 onPress={() => go("N3Intro")} 
+                title="Raion: Nivel N3"
+                image={require("../../assets/images/cursos/leon_blanco_transparente.webp")}
+                onPress={() => go("N3Intro")}
+                colors={[RED_START, RED_MID, RED_END]}
+              />
+            </Animated.View>
+
+            {/* N2 Panda y N1 Dragón */}
+            <Animated.View style={[styles.extraRow, fadeUpStyle(aMore, 24)]}>
+              <CourseCard
+                title="Panda: Nivel N2"
+                image={require("../../assets/images/cursos/n2_pandabueno.png")}
+                onPress={() => go("N2Intro")}
+                iconW={160}
+                iconH={90}
+                colors={[RED_START, RED_MID, RED_END]}
+              />
+              <CourseCard
+                title="Dragón: Nivel N1"
+                image={require("../../assets/images/cursos/n1_dragon.webp")}
+                onPress={() => go("N1Intro")}
+                iconW={160}
+                iconH={90}
+                colors={[RED_START, RED_MID, RED_END]}
               />
             </Animated.View>
           </View>
@@ -373,7 +366,7 @@ export default function HomeScreen(): React.JSX.Element {
           <View style={{ height: 120 }} />
         </ScrollView>
 
-        {/* Pill fijo */}
+        {/* Barra inferior fija */}
         <View pointerEvents="box-none" style={styles.bottomBarFixed}>
           <View style={styles.bottomBg}>
             <TouchableOpacity onPress={() => go("Notificaciones")} style={styles.bottomItem} activeOpacity={0.8}>
@@ -389,7 +382,6 @@ export default function HomeScreen(): React.JSX.Element {
         </View>
       </SafeAreaView>
 
-      {/* Modal de video de introducción */}
       <IntroVideoModal
         visible={showIntro}
         sourceUrl={videoUrl}
@@ -403,64 +395,69 @@ export default function HomeScreen(): React.JSX.Element {
   );
 }
 
+/* ==== Cards ==== */
 function CourseCard({
-  from,
-  to,
   title,
-  minutes,
   image,
   onPress,
+  iconW = 160,
+  iconH = 90,
+  colors = ["#9D0012", "#C7081F", "#FF2B3B"],
 }: {
-  from: string;
-  to: string;
   title: string;
-  minutes: string;
   image: any;
   onPress: () => void;
+  iconW?: number;
+  iconH?: number;
+  colors?: string[];
 }) {
+  const { width } = Dimensions.get("window");
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
-      <LinearGradient colors={[from, to]} style={StyleSheet.absoluteFill} />
+    <TouchableOpacity
+      style={[
+        styles.card,
+        { width: (width - 16 * 2 - 12) / 2, borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" },
+      ]}
+      onPress={onPress}
+      activeOpacity={0.9}
+    >
+      <LinearGradient
+        colors={colors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.cardArt}>
-        <Image source={image} style={styles.cardIcon} />
+        <Image source={image} style={{ width: iconW, height: iconH, resizeMode: "contain" }} />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <View style={styles.timeRow}>
-          <Image source={require("../../assets/icons/clock.webp")} style={styles.timeIcon} />
-          <Text style={styles.timeText}>{minutes}</Text>
-        </View>
-      </View>
+      <Text style={styles.cardTitle}>{title}</Text>
     </TouchableOpacity>
   );
 }
 
 function CourseWide({
-  from,
-  to,
   title,
-  minutes,
   image,
   onPress,
+  colors = ["#9D0012", "#C7081F", "#FF2B3B"],
 }: {
-  from: string;
-  to: string;
   title: string;
-  minutes: string;
   image: any;
   onPress: () => void;
+  colors?: string[];
 }) {
   return (
     <TouchableOpacity style={styles.wide} onPress={onPress} activeOpacity={0.9}>
-      <LinearGradient colors={[from, to]} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={colors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.wideRow}>
         <Image source={image} style={styles.wideIcon} />
         <View style={{ flex: 1 }}>
           <Text style={styles.wideTitle}>{title}</Text>
-          <View style={styles.timeRow}>
-            <Image source={require("../../assets/icons/clock.webp")} style={styles.timeIcon} />
-            <Text style={styles.timeText}>{minutes}</Text>
-          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -477,30 +474,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
+  hamburger: { width: 120, height: 120, alignItems: "center", justifyContent: "center" },
+  hamburgerIcon: { width: 112, height: 112, resizeMode: "contain" },
+  headerTitle: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800", color: "#5C0A14" },
 
-  // ⬇️ AJUSTES CLAVE: botón más grande, sin fondo y con área táctil cómoda.
-  hamburger: {
-    width: 120, // Aumentado para área táctil
-    height: 120, // Aumentado para área táctil
-    alignItems: "center",
-    justifyContent: "center",
-    // backgroundColor: "rgba(255,255,255,0.9)", // 🗑️ Fondo eliminado
-  },
-  hamburgerIcon: {
-    width: 112, // Duplicado del tamaño original (56*2)
-    height: 112, // Duplicado del tamaño original (56*2)
-    resizeMode: "contain",
-  },
-
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#5C0A14",
-  },
-
-  // ==== Tarjeta Progreso - rojos reforzados ====
+  // Progreso
   progressCard: {
     backgroundColor: "#7E0D18",
     marginHorizontal: 16,
@@ -512,33 +490,17 @@ const styles = StyleSheet.create({
   },
   cloudDecor: { position: "absolute", right: 14, top: 10, width: 90, height: 60, opacity: 0.9 },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-
-  levelCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "transparent",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  levelCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" },
   levelIcon: { width: 64, height: 64 },
-
   progressTextCol: { flex: 1, paddingRight: 60 },
   progressTitle: { color: "#fff", fontSize: 16, fontWeight: "800", lineHeight: 24 },
   dotsRow: { flexDirection: "row", gap: 6, marginTop: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.55)" },
   dotActive: { backgroundColor: "#fff" },
-  progressBtn: {
-    backgroundColor: "#FFF3F3",
-    alignSelf: "center",
-    marginTop: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
+  progressBtn: { backgroundColor: "#FFF3F3", alignSelf: "center", marginTop: 12, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20 },
   progressBtnText: { fontWeight: "800", color: "#7E0D18" },
 
-  // Panel Notas / Calendario
+  // Notas / Calendario
   panelWrap: { marginTop: 12, paddingHorizontal: 16 },
   panelBg: { height: 118, justifyContent: "center", paddingHorizontal: 18 },
   panelBgImage: { resizeMode: "stretch", borderRadius: 14 },
@@ -562,7 +524,7 @@ const styles = StyleSheet.create({
   actionIcon: { width: 26, height: 26, resizeMode: "contain" },
   actionText: { fontWeight: "800", fontSize: 16, color: "#6B0F17" },
 
-  // Cards niveles (MISMO rojo que progreso)
+  // Cards
   cardsGrid: {
     marginTop: 16,
     paddingHorizontal: 16,
@@ -571,28 +533,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
   },
-  card: {
-    borderRadius: 18,
-    padding: 12,
-    overflow: "hidden",
+  extraRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 12,
   },
-  cardArt: {
-    borderRadius: 14,
-    marginBottom: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
+  card: { borderRadius: 18, padding: 12, overflow: "hidden" },
+  cardArt: { borderRadius: 14, marginBottom: 10, alignItems: "center", justifyContent: "center", paddingVertical: 12 },
+  cardTitle: {
+    color: "#fff",
+    fontWeight: "800",
+    marginBottom: 2,
+    textShadowColor: "rgba(0,0,0,0.30)",
+    textShadowRadius: 6,
   },
-  cardIcon: { width: 160, height: 90, resizeMode: "contain" },
-  cardTitle: { color: "#fff", fontWeight: "800", marginBottom: 8 },
-  timeRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  timeIcon: { width: 14, height: 14, resizeMode: "contain", tintColor: "#fff" },
-  timeText: { color: "#fff" },
 
+  // Wide
   wide: { width: "100%", borderRadius: 22, padding: 14, overflow: "hidden" },
   wideRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   wideIcon: { width: 105, height: 105, resizeMode: "contain" },
-  wideTitle: { color: "#fff", fontWeight: "800", fontSize: 16, marginBottom: 6 },
+  wideTitle: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 16,
+    marginBottom: 2,
+    textShadowColor: "rgba(0,0,0,0.30)",
+    textShadowRadius: 6,
+  },
 
   // Barra inferior
   bottomBarFixed: {
@@ -621,3 +589,4 @@ const styles = StyleSheet.create({
   bottomItem: { width: 52, height: 52, alignItems: "center", justifyContent: "center" },
   bottomIcon: { width: 32, height: 32, resizeMode: "contain" },
 });
+                               

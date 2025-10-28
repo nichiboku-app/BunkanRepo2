@@ -1,13 +1,14 @@
 // tools/kanjivg-to-nums.js
 // Genera *_nums.webp con números de orden de trazo sobre los paths del KanjiVG.
 // Uso:
-//   node tools/kanjivg-to-nums.js 96ea 5bfa ...
+//   node tools/kanjivg-to-nums.js 従 連 伴
+//   node tools/kanjivg-to-nums.js 5f93 9023 4f34
+//   node tools/kanjivg-to-nums.js --in assets/kanjivg/n2 --out assets/kanjivg/n2 従 5f93 連
 //
 // Requisitos:
-//   - Tener el SVG base en assets/kanjivg/n3/<hex>.svg
-//   - Tener el contorno ya renderizado (opcional) en <hex>_web.webp (no obligatorio)
+//   - Tener los SVG KanjiVG en <INPUT_DIR>/<hex>.svg  (hex = codepoint minúsculas; p.ej. 従 => 5f93.svg)
 // Salida:
-//   - assets/kanjivg/n3/<hex>_nums.webp
+//   - <OUTPUT_DIR>/<hex>_nums.webp
 
 const fs = require("fs");
 const path = require("path");
@@ -15,13 +16,42 @@ const sharp = require("sharp");
 const { parse } = require("svgson");
 const pathBounds = require("svg-path-bounds");
 
-const INPUT_DIR = path.resolve("assets/kanjivg/n3");
-const WIDTH = 768;    // resolución de salida
-const HEIGHT = 768;
-const FONT_SIZE = 28; // tamaño del número
-const CIRCLE_R = 18;  // radio del circulito detrás del número
+// ===== CLI =====
+const args = process.argv.slice(2);
+const flags = {};
+const terms = [];
+for (const a of args) {
+  if (a.startsWith("--")) {
+    const [k, v] = a.replace(/^--/, "").split("=");
+    flags[k] = v ?? true;
+  } else {
+    terms.push(a);
+  }
+}
 
-async function svgToNumberedPng(hex) {
+const INPUT_DIR = path.resolve(flags.in || "assets/kanjivg/n2");
+const OUTPUT_DIR = path.resolve(flags.out || INPUT_DIR);
+const WIDTH = Number(flags.w || 768);
+const HEIGHT = Number(flags.h || 768);
+const FONT_SIZE = Number(flags.font || 28);
+const CIRCLE_R = Number(flags.r || 18);
+
+if (!terms.length) {
+  console.error(
+    "Uso: node tools/kanjivg-to-nums.js [--in=assets/kanjivg/n2] [--out=assets/kanjivg/n2] 従 5f93 連 ..."
+  );
+  process.exit(1);
+}
+
+function toHexCode(term) {
+  // si ya viene en hex (ej. 5f93)
+  if (/^[0-9a-f]{4,6}$/i.test(term)) return term.toLowerCase();
+  // si viene como kanji (1 char)
+  const cp = term.codePointAt(0);
+  return cp.toString(16).toLowerCase();
+}
+
+async function svgToNumberedWebp(hex) {
   const svgPath = path.join(INPUT_DIR, `${hex}.svg`);
   if (!fs.existsSync(svgPath)) {
     console.error(`NO SVG: ${svgPath}`);
@@ -29,86 +59,64 @@ async function svgToNumberedPng(hex) {
   }
 
   const raw = fs.readFileSync(svgPath, "utf8");
-
-  // 1) Parsear SVG
   const ast = await parse(raw);
 
-  // 2) Extraer todos los <path ... d="..."> y su número de trazo (por id ...-sN)
-  //    KanjiVG tiene ids como "...-s1", "...-s2" para cada trazo en orden.
-  //    Si no hay -sN, igual numeramos según el orden de aparición.
+  // Extraer paths y número de trazo
   const strokes = [];
-  function walk(node) {
+  (function walk(node) {
     if (!node) return;
     if (node.name === "path") {
       const d = node.attributes?.d;
       if (d) {
         let n = null;
         const id = node.attributes?.id || "";
-        // buscar sufijo -sN
-        const m = id.match(/-s(\d+)/);
+        const m = id.match(/-s(\d+)/); // ...-s1, ...-s2
         if (m) n = parseInt(m[1], 10);
         strokes.push({ d, n });
       }
     }
     if (node.children) node.children.forEach(walk);
-  }
-  walk(ast);
+  })(ast);
 
   if (strokes.length === 0) {
     console.error(`ERROR: ${hex} no tiene <path d="...">`);
     return false;
   }
 
-  // Ordenar por n (si lo hay); si algún path no tiene n, cae al final por orden
-  const withOrder = strokes.every(s => typeof s.n === "number");
-  if (withOrder) {
-    strokes.sort((a, b) => a.n - b.n);
-  }
+  const withOrder = strokes.every((s) => typeof s.n === "number");
+  if (withOrder) strokes.sort((a, b) => a.n - b.n);
 
-  // 3) Calcular posiciones para los números (centro del bbox de cada path)
+  // BBoxes por path para situar números
   const labels = [];
-  let index = 1;
+  let idx = 1;
   for (const s of strokes) {
-    let minX, minY, maxX, maxY;
     try {
-      [minX, minY, maxX, maxY] = pathBounds(s.d);
-    } catch (e) {
-      // Si el parser falla en un path raro, lo saltamos sin romper todo
-      continue;
+      const [minX, minY, maxX, maxY] = pathBounds(s.d);
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      labels.push({ n: withOrder ? s.n : idx, x: cx, y: cy });
+      idx++;
+    } catch {
+      // si un path raro falla, lo saltamos
     }
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-
-    // Guardamos en coords originales del viewBox; luego escalamos al WIDTH/HEIGHT.
-    labels.push({
-      n: withOrder ? s.n : index,
-      x: cx,
-      y: cy,
-    });
-    index++;
   }
 
-  // 4) Tomar viewBox del SVG para escalar coordenadas correctamente.
-  // Intentaremos leerlo del nodo raíz.
+  // viewBox para escalar coords
   const vbAttr = ast.attributes?.viewBox || ast.attributes?.viewbox || "";
-  let vb = vbAttr.split(/\s+/).map(Number);
-  if (vb.length !== 4 || vb.some(isNaN)) {
-    // fallback a 0 0 109 109 (tamaño común en KanjiVG)
-    vb = [0, 0, 109, 109];
+  let [vbX, vbY, vbW, vbH] = vbAttr.split(/\s+/).map(Number);
+  if (!Number.isFinite(vbX) || !Number.isFinite(vbY) || !Number.isFinite(vbW) || !Number.isFinite(vbH)) {
+    vbX = 0; vbY = 0; vbW = 109; vbH = 109;
   }
-  const [vbX, vbY, vbW, vbH] = vb;
 
-  // 5) Render base: usamos el SVG original como fondo rasterizado
   const basePng = await sharp(Buffer.from(raw))
     .resize(WIDTH, HEIGHT, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
     .toBuffer();
 
-  // 6) Construir una capa SVG con círculos + números posicionados (escalados a salida)
-  function scaleX(x) { return ((x - vbX) / vbW) * WIDTH; }
-  function scaleY(y) { return ((y - vbY) / vbH) * HEIGHT; }
+  const scaleX = (x) => ((x - vbX) / vbW) * WIDTH;
+  const scaleY = (y) => ((y - vbY) / vbH) * HEIGHT;
 
-  const overlaySvg =
-    `<svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  const overlaySvg = `
+    <svg width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
       <style>
         .knum { font-family: Arial, Helvetica, sans-serif; font-size: ${FONT_SIZE}px; font-weight: 700; fill: #ffffff; dominant-baseline: middle; text-anchor: middle; }
       </style>
@@ -125,26 +133,27 @@ async function svgToNumberedPng(hex) {
     .webp({ quality: 95 })
     .toBuffer();
 
-  const outPath = path.join(INPUT_DIR, `${hex}_nums.webp`);
+  const outPath = path.join(OUTPUT_DIR, `${hex}_nums.webp`);
   fs.writeFileSync(outPath, out);
-  console.log(`OK: ${hex}_nums.webp (trazos numerados)`);
+  console.log(`OK: ${path.relative(process.cwd(), outPath)} (trazos numerados)`);
   return true;
 }
 
 (async () => {
-  const hexes = process.argv.slice(2);
-  if (hexes.length === 0) {
-    console.error("Uso: node tools/kanjivg-to-nums.js <hex> [<hex> ...]");
+  if (!fs.existsSync(INPUT_DIR)) {
+    console.error("No existe INPUT_DIR:", INPUT_DIR);
     process.exit(1);
   }
+  if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
   let ok = 0, fail = 0;
-  for (const h of hexes) {
+  for (const term of terms) {
+    const hex = toHexCode(term);
     try {
-      const res = await svgToNumberedPng(h);
+      const res = await svgToNumberedWebp(hex);
       res ? ok++ : fail++;
     } catch (e) {
-      console.error(`ERR ${h}:`, e.message);
+      console.error(`ERR ${term} (${hex}):`, e.message);
       fail++;
     }
   }

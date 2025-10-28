@@ -167,6 +167,25 @@ import N3_B6_U5_PracticeScreen from "./src/screens/N3/B6/N3_B6_U5_PracticeScreen
 import N3_B6_U6_PracticeScreen from "./src/screens/N3/B6/N3_B6_U6_PracticeScreen";
 import N3_FinalExamScreen from "./src/screens/N3/N3_FinalExamScreen";
 
+// === N2 ===
+import CursoN2Screen from "./src/screens/N2/N2BrowseScreen";
+import N2IntroScreen from "./src/screens/N2IntroScreen";
+// 🆕 Netflix-style browse para N2
+import N2_B1_U1 from "./src/screens/N2/N2_B1_U1";
+import N2_B1_U2 from "./src/screens/N2/N2_B1_U2";
+import N2_B1_U3 from "./src/screens/N2/N2_B1_U3";
+import N2_B2_U1 from "./src/screens/N2/N2_B2_U1";
+import N2BrowseScreen from "./src/screens/N2/N2BrowseScreen";
+
+import N2_B2_U2 from "./src/screens/N2/N2_B2_U2";
+import N2_B2_U3 from "./src/screens/N2/N2_B2_U3";
+
+import N2_B3_U1 from "./src/screens/N2/N2_B3_U1";
+import N2_B3_U2 from "./src/screens/N2/N2_B3_U2"; // ✅ importa la pantalla NUEVA
+import N2_B3_U3 from "./src/screens/N2/N2_B3_U3";
+
+
+
 // Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -482,6 +501,23 @@ export default function App() {
 
               {/* === EXAMEN FINAL N3 === */}
               <Stack.Screen name="N3_FinalExam" component={N3_FinalExamScreen} options={{ headerShown: false }} />
+
+              {/* === N2 === */}
+              <Stack.Screen name="N2Intro" component={N2IntroScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="CursoN2" component={CursoN2Screen} options={{ headerShown: false }} />
+              {/* 🆕 Netflix-style browse */}
+              <Stack.Screen name="N2Browse" component={N2BrowseScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B1_U1" component={N2_B1_U1} options={{ headerShown: false }} />
+<Stack.Screen name="N2_B1_U2" component={N2_B1_U2} options={{ headerShown: false }} />
+<Stack.Screen name="N2_B1_U3" component={N2_B1_U3} options={{ headerShown: false }} />
+<Stack.Screen name="N2_B2_U1" component={N2_B2_U1} options={{ headerShown: false }} />
+
+<Stack.Screen name="N2_B2_U2" component={N2_B2_U2} options={{ headerShown: false }} />
+<Stack.Screen name="N2_B2_U3" component={N2_B2_U3} options={{ headerShown: false }} />
+ <Stack.Screen name="N2_B3_U1" component={N2_B3_U1} options={{ headerShown: false }} />
+ <Stack.Screen name="N2_B3_U2" component={N2_B3_U2} options={{ headerShown: false }} /> 
+ <Stack.Screen name="N2_B3_U3" component={N2_B3_U3} options={{ headerShown: false }} />
+
             </Stack.Navigator>
           </NavigationContainer>
         </B3ScoreProvider>

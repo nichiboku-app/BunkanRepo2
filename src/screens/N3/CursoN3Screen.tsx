@@ -183,7 +183,7 @@ export default function CursoN3Screen() {
       {/* ==== HERO ==== */}
       <Animated.View style={[styles.heroWrap, { height: heroH }]}>
         <Animated.Image
-          source={require("../../../assets/images/n3_hero_leon.webp")}
+          source={require("../../../assets/images/n3/n3_hero_castillo.webp")}
           style={[styles.heroImg, { transform: [{ translateY: tY }, { scale }] }]}
           resizeMode="cover"
         />

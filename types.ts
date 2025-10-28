@@ -195,6 +195,20 @@ N3_Block1_Unit5:| undefined | { block: number; unit: number; title?: string };
  N3_B6_U4_Practice: undefined | { from?: string };
  N3_B6_U6_Practice: undefined | { from?: string };
  N3_FinalExam: undefined;
+
+   N2Intro: undefined;
+  CursoN2: undefined;
+
+  
+  // Bloque 1
+  N2_B1_U1: undefined;
+  N2_B1_U2: undefined;
+  N2_B1_U3: undefined;
+
+  // 🆕 Bloque 2 (añade las que vayas creando)
+  N2_B2_U1: undefined;
+  N2_B2_U2?: undefined; // opcional, por si la agregas pronto
+  N2_B2_U3?: undefined;
 };
 
 
