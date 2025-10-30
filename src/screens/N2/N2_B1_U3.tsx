@@ -194,7 +194,7 @@ export type KanjiItem = {
 };
 
 const KANJI_12_U3: KanjiItem[] = [
-  { kanji: "決", readingJP: "けつ／き(める)", meaningEs: "decidir", strokeAsset: require("../../../assets/kanjivg/n2/06c7a_nums.webp"),
+  { kanji: "決", readingJP: "けつ／き(める)", meaningEs: "decidir", strokeAsset: require("../../../assets/kanjivg/n2/6c7a_nums.webp"),
     words: [
       { jp: "決定", reading: "けってい", es: "decisión" },
       { jp: "解決", reading: "かいけつ", es: "solución" },
@@ -202,7 +202,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "決める", reading: "きめる", es: "decidir (v.)" },
     ],
   },
-  { kanji: "定", readingJP: "てい／さだ(める)", meaningEs: "fijar / establecer", strokeAsset: require("../../../assets/kanjivg/n2/05b9a_nums.webp"),
+  { kanji: "定", readingJP: "てい／さだ(める)", meaningEs: "fijar / establecer", strokeAsset: require("../../../assets/kanjivg/n2/5b9a_nums.webp"),
     words: [
       { jp: "予定", reading: "よてい", es: "plan / agenda" },
       { jp: "決定", reading: "けってい", es: "decisión" },
@@ -210,7 +210,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "定める", reading: "さだめる", es: "establecer (v.)" },
     ],
   },
-  { kanji: "参", readingJP: "さん", meaningEs: "participar / referirse", strokeAsset: require("../../../assets/kanjivg/n2/053c2_nums.webp"),
+  { kanji: "参", readingJP: "さん", meaningEs: "participar / referirse", strokeAsset: require("../../../assets/kanjivg/n2/53c2_nums.webp"),
     words: [
       { jp: "参加", reading: "さんか", es: "participación" },
       { jp: "参考", reading: "さんこう", es: "referencia" },
@@ -218,7 +218,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "参議院", reading: "さんぎいん", es: "Cámara Alta (JP)" },
     ],
   },
-  { kanji: "加", readingJP: "か／くわ(える)", meaningEs: "añadir / unirse", strokeAsset: require("../../../assets/kanjivg/n2/052a0_nums.webp"),
+  { kanji: "加", readingJP: "か／くわ(える)", meaningEs: "añadir / unirse", strokeAsset: require("../../../assets/kanjivg/n2/52a0_nums.webp"),
     words: [
       { jp: "参加", reading: "さんか", es: "participar" },
       { jp: "追加", reading: "ついか", es: "agregar" },
@@ -226,7 +226,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "加える", reading: "くわえる", es: "añadir (v.)" },
     ],
   },
-  { kanji: "断", readingJP: "だん／ことわ(る)", meaningEs: "cortar / rechazar / decidir", strokeAsset: require("../../../assets/kanjivg/n2/065ad_nums.webp"),
+  { kanji: "断", readingJP: "だん／ことわ(る)", meaningEs: "cortar / rechazar / decidir", strokeAsset: require("../../../assets/kanjivg/n2/65ad_nums.webp"),
     words: [
       { jp: "判断", reading: "はんだん", es: "juicio / decisión" },
       { jp: "断念", reading: "だんねん", es: "renuncia a algo" },
@@ -234,7 +234,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "断る", reading: "ことわる", es: "rechazar / avisar" },
     ],
   },
-  { kanji: "由", readingJP: "ゆ", meaningEs: "origen / razón", strokeAsset: require("../../../assets/kanjivg/n2/07531_nums.webp"),
+  { kanji: "由", readingJP: "ゆ", meaningEs: "origen / razón", strokeAsset: require("../../../assets/kanjivg/n2/7531_nums.webp"),
     words: [
       { jp: "理由", reading: "りゆう", es: "razón / motivo" },
       { jp: "自由", reading: "じゆう", es: "libertad" },
@@ -242,7 +242,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "不自由", reading: "ふじゆう", es: "inconveniencia / discapacidad" },
     ],
   },
-  { kanji: "訳", readingJP: "やく／わけ", meaningEs: "traducir / razón", strokeAsset: require("../../../assets/kanjivg/n2/08a33_nums.webp"),
+  { kanji: "訳", readingJP: "やく／わけ", meaningEs: "traducir / razón", strokeAsset: require("../../../assets/kanjivg/n2/8a33_nums.webp"),
     words: [
       { jp: "翻訳", reading: "ほんやく", es: "traducción (escrita)" },
       { jp: "通訳", reading: "つうやく", es: "interpretación (oral)" },
@@ -250,7 +250,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "訳", reading: "わけ", es: "razón / sentido" },
     ],
   },
-  { kanji: "必", readingJP: "ひつ／かなら(ず)", meaningEs: "necesario", strokeAsset: require("../../../assets/kanjivg/n2/05fc5_nums.webp"),
+  { kanji: "必", readingJP: "ひつ／かなら(ず)", meaningEs: "necesario", strokeAsset: require("../../../assets/kanjivg/n2/5fc5_nums.webp"),
     words: [
       { jp: "必要", reading: "ひつよう", es: "necesario" },
       { jp: "必須", reading: "ひっす", es: "indispensable" },
@@ -258,7 +258,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "必然", reading: "ひつぜん", es: "inevitabilidad" },
     ],
   },
-  { kanji: "然", readingJP: "ぜん／しか(し)", meaningEs: "así / naturaleza", strokeAsset: require("../../../assets/kanjivg/n2/07136_nums.webp"),
+  { kanji: "然", readingJP: "ぜん／しか(し)", meaningEs: "así / naturaleza", strokeAsset: require("../../../assets/kanjivg/n2/7136_nums.webp"),
     words: [
       { jp: "自然", reading: "しぜん", es: "naturaleza" },
       { jp: "当然", reading: "とうぜん", es: "por supuesto / natural" },
@@ -266,7 +266,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "全然", reading: "ぜんぜん", es: "en absoluto / totalmente" },
     ],
   },
-  { kanji: "証", readingJP: "しょう", meaningEs: "prueba / certificado", strokeAsset: require("../../../assets/kanjivg/n2/08a3c_nums.webp"),
+  { kanji: "証", readingJP: "しょう", meaningEs: "prueba / certificado", strokeAsset: require("../../../assets/kanjivg/n2/8a3c_nums.webp"),
     words: [
       { jp: "証明", reading: "しょうめい", es: "demostración / prueba" },
       { jp: "保証", reading: "ほしょう", es: "garantía" },
@@ -274,7 +274,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "証券", reading: "しょうけん", es: "título / valor" },
     ],
   },
-  { kanji: "責", readingJP: "せき", meaningEs: "responsabilidad / culpar", strokeAsset: require("../../../assets/kanjivg/n2/08cac_nums.webp"),
+  { kanji: "責", readingJP: "せき", meaningEs: "responsabilidad / culpar", strokeAsset: require("../../../assets/kanjivg/n2/8cac_nums.webp"),
     words: [
       { jp: "責任", reading: "せきにん", es: "responsabilidad" },
       { jp: "責任者", reading: "せきにんしゃ", es: "responsable (cargo)" },
@@ -282,7 +282,7 @@ const KANJI_12_U3: KanjiItem[] = [
       { jp: "職責", reading: "しょくせき", es: "responsabilidad del puesto" },
     ],
   },
-  { kanji: "任", readingJP: "にん", meaningEs: "cargo / confiar", strokeAsset: require("../../../assets/kanjivg/n2/04efb_nums.webp"),
+  { kanji: "任", readingJP: "にん", meaningEs: "cargo / confiar", strokeAsset: require("../../../assets/kanjivg/n2/4efb_nums.webp"),
     words: [
       { jp: "責任", reading: "せきにん", es: "responsabilidad" },
       { jp: "任命", reading: "にんめい", es: "nombramiento" },
@@ -300,7 +300,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "尊",
     readingJP: "そん／とうと(い)",
     meaningEs: "respetar / digno",
-    strokeAsset: require("../../../assets/kanjivg/n2/05c0a_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/5c0a_nums.webp"),
     words: [
       { jp: "尊敬", reading: "そんけい", es: "respeto" },
       { jp: "尊重", reading: "そんちょう", es: "consideración" },
@@ -312,7 +312,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "敬",
     readingJP: "けい",
     meaningEs: "respeto / reverencia",
-    strokeAsset: require("../../../assets/kanjivg/n2/0656c_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/656c_nums.webp"),
     words: [
       { jp: "敬語", reading: "けいご", es: "lenguaje honorífico" },
       { jp: "敬意", reading: "けいい", es: "respeto" },
@@ -324,7 +324,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "謙",
     readingJP: "けん",
     meaningEs: "humildad",
-    strokeAsset: require("../../../assets/kanjivg/n2/08b19_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/8b19_nums.webp"),
     words: [
       { jp: "謙遜", reading: "けんそん", es: "modestia" },
       { jp: "謙譲語", reading: "けんじょうご", es: "lenguaje humilde" },
@@ -336,7 +336,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "譲",
     readingJP: "じょう／ゆず(る)",
     meaningEs: "ceder / transferir",
-    strokeAsset: require("../../../assets/kanjivg/n2/08b72_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/8b72_nums.webp"),
     words: [
       { jp: "譲渡", reading: "じょうと", es: "transferencia" },
       { jp: "譲歩", reading: "じょうほ", es: "concesión" },
@@ -348,7 +348,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "伺",
     readingJP: "うかが(う)",
     meaningEs: "visitar / consultar (hum.)",
-    strokeAsset: require("../../../assets/kanjivg/n2/04f3a_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/4f3a_nums.webp"),
     words: [
       { jp: "伺う", reading: "うかがう", es: "visitar/preguntar (hum.)" },
       { jp: "お伺い", reading: "おうかがい", es: "consulta/visita" },
@@ -360,7 +360,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "申",
     readingJP: "もう(す)",
     meaningEs: "decir (hum.) / solicitar",
-    strokeAsset: require("../../../assets/kanjivg/n2/07533_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/7533_nums.webp"),
     words: [
       { jp: "申す", reading: "もうす", es: "decir (hum.)" },
       { jp: "申し上げる", reading: "もうしあげる", es: "decir/ofrecer (hum.)" },
@@ -372,7 +372,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "致",
     readingJP: "いた(す)",
     meaningEs: "hacer (hum.) / causar",
-    strokeAsset: require("../../../assets/kanjivg/n2/081f4_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/81f4_nums.webp"),
     words: [
       { jp: "致す", reading: "いたす", es: "hacer (hum.)" },
       { jp: "一致", reading: "いっち", es: "coincidencia" },
@@ -384,7 +384,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "存",
     readingJP: "そん",
     meaningEs: "existir / conocer (hum.)",
-    strokeAsset: require("../../../assets/kanjivg/n2/05b58_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/5b58_nums.webp"),
     words: [
       { jp: "存じる", reading: "ぞんじる", es: "saber/conocer (hum.)" },
       { jp: "ご存知", reading: "ごぞんじ", es: "saber (hon.)" },
@@ -396,7 +396,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "参",
     readingJP: "さん／まい(る)",
     meaningEs: "participar / ir (hum.)",
-    strokeAsset: require("../../../assets/kanjivg/n2/053c2_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/53c2_nums.webp"),
     words: [
       { jp: "参る", reading: "まいる", es: "ir/venir (hum.)" },
       { jp: "参加", reading: "さんか", es: "participación" },
@@ -408,7 +408,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "拝",
     readingJP: "はい",
     meaningEs: "reverencia / humilde",
-    strokeAsset: require("../../../assets/kanjivg/n2/062dd_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/62dd_nums.webp"),
     words: [
       { jp: "拝見", reading: "はいけん", es: "ver (hum.)" },
       { jp: "拝読", reading: "はいどく", es: "leer (hum.)" },
@@ -420,7 +420,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "御",
     readingJP: "ご／おん",
     meaningEs: "honorífico (prefijo)",
-    strokeAsset: require("../../../assets/kanjivg/n2/05fa1_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/5fa1_nums.webp"),
     words: [
       { jp: "御社", reading: "おんしゃ", es: "su empresa (hon.)" },
       { jp: "御中", reading: "おんちゅう", es: "A la atención de" },
@@ -432,7 +432,7 @@ const KANJI_12_B2_U1: KanjiItem[] = [
     kanji: "様",
     readingJP: "さま／よう",
     meaningEs: "señor/a; forma/estilo",
-    strokeAsset: require("../../../assets/kanjivg/n2/069d8_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/69d8_nums.webp"),
     words: [
       { jp: "〜様", reading: "〜さま", es: "Sr./Sra. (hon.)" },
       { jp: "様式", reading: "ようしき", es: "formato / estilo" },

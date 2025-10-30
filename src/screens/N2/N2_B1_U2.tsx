@@ -198,7 +198,8 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "原",
     readingJP: "げん",
     meaningEs: "origen / causa",
-    strokeAsset: require("../../../assets/kanjivg/n2/0539f_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/539f_nums.webp"),
+
     words: [
       { jp: "原因", reading: "げんいん", es: "causa" },
       { jp: "原則", reading: "げんそく", es: "principio / regla" },
@@ -210,7 +211,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "因",
     readingJP: "いん",
     meaningEs: "motivo / razón",
-    strokeAsset: require("../../../assets/kanjivg/n2/056e0_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/56e0_nums.webp"),
     words: [
       { jp: "要因", reading: "よういん", es: "factor" },
       { jp: "因果", reading: "いんが", es: "causa y efecto" },
@@ -222,7 +223,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "結",
     readingJP: "けつ",
     meaningEs: "unir / concluir",
-    strokeAsset: require("../../../assets/kanjivg/n2/07d50_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/7d50_nums.webp"),
     words: [
       { jp: "結果", reading: "けっか", es: "resultado" },
       { jp: "結論", reading: "けつろん", es: "conclusión" },
@@ -234,7 +235,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "果",
     readingJP: "か",
     meaningEs: "fruto / efecto",
-    strokeAsset: require("../../../assets/kanjivg/n2/0679c_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/679c_nums.webp"),
     words: [
       { jp: "成果", reading: "せいか", es: "resultado / logro" },
       { jp: "果たす", reading: "はたす", es: "cumplir / realizar" },
@@ -246,7 +247,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "功",
     readingJP: "こう",
     meaningEs: "mérito / logro",
-    strokeAsset: require("../../../assets/kanjivg/n2/0529f_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/529f_nums.webp"),
     words: [
       { jp: "成功", reading: "せいこう", es: "éxito" },
       { jp: "功績", reading: "こうせき", es: "mérito / logros" },
@@ -258,7 +259,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "失",
     readingJP: "しつ",
     meaningEs: "perder / error",
-    strokeAsset: require("../../../assets/kanjivg/n2/05931_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/5931_nums.webp"),
     words: [
       { jp: "失敗", reading: "しっぱい", es: "fracaso / error" },
       { jp: "失礼", reading: "しつれい", es: "descortesía / disculpe" },
@@ -270,7 +271,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "敗",
     readingJP: "はい",
     meaningEs: "derrota",
-    strokeAsset: require("../../../assets/kanjivg/n2/06557_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/6557_nums.webp"),
     words: [
       { jp: "敗北", reading: "はいぼく", es: "derrota" },
       { jp: "惨敗", reading: "ざんぱい", es: "derrota aplastante" },
@@ -282,7 +283,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "努",
     readingJP: "ど",
     meaningEs: "esfuerzo",
-    strokeAsset: require("../../../assets/kanjivg/n2/052aa_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/52aa_nums.webp"),
     words: [
       { jp: "努力", reading: "どりょく", es: "esfuerzo" },
       { jp: "努める", reading: "つとめる", es: "esforzarse" },
@@ -294,7 +295,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "力",
     readingJP: "りょく",
     meaningEs: "fuerza / capacidad",
-    strokeAsset: require("../../../assets/kanjivg/n2/0529b_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/529b_nums.webp"),
     words: [
       { jp: "能力", reading: "のうりょく", es: "capacidad / habilidad" },
       { jp: "協力", reading: "きょうりょく", es: "cooperación" },
@@ -306,7 +307,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "影",
     readingJP: "えい",
     meaningEs: "sombra / influencia",
-    strokeAsset: require("../../../assets/kanjivg/n2/05f71_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/5f71_nums.webp"),
     words: [
       { jp: "影響", reading: "えいきょう", es: "influencia / impacto" },
       { jp: "影", reading: "かげ", es: "sombra" },
@@ -318,7 +319,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "響",
     readingJP: "きょう",
     meaningEs: "resonar / afectar",
-    strokeAsset: require("../../../assets/kanjivg/n2/097ff_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/97ff_nums.webp"),
     words: [
       { jp: "影響", reading: "えいきょう", es: "influencia / efecto" },
       { jp: "響く", reading: "ひびく", es: "resonar / repercutir" },
@@ -330,7 +331,7 @@ const KANJI_12_U2: KanjiItem[] = [
     kanji: "効",
     readingJP: "こう",
     meaningEs: "efecto / eficacia",
-    strokeAsset: require("../../../assets/kanjivg/n2/052b9_nums.webp"),
+    strokeAsset: require("../../../assets/kanjivg/n2/52b9_nums.webp"),
     words: [
       { jp: "効果", reading: "こうか", es: "efecto / eficacia" },
       { jp: "有効", reading: "ゆうこう", es: "válido / eficaz" },

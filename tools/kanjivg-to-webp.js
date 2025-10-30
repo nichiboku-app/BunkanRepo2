@@ -1,82 +1,114 @@
-// tools/kanjivg-to-webp.js
-// Extrae sólo los <path d="..."> de KanjiVG y genera <hex>_web.webp
-// Uso: node tools/kanjivg-to-webp.js 670d 5225 610f ...
+// scripts/make_kanji_webp.js
+// Uso:
+//   node scripts/make_kanji_webp.js --level n1 --suffix nums 4f8b 5ddd 6f22 ...
+//   node scripts/make_kanji_webp.js --level n3 --suffix nums --stroke white 5408
+//
+// Crea imágenes WebP desde SVGs de KanjiVG.
+// Si se usa --stroke white, todos los trazos se colorean de blanco.
+//
+// Salida: assets/kanjivg/<level>/<hex>_<suffix>.webp
 
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
+const { Resvg } = require("@resvg/resvg-js");
 
-const SRC_DIR = path.join("assets", "kanjivg", "n3");
-const OUT_W = 1000;  // ancho destino para móvil
+/* ---------- CLI ARGUMENTOS ---------- */
+const args = process.argv.slice(2);
+const DEBUG = args.includes("--debug");
 
-const hexes = process.argv.slice(2);
-if (!hexes.length) {
-  console.log("Usage: node tools/kanjivg-to-webp.js 670d 5225 ...");
+// sufijo (por defecto: nums)
+const suffixFlagIndex = args.indexOf("--suffix");
+const OUT_SUFFIX =
+  suffixFlagIndex !== -1 && args[suffixFlagIndex + 1]
+    ? String(args[suffixFlagIndex + 1]).trim()
+    : "nums";
+
+// nivel (por defecto: n1)
+const levelFlagIndex = args.indexOf("--level");
+const OUT_LEVEL =
+  levelFlagIndex !== -1 && args[levelFlagIndex + 1]
+    ? String(args[levelFlagIndex + 1]).trim()
+    : "n1";
+
+// color de trazo forzado (por defecto: ninguno)
+const strokeFlagIndex = args.indexOf("--stroke");
+const STROKE_COLOR =
+  strokeFlagIndex !== -1 && args[strokeFlagIndex + 1]
+    ? String(args[strokeFlagIndex + 1]).trim()
+    : null;
+
+// lista de kanji hex
+const HEXES = args.filter(
+  (a) =>
+    !a.startsWith("--") &&
+    ![args[suffixFlagIndex + 1], args[levelFlagIndex + 1], args[strokeFlagIndex + 1]].includes(a)
+);
+
+if (HEXES.length === 0) {
+  console.error("⚠️  Usa: node scripts/make_kanji_webp.js --level n1 --suffix nums 4f8b 8a55 ...");
   process.exit(1);
 }
 
-function buildCleanSvg(paths) {
-  // SVG mínimo y válido con los trazos
-  // (viewBox fijo de KanjiVG: 0 0 109 109)
-  return `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 109 109" width="109" height="109">
-  <g fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-    ${paths.map(d => `<path d="${d}"/>`).join("\n    ")}
-  </g>
-</svg>`.trim();
+console.log(`▶ Nivel de salida: ${OUT_LEVEL}  ·  Sufijo: ${OUT_SUFFIX}`);
+if (STROKE_COLOR) console.log(`▶ Forzando color de trazo: ${STROKE_COLOR}`);
+console.log("▶ Kanji a procesar:", HEXES.join(", "));
+
+/* ---------- RUTAS BASE ---------- */
+const RAW_DIRS = [
+  path.join(__dirname, "..", "assets", "kanjivg", "raw"),
+  path.join(__dirname, "..", "vendor", "kanjivg", "kanji"),
+];
+const OUT_DIR = path.join(__dirname, "..", "assets", "kanjivg", OUT_LEVEL);
+fs.mkdirSync(OUT_DIR, { recursive: true });
+
+/* ---------- FUNCIONES ---------- */
+function findSvg(hex) {
+  const fname = `${hex.length === 4 ? "0" + hex : hex}.svg`.replace(/^00/, "0");
+  for (const dir of RAW_DIRS) {
+    const p = path.join(dir, fname);
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
 }
 
-for (const h of hexes) {
-  const svgPath = path.join(SRC_DIR, `${h}.svg`);
-  const outPath = path.join(SRC_DIR, `${h}_web.webp`);
+async function convertSvgToWebp(svgPath, outPath) {
+  let svg = fs.readFileSync(svgPath, "utf8");
 
-  if (!fs.existsSync(svgPath)) {
-    console.log("NO SVG:", svgPath);
-    continue;
+  // Forzar color de trazo (blanco, etc.)
+  if (STROKE_COLOR) {
+    const forcedCSS = `
+      <style>
+        path[stroke], .stroke { stroke: ${STROKE_COLOR} !important; }
+        path[fill="none"] { stroke: ${STROKE_COLOR} !important; }
+      </style>
+    `;
+    svg = svg.replace(/<svg[^>]*>/, (m) => m + forcedCSS);
   }
-  if (fs.existsSync(outPath)) {
-    console.log("SKIP (exists):", path.basename(outPath));
-    continue;
-  }
 
-  try {
-    // lee como binario y conviértelo a UTF-8 lo mejor posible
-    // (algunos SVG en Windows quedan en ANSI; esto evita mojibake fatal)
-    let raw = fs.readFileSync(svgPath);
-    let text;
-    try {
-      text = raw.toString("utf8");
-    } catch {
-      // fallback Latin-1 -> UTF-8
-      text = Buffer.from(raw, "binary").toString("utf8");
-    }
+  // Renderizar con resvg
+  const resvg = new Resvg(svg, { fitTo: { mode: "width", value: 1024 } });
+  const pngBuffer = resvg.render().asPng();
 
-    // extraer TODAS las rutas d="..."; robusto, no dependemos de XML válido
-    const ds = [];
-    const re = /<path\b[^>]*\bd="([^"]+)"[^>]*>/gi;
-    let m;
-    while ((m = re.exec(text))) ds.push(m[1]);
+  // Convertir a WebP
+  await sharp(pngBuffer).webp({ quality: 95 }).toFile(outPath);
+}
 
-    if (ds.length === 0) {
-      console.log(`ERROR: ${h} no tiene <path d="...">`);
+/* ---------- PROCESAMIENTO ---------- */
+(async () => {
+  for (const hex of HEXES) {
+    const svgPath = findSvg(hex);
+    if (!svgPath) {
+      console.warn(`❌ No se encontró SVG para ${hex}`);
       continue;
     }
 
-    const cleanSvg = buildCleanSvg(ds);
-
-    // opcional: guarda el SVG limpio para inspección
-    const tmpDir = path.join(SRC_DIR, ".tmp_clean");
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-    fs.writeFileSync(path.join(tmpDir, `${h}.clean.svg`), cleanSvg, "utf8");
-
-    // render a WEBP
-    sharp(Buffer.from(cleanSvg))
-      .resize({ width: OUT_W })
-      .webp({ quality: 88 })
-      .toFile(outPath)
-      .then(() => console.log("OK:", path.basename(outPath)))
-      .catch(err => console.error("ERROR:", h, err.message));
-  } catch (e) {
-    console.error("ERROR:", h, e.message);
+    const outPath = path.join(OUT_DIR, `${hex}_${OUT_SUFFIX}.webp`);
+    try {
+      await convertSvgToWebp(svgPath, outPath);
+      console.log(`✅ ${path.relative(process.cwd(), outPath)} creado`);
+    } catch (err) {
+      console.error(`❌ Error al convertir ${hex}:`, err.message);
+    }
   }
-}
+})();

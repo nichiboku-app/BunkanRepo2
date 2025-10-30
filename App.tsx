@@ -98,10 +98,12 @@ import B8EvaluacionesLogrosMenu from "./src/screens/N5/B8Evaluaciones/B8Evaluaci
 import ExamenFinalMapacheN5 from "./src/screens/N5/ExamenFinal/ExamenFinalMapacheN5";
 
 // ✅ Bloque 3 — Números y Edad (tres actividades)
+// ✅ rutas correctas (carpeta B3_Familia)
 import B3_Familia from "./src/screens/N5/B3_Familia/B3_Familia";
 import B3_Familia_Arbol from "./src/screens/N5/B3_Familia/B3_Familia_Arbol";
 import B3_Familia_Roleplay from "./src/screens/N5/B3_Familia/B3_Familia_Roleplay";
 import B3_Familia_Tarjetas from "./src/screens/N5/B3_Familia/B3_Familia_Tarjetas";
+
 import B3_NumerosEdad from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad";
 import B3_NumerosEdad_Contadores from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad_Contadores";
 import B3_NumerosEdad_Roleplay from "./src/screens/N5/B3Vocabulario/B3_NumerosEdad_Roleplay";
@@ -175,17 +177,29 @@ import N2_B1_U1 from "./src/screens/N2/N2_B1_U1";
 import N2_B1_U2 from "./src/screens/N2/N2_B1_U2";
 import N2_B1_U3 from "./src/screens/N2/N2_B1_U3";
 import N2_B2_U1 from "./src/screens/N2/N2_B2_U1";
-import N2BrowseScreen from "./src/screens/N2/N2BrowseScreen";
-
 import N2_B2_U2 from "./src/screens/N2/N2_B2_U2";
 import N2_B2_U3 from "./src/screens/N2/N2_B2_U3";
-
 import N2_B3_U1 from "./src/screens/N2/N2_B3_U1";
-import N2_B3_U2 from "./src/screens/N2/N2_B3_U2"; // ✅ importa la pantalla NUEVA
+import N2_B3_U2 from "./src/screens/N2/N2_B3_U2";
 import N2_B3_U3 from "./src/screens/N2/N2_B3_U3";
+import N2_B4_U1 from "./src/screens/N2/N2_B4_U1";
+import N2_B4_U2 from "./src/screens/N2/N2_B4_U2";
+import N2_B4_U3 from "./src/screens/N2/N2_B4_U3";
+import N2_B5_U1 from "./src/screens/N2/N2_B5_U1";
+import N2_B5_U2 from "./src/screens/N2/N2_B5_U2";
+import N2_B5_U3 from "./src/screens/N2/N2_B5_U3";
+import N2BrowseScreen from "./src/screens/N2/N2BrowseScreen";
 
+// === N1 ===
+import CursoN1Screen from "./src/screens/N1/CursoN1"; // ✅ IMPORTA EL COMPONENTE REAL
+import N1ExamScreen from "./src/screens/N1/N1ExamScreen";
+import N1HomeScreen from "./src/screens/N1/N1HomeScreen";
+import N1KanjiHubScreen from "./src/screens/N1/N1KanjiHubScreen"; // placeholder abajo
+import N1KanjiLessonScreen from "./src/screens/N1/N1KanjiLessonScreen";
+import N1LessonScreen from "./src/screens/N1/N1LessonScreen"; // placeholder abajo
+import N1IntroScreen from "./src/screens/N1IntroScreen";
 
-
+// import
 // Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -508,15 +522,28 @@ export default function App() {
               {/* 🆕 Netflix-style browse */}
               <Stack.Screen name="N2Browse" component={N2BrowseScreen} options={{ headerShown: false }} />
               <Stack.Screen name="N2_B1_U1" component={N2_B1_U1} options={{ headerShown: false }} />
-<Stack.Screen name="N2_B1_U2" component={N2_B1_U2} options={{ headerShown: false }} />
-<Stack.Screen name="N2_B1_U3" component={N2_B1_U3} options={{ headerShown: false }} />
-<Stack.Screen name="N2_B2_U1" component={N2_B2_U1} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B1_U2" component={N2_B1_U2} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B1_U3" component={N2_B1_U3} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B2_U1" component={N2_B2_U1} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B2_U2" component={N2_B2_U2} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B2_U3" component={N2_B2_U3} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B3_U1" component={N2_B3_U1} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B3_U2" component={N2_B3_U2} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B3_U3" component={N2_B3_U3} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B4_U1" component={N2_B4_U1} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B4_U2" component={N2_B4_U2} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B4_U3" component={N2_B4_U3} options={{ headerShown: false }} />
+              <Stack.Screen name="N2_B5_U1" component={N2_B5_U1} options={{ headerShown:false }} />
+              <Stack.Screen name="N2_B5_U2" component={N2_B5_U2} options={{ headerShown:false }} />
+              <Stack.Screen name="N2_B5_U3" component={N2_B5_U3} options={{ headerShown:false }} />
 
-<Stack.Screen name="N2_B2_U2" component={N2_B2_U2} options={{ headerShown: false }} />
-<Stack.Screen name="N2_B2_U3" component={N2_B2_U3} options={{ headerShown: false }} />
- <Stack.Screen name="N2_B3_U1" component={N2_B3_U1} options={{ headerShown: false }} />
- <Stack.Screen name="N2_B3_U2" component={N2_B3_U2} options={{ headerShown: false }} /> 
- <Stack.Screen name="N2_B3_U3" component={N2_B3_U3} options={{ headerShown: false }} />
+             <Stack.Screen name="N1Intro" component={N1IntroScreen} options={{ headerShown: false }} />
+<Stack.Screen name="CursoN1" component={CursoN1Screen} options={{ headerShown: false }} />
+<Stack.Screen name="N1Home" component={N1HomeScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1Lesson" component={N1LessonScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1KanjiHub" component={N1KanjiHubScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1Exam" component={N1ExamScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1KanjiLesson" component={N1KanjiLessonScreen} options={{ headerShown: false }} />
 
             </Stack.Navigator>
           </NavigationContainer>

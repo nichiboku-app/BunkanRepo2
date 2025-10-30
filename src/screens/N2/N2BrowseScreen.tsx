@@ -29,6 +29,9 @@ type RootStackParamList = {
   N2_B2_U3?: undefined;
   N2_B3_U1?: undefined;
   N2_B3_U2?: undefined;
+   // B4
+  N2_B4_U1?: undefined;
+  N2_B4_U2?: undefined; // <— NUEVA
 };
 type Nav = NativeStackNavigationProp<RootStackParamList, "N2Browse">;
 
@@ -48,6 +51,14 @@ function routeFor(block: number, unit: number) {
   if (block === 3 && unit === 1) return "N2_B3_U1";
   if (block === 3 && unit === 2) return "N2_B3_U2";
   if (block === 3 && unit === 3) return "N2_B3_U3"; // temporal
+
+    if (block === 4 && unit === 1) return "N2_B4_U1";
+    if (block === 4 && unit === 2) return "N2_B4_U2";
+    if (block === 4 && unit === 3) return "N2_B4_U3"; 
+
+    if (block===5 && unit===1) return "N2_B5_U1";
+  if (block===5 && unit===2) return "N2_B5_U2";
+  if (block===5 && unit===3) return "N2_B5_U3";
   return "N2_Unit"; // fallback
 }
 

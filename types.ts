@@ -209,6 +209,15 @@ N3_Block1_Unit5:| undefined | { block: number; unit: number; title?: string };
   N2_B2_U1: undefined;
   N2_B2_U2?: undefined; // opcional, por si la agregas pronto
   N2_B2_U3?: undefined;
+
+
+  N1Intro: undefined;
+CursoN1: undefined;
+ N1Home: undefined;
+  N1Lesson: { id: string };
+  N1KanjiHub: undefined;
+  N1Exam: undefined;
+N1KanjiLesson: { id: string; kanji: string };
 };
 
 
