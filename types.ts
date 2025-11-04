@@ -21,7 +21,7 @@ export type RootStackParamList = {
   // Actividades intro
   QuizCultural: undefined;
   GifSaludo: undefined;
-
+  N5_Diagnostico: undefined;
   // Ejercicios
   VowelExercises: undefined;
 
@@ -66,10 +66,9 @@ export type RootStackParamList = {
   NLecturaGuiada: undefined;
   HRoleplaySaludo: undefined;
 
-  // ...rutas que ya tienes
+  // Menús y subpantallas Hiragana
   HiraganaMMenu: undefined;
   HiraganaYRMenu: undefined;
-  // (opcional si luego creas subpantallas)
   M_Dictado: undefined;
   M_PracticaVoz: undefined;
   YR_AudioInteractivo: undefined;
@@ -79,11 +78,14 @@ export type RootStackParamList = {
   WN_LecturaFrases: undefined;
   WN_PracticaNFinal: undefined;
 
+  // Katakana
   KatakanaMenu: undefined;
   KatakanaChallenge: undefined;
-  KatakanaRow: { row: "A" | "K" | "S" | "T" | "N" | "H" | "M" | "Y" | "R" | "W" } | undefined;
+  KatakanaRow:
+    | { row: "A" | "K" | "S" | "T" | "N" | "H" | "M" | "Y" | "R" | "W" }
+    | undefined;
 
-  // Bloques
+  // Bloques N5
   B3VocabularioMenu: undefined;
   B4GramaticaIMenu: undefined;
   B5GramaticaIIMenu: undefined;
@@ -115,28 +117,28 @@ export type RootStackParamList = {
   B3_ObjetosClase: undefined;
   B3_LugaresCiudad: undefined;
   B3_PreguntasBasicas: undefined;
+  B3_ComidaBebidas: undefined;
+  B3_ColoresAdjetivos: undefined;
+  B3_Cortesia: undefined;
 
-   B3_ComidaBebidas: undefined;
-    B3_ColoresAdjetivos: undefined;
-     B3_Cortesia: undefined;
-  
-     // ===== B4: Gramática I =====
-B4_Desu: undefined;
-B4_DesuNeg: undefined;
-B4_PregKa: undefined;
-B4_KoreSoreAre: undefined;
-B4_NoModifier: undefined;      // の (posesión/modificador)
-B4_WaGa: undefined;
-B4_Wo: undefined;
-B4_NiHe: undefined;
-B4_De: undefined;
-B4_ArimasuImasu: undefined;
-B4_Adjetivos: undefined;       // い／な adjetivos
-B4_Mo: undefined;
-B4_Tiempo: undefined;          // 時間・曜日・に
-B4_MasuIntro: undefined;       // ます afirmativo
-B4_MasuNeg: undefined;         // ません negativo
+  // ===== B4: Gramática I =====
+  B4_Desu: undefined;
+  B4_DesuNeg: undefined;
+  B4_PregKa: undefined;
+  B4_KoreSoreAre: undefined;
+  B4_NoModifier: undefined; // の (posesión/modificador)
+  B4_WaGa: undefined;
+  B4_Wo: undefined;
+  B4_NiHe: undefined;
+  B4_De: undefined;
+  B4_ArimasuImasu: undefined;
+  B4_Adjetivos: undefined; // い／な adjetivos
+  B4_Mo: undefined;
+  B4_Tiempo: undefined; // 時間・曜日・に
+  B4_MasuIntro: undefined; // ます afirmativo
+  B4_MasuNeg: undefined; // ません negativo
 
+  // ===== B5 =====
   B5_Contadores: undefined;
   B5_TiempoPuntos: undefined;
   B5_TiempoDuracion: undefined;
@@ -147,6 +149,7 @@ B4_MasuNeg: undefined;         // ません negativo
   B5_VecesContador: undefined;
   B5_ParticulasTiempo: undefined;
 
+  // ===== B6 =====
   B6_Compras: undefined;
   B6_Restaurante: undefined;
   B6_Transporte: undefined;
@@ -156,70 +159,107 @@ B4_MasuNeg: undefined;         // ません negativo
   B6_Hotel: undefined;
   B6_Emergencias: undefined;
 
+  // === N4 ===
   N4Intro: undefined;
-  
-    // N3
+  CursoN4: undefined;
+  N4_Tema: undefined;
+
+  // === N3 ===
   N3Intro: undefined;
   CursoN3: undefined;
   N3_Unit: { block: number; unit: number; title: string } | undefined;
-N3_MetasFinalidad: undefined;
-N3_DecisionesCambios: undefined;
-N3_HabitosRutinas: undefined;
-N3_AccionesSin: undefined;
-N3_ReglasPermisos: undefined;
-N3_Block1_Unit3: undefined; // 03 Hábitos y rutinas  ← NUEVA
-N3_Block1_Unit4: undefined | { block: number; unit: number; title?: string };
-N3_Block1_Unit5:| undefined | { block: number; unit: number; title?: string };
+  N3_MetasFinalidad: undefined;
+  N3_DecisionesCambios: undefined;
+  N3_HabitosRutinas: undefined;
+  N3_AccionesSin: undefined;
+  N3_ReglasPermisos: undefined;
+  N3_Block1_Unit3: undefined;
+  N3_Block1_Unit4: undefined | { block: number; unit: number; title?: string };
+  N3_Block1_Unit5: undefined | { block: number; unit: number; title?: string };
 
+  // N3 B2
   N3_B2_U1: undefined | { block?: 2; unit?: 1; title?: string };
   N3_B2_U1_Practice: undefined | { from?: "N3_B2_U1" };
-   N3_B2_U2_Practice: undefined | { from?: "N3_B2_U2" };
-   N3_B2_U3_Practice: undefined | { from?: "N3_B2_U3" };
-   N3_B2_U4_Practice?: { from?: "N3_B2_U4" };
-    N3_B2_U10_Practice: undefined | { from?: "N3_B2_U10" };
-     N3_B3_U2_Practice: undefined | { from?: string };
-      N3_B3_U3_Practice: undefined | { from?: string };
-       N3_B3_U4_Practice: undefined | { from?: string };
-       N3_B3_U5_Practice: undefined | { from?: string };
+  N3_B2_U2_Practice: undefined | { from?: "N3_B2_U2" };
+  N3_B2_U3_Practice: undefined | { from?: "N3_B2_U3" };
+  N3_B2_U4_Practice: undefined | { from?: "N3_B2_U4" };
+  N3_B2_U10_Practice: undefined | { from?: "N3_B2_U10" };
+
+  // N3 B3
+  N3_B3_U1_Practice: undefined | { from?: string };
+  N3_B3_U2_Practice: undefined | { from?: string };
+  N3_B3_U3_Practice: undefined | { from?: string };
+  N3_B3_U4_Practice: undefined | { from?: string };
+  N3_B3_U5_Practice: undefined | { from?: string };
+
+  // N3 B4
   N3_B4_U1_Practice: undefined | { from?: string };
- N3_B4_U2_Practice: undefined | { from?: string };
+  N3_B4_U2_Practice: undefined | { from?: string };
   N3_B4_U3_Practice: undefined | { from?: string };
   N3_B4_U4_Practice: undefined | { from?: string };
   N3_B4_U20_Practice: undefined | { from?: string };
+
+  // N3 B5
+  N3_B5_U1_Practice: undefined | { from?: string };
   N3_B5_U2_Practice: undefined | { from?: string };
-  n3_B5_U1Screen: undefined | { from?: string };
-  N3_B5_U3_PracticeScreen : undefined | { from?: string };
+  N3_B5_U3_Practice: undefined | { from?: string };
   N3_B5_U4_Practice: undefined | { from?: string };
- N3_B6_U2_PracticeScreen: undefined | { from?: string };
+  N3_B5_U5_Practice: undefined | { from?: string };
+
+  // N3 B6
+  N3_B6_U2_Practice: undefined | { from?: string };
   N3_B6_U3_Practice: undefined | { from?: string };
- N3_B6_U4_Practice: undefined | { from?: string };
- N3_B6_U6_Practice: undefined | { from?: string };
- N3_FinalExam: undefined;
+  N3_B6_U4_Practice: undefined | { from?: string };
+  N3_B6_U6_Practice: undefined | { from?: string };
 
-   N2Intro: undefined;
+  N3_FinalExam: undefined;
+
+  // === N2 ===
+  N2Intro: undefined;
   CursoN2: undefined;
-
-  
-  // Bloque 1
   N2_B1_U1: undefined;
   N2_B1_U2: undefined;
   N2_B1_U3: undefined;
-
-  // 🆕 Bloque 2 (añade las que vayas creando)
   N2_B2_U1: undefined;
-  N2_B2_U2?: undefined; // opcional, por si la agregas pronto
-  N2_B2_U3?: undefined;
+  N2_B2_U2: undefined;
+  N2_B2_U3: undefined;
 
-
+  // === N1 ===
+   N1_Tech: undefined;
+  N1_Culture: undefined;
+  N1_Law: undefined;
+  N1_Environment: undefined;
+  N1_Health: undefined;
+  N1_Work: undefined;
+  N1_Opinion: undefined;
+  N1_International: undefined;
   N1Intro: undefined;
-CursoN1: undefined;
- N1Home: undefined;
+  CursoN1: undefined;
+  N1Home: undefined;
   N1Lesson: { id: string };
   N1KanjiHub: undefined;
   N1Exam: undefined;
-N1KanjiLesson: { id: string; kanji: string };
+  N1KanjiLesson: { id: string; kanji: string };
+  N1Quiz: {
+    id: string;
+    hex: string;
+    kanji: string;
+    on: string[];
+    kun: string[];
+    es: string;
+    words: { jp: string; reading: string; es: string }[];
+  };
+  Economy: undefined;
+  N1Game: {
+    id: string;
+    hex: string;
+    kanji: string;
+    on: string[];
+    kun: string[];
+    es: string;
+    words: { jp: string; reading: string; es: string }[];
+  };
 };
-
 
 declare global {
   namespace ReactNavigation {

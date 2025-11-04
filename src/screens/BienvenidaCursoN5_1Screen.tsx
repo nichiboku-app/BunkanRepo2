@@ -4,14 +4,16 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ImageBackground,
+  Modal,
   ScrollView,
   StatusBar,
   StyleProp,
   StyleSheet,
   Text,
+  TouchableOpacity,
   useWindowDimensions,
   View,
   ViewStyle,
@@ -19,9 +21,8 @@ import {
 
 import SakuraFall from '../components/SakuraFall';
 import { BulletItem } from '../components/ui/BulletItem';
-import { GhostButton, PrimaryButton } from '../components/ui/Buttons';
+import { PrimaryButton } from '../components/ui/Buttons';
 import { ChipTag } from '../components/ui/ChipTag';
-import { getLastLocation } from '../services/progress';
 
 // ===== Tipos locales =====
 type RootStackParamList = {
@@ -38,11 +39,13 @@ const COLORS = {
   redDeep: '#6A0F16',
   redGradA: '#7A1117',
   redGradB: '#B32424',
+  redSolid: '#B32424',
   cream: 'rgba(255, 255, 255, 0.94)',
   gold: '#C8A046',
   goldSoft: '#E8D29A',
   goldLine: '#E6D9B8',
   subBg: 'rgba(255,255,255,0.82)',
+  overlay: 'rgba(0,0,0,0.25)',
 };
 
 // imágenes
@@ -58,6 +61,25 @@ function Decor({ source, style }: { source: any; style?: StyleProp<ViewStyle> })
   );
 }
 
+/** ===== Botón rojo (para CTAs y tips) ===== */
+function RedButton({
+  title,
+  onPress,
+  style,
+  small = false,
+}: {
+  title: string;
+  onPress: () => void;
+  style?: any;
+  small?: boolean;
+}) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={[rb.base, small && rb.small, style]}>
+      <Text style={[rb.txt, small && rb.txtSmall]}>{title}</Text>
+    </TouchableOpacity>
+  );
+}
+
 /** ===== Título premium, centrado, con glow dorado y trazo ===== */
 function ElegantTitle({ children }: { children: React.ReactNode }) {
   return (
@@ -69,26 +91,22 @@ function ElegantTitle({ children }: { children: React.ReactNode }) {
         style={s.titleOuter}
       >
         <View style={s.titleInner}>
-          {/* brillo superior tipo laca */}
           <LinearGradient
             colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
             style={s.titleSheen}
           />
-          {/* “doble” capa para efecto glow + texto principal */}
           <View style={s.titleTextWrap}>
             <Text style={[s.titleText, s.titleTextGlow]}>{children}</Text>
             <Text style={s.titleText}>{children}</Text>
           </View>
 
-          {/* Esquinas doradas tipo bracket */}
           <View style={[s.corner, s.cornerTL]} />
           <View style={[s.corner, s.cornerTR]} />
           <View style={[s.corner, s.cornerBL]} />
           <View style={[s.corner, s.cornerBR]} />
 
-          {/* Trazo tipo pincel, centrado */}
           <LinearGradient
             colors={[COLORS.gold, COLORS.goldSoft, COLORS.gold]}
             start={{ x: 0, y: 0.5 }}
@@ -101,7 +119,7 @@ function ElegantTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** ===== Subtítulo ancho completo, sin iconos ===== */
+/** ===== Subtítulo ancho completo ===== */
 function ElegantSub({ children }: { children: React.ReactNode }) {
   return (
     <View style={s.subWrap}>
@@ -124,45 +142,27 @@ export default function BienvenidaCursoN5_1Screen() {
   const navigation = useNavigation<Nav>();
   const { width } = useWindowDimensions();
 
+  // Estado para tips (modal superior)
+  const [tipVisible, setTipVisible] = useState(false);
+  const [tipTitle, setTipTitle] = useState<string>('');
+  const [tipBody, setTipBody] = useState<string>('');
+
+  const openTip = (title: string, body: string) => {
+    setTipTitle(title);
+    setTipBody(body);
+    setTipVisible(true);
+  };
+
+  const closeTip = () => setTipVisible(false);
+
   // Ancho útil (padding 20 a cada lado)
   const contentWidth = Math.max(0, width - 40);
-  // Altura base con proporción vertical (3/4) y recorte ~60px
   const heroHeight = Math.max(260, Math.round(contentWidth * (3 / 4)) - 60);
 
   const goRoot = (route: keyof RootStackParamList, params?: any) => {
     const parent = navigation.getParent();
     if (parent) (parent as any).navigate(route as any, params);
     else (navigation as any).navigate(route as any, params);
-  };
-
-  const routeMap = {
-    IntroJapones: 'IntroJapones',
-    IntroJaponesScreen: 'IntroJapones',
-    EntradaActividadesN5: 'EntradaActividadesN5',
-    TemaN5: 'TemaN5',
-    CursoN5: 'CursoN5',
-    BienvenidaCursoN5_1: 'BienvenidaCursoN5_1',
-  } as const;
-  type RouteMapKey = keyof typeof routeMap;
-  const normalizeRoute = (r?: string): keyof RootStackParamList | null =>
-    r && (routeMap as Record<string, keyof RootStackParamList>)[r] ? routeMap[r as RouteMapKey] : null;
-
-  type SavedLoc = string | { route: string; params?: any } | null;
-  const handleContinue = async () => {
-    try {
-      const lastRaw = (await getLastLocation()) as SavedLoc;
-      const lastRoute = typeof lastRaw === 'string' ? lastRaw : lastRaw?.route;
-      const params = typeof lastRaw === 'string' ? undefined : lastRaw?.params;
-
-      const normalized = normalizeRoute(lastRoute);
-      if (normalized) {
-        goRoot(normalized, params ?? {});
-      } else {
-        goRoot('EntradaActividadesN5');
-      }
-    } catch {
-      goRoot('EntradaActividadesN5');
-    }
   };
 
   return (
@@ -181,29 +181,15 @@ export default function BienvenidaCursoN5_1Screen() {
         {/* Título centrado premium */}
         <ElegantTitle>Curso de Japonés N5</ElegantTitle>
 
-        {/* Subtítulo ancho completo */}
+        {/* Subtítulo */}
         <ElegantSub>Presentación del nivel y acceso a tus actividades.</ElegantSub>
 
         {/* HERO */}
         <View style={[s.heroFrameGold, { height: heroHeight }]}>
-          <ExpoImage
-            source={HERO_SRC}
-            style={s.heroImage}
-            contentFit="cover"
-            transition={250}
-            onError={(err: unknown) => {
-              const msg =
-                err instanceof Error
-                  ? err.message
-                  : typeof err === 'object'
-                  ? JSON.stringify(err)
-                  : String(err);
-              console.warn('[HERO] Error cargando imagen:', msg);
-            }}
-          />
+          <ExpoImage source={HERO_SRC} style={s.heroImage} contentFit="cover" transition={250} />
         </View>
 
-        {/* ¿Qué aprenderás? —— tarjeta blanca */}
+        {/* ¿Qué aprenderás? */}
         <View style={s.cardWhiteFull}>
           <Text style={s.cardTitle}>¿Qué aprenderás?</Text>
           <View style={{ marginTop: 6 }}>
@@ -217,7 +203,7 @@ export default function BienvenidaCursoN5_1Screen() {
           <Decor source={SAKURA_DECOR} style={s.sakuraCorner} />
         </View>
 
-        {/* Requisitos / Método —— tarjetas blancas */}
+        {/* Requisitos / Método */}
         <View style={s.row}>
           <View style={[s.col, s.cardWhiteFull]}>
             <Text style={s.cardTitle}>Requisitos</Text>
@@ -234,36 +220,83 @@ export default function BienvenidaCursoN5_1Screen() {
           </View>
         </View>
 
-        {/* Incluye —— tarjeta blanca */}
+        {/* Incluye */}
         <View style={s.cardWhiteFull}>
           <Text style={s.cardTitle}>Incluye</Text>
           <View style={s.chips}>
             <ChipTag icon={<Ionicons name="headset" size={14} color="#A93226" />} label="Escucha" />
             <ChipTag icon={<Ionicons name="mic" size={14} color="#A93226" />} label="Pronunciación" />
             <ChipTag icon={<Ionicons name="book" size={14} color="#A93226" />} label="Lecturas" />
-            <ChipTag
-              icon={<MaterialCommunityIcons name="gamepad-variant-outline" size={14} color="#A93226" />}
-              label="Juegos"
-            />
+            <ChipTag icon={<MaterialCommunityIcons name="gamepad-variant-outline" size={14} color="#A93226" />} label="Juegos" />
             <ChipTag icon={<Ionicons name="stats-chart" size={14} color="#A93226" />} label="Progreso" />
+          </View>
+
+          {/* Instrucción pedida */}
+          <Text style={s.includeHint}>
+            Pulsa los <Text style={{ fontWeight: '900', color: COLORS.redSolid }}>botones rojos</Text> para ver
+            <Text style={{ fontWeight: '900' }}> consejos de estudio</Text> para este nivel.
+          </Text>
+
+          {/* Botones rojos de consejos */}
+          <View style={s.tipButtonsRow}>
+            <RedButton
+              small
+              title="Consejos: ritmo"
+              onPress={() =>
+                openTip(
+                  'Consejos de ritmo',
+                  'Estudia 15–25 min diarios. Haz 1–2 actividades por sesión y repite en días alternos para consolidar.'
+                )
+              }
+            />
+            <RedButton
+              small
+              title="Consejos: memoria"
+              onPress={() =>
+                openTip(
+                  'Consejos de memoria',
+                  'Crea tarjetas (kana y vocabulario) y practica con intervalos espaciados. Di en voz alta cada ejemplo.'
+                )
+              }
+            />
+            <RedButton
+              small
+              title="Consejos: audio"
+              onPress={() =>
+                openTip(
+                  'Consejos de audio',
+                  'Escucha primero, luego repite imitando ritmo y entonación. Usa auriculares y baja la velocidad si lo necesitas.'
+                )
+              }
+            />
           </View>
         </View>
 
-        {/* CTA: Continuar + Entrar */}
+        {/* CTA principal: Examen diagnóstico y Entrar */}
         <View style={s.ctaCol}>
-          <PrimaryButton title="Continuar donde te quedaste" onPress={handleContinue} />
-          <PrimaryButton title="Entrar a las actividades N5" onPress={() => goRoot('IntroJapones')} />
-        </View>
+          <RedButton
+  title="Examen diagnóstico"
+  onPress={() => goRoot('N5_Diagnostico')}
+/>
 
-        <View style={s.actionsRow}>
-          <GhostButton title="Examen diagnóstico" onPress={() => {}} style={{ flex: 1 }} />
-          <GhostButton title="Comprar membresía" onPress={() => {}} style={{ flex: 1 }} />
+          <PrimaryButton title="Entrar a las actividades N5" onPress={() => goRoot('IntroJapones')} />
         </View>
 
         <Text style={s.tip}>
           Consejo: completa 1–2 actividades por día. Tu avance y logros aparecerán aquí cuando conectemos tu perfil.
         </Text>
       </ScrollView>
+
+      {/* Modal superior de tips */}
+      <Modal visible={tipVisible} transparent animationType="fade" onRequestClose={closeTip}>
+        <View style={m.overlay}>
+          <View style={m.topSheet}>
+            <Text style={m.title}>{tipTitle}</Text>
+            <Text style={m.body}>{tipBody}</Text>
+            <RedButton small title="Cerrar" onPress={closeTip} style={{ alignSelf: 'flex-end', marginTop: 8 }} />
+          </View>
+        </View>
+      </Modal>
 
       {/* Pétalos por delante — ultra sutil */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -277,12 +310,12 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#ECEFF3' },
   content: { padding: 20, paddingBottom: 40, gap: 14 },
 
-  /** ===== TÍTULO CENTRADO PREMIUM ===== */
+  /** ===== TÍTULO ===== */
   titleWrap: { marginTop: 55 },
   titleOuter: {
     width: '100%',
     borderRadius: 18,
-    padding: 2, // marco gradiente rojo
+    padding: 2,
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 10,
@@ -298,21 +331,10 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#F0E7D4',
-    alignItems: 'center',        // ⬅️ centra contenido
-  },
-  titleSheen: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 22,
-  },
-  titleTextWrap: {
-    position: 'relative',
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  // Capa de “glow” dorado detrás del texto
+  titleSheen: { position: 'absolute', left: 0, right: 0, top: 0, height: 22 },
+  titleTextWrap: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
   titleTextGlow: {
     position: 'absolute',
     color: 'transparent',
@@ -325,34 +347,19 @@ const s = StyleSheet.create({
     fontWeight: '900',
     color: COLORS.redDeep,
     letterSpacing: 0.8,
-    textAlign: 'center',         // ⬅️ texto centrado
+    textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.12)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  // Esquinas doradas tipo “bracket”
-  corner: {
-    position: 'absolute',
-    width: 18,
-    height: 18,
-    borderColor: COLORS.gold,
-  },
+  corner: { position: 'absolute', width: 18, height: 18, borderColor: COLORS.gold },
   cornerTL: { top: 8, left: 10, borderTopWidth: 2, borderLeftWidth: 2 },
   cornerTR: { top: 8, right: 10, borderTopWidth: 2, borderRightWidth: 2 },
   cornerBL: { bottom: 10, left: 10, borderBottomWidth: 2, borderLeftWidth: 2 },
   cornerBR: { bottom: 10, right: 10, borderBottomWidth: 2, borderRightWidth: 2 },
-  // Trazo de pincel dorado centrado
-  titleBrush: {
-    position: 'absolute',
-    bottom: 8,
-    height: 3,
-    borderRadius: 3,
-    opacity: 0.95,
-    alignSelf: 'center',
-    width: '56%',               // centrado bajo el texto
-  },
+  titleBrush: { position: 'absolute', bottom: 8, height: 3, borderRadius: 3, opacity: 0.95, alignSelf: 'center', width: '56%' },
 
-  /** ===== SUBTÍTULO (ancho completo) ===== */
+  /** ===== SUBTÍTULO ===== */
   subWrap: {
     position: 'relative',
     width: '100%',
@@ -369,42 +376,11 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  subAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 7,
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
-  },
-  subInner: {
-    paddingVertical: 12,
-    paddingRight: 16,
-    paddingLeft: 18 + 10, // franja + aire
-  },
-  subText: {
-    color: '#4A4031',
-    fontSize: 16.5,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  subRuleTop: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    top: 6,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#EADFBF',
-  },
-  subRuleBottom: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 6,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#EADFBF',
-  },
+  subAccent: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 7, borderTopLeftRadius: 14, borderBottomLeftRadius: 14 },
+  subInner: { paddingVertical: 12, paddingRight: 16, paddingLeft: 28 },
+  subText: { color: '#4A4031', fontSize: 16.5, fontWeight: '600', letterSpacing: 0.3 },
+  subRuleTop: { position: 'absolute', left: 12, right: 12, top: 6, height: StyleSheet.hairlineWidth, backgroundColor: '#EADFBF' },
+  subRuleBottom: { position: 'absolute', left: 12, right: 12, bottom: 6, height: StyleSheet.hairlineWidth, backgroundColor: '#EADFBF' },
 
   // TARJETA BLANCA
   cardWhiteFull: {
@@ -421,7 +397,6 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // HERO (marco dorado al ras + alto recortado)
   heroFrameGold: {
     backgroundColor: 'transparent',
     borderRadius: 16,
@@ -444,22 +419,60 @@ const s = StyleSheet.create({
   cardTitle: { fontSize: 18, fontWeight: '800', color: '#1A1A1A', marginBottom: 6 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
 
-  // CTA column
-  ctaCol: { gap: 10, marginTop: 6 },
+  includeHint: { marginTop: 10, color: '#4A4031', fontSize: 13.5 },
+  tipButtonsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
 
-  actionsRow: { flexDirection: 'row', gap: 12 },
+  // CTAs
+  ctaCol: { gap: 10, marginTop: 10 },
+
   tip: { color: '#444', fontSize: 12, marginTop: 8, textAlign: 'center' },
 
-  sakuraCorner: {
-    position: 'absolute',
-    right: -16,
-    bottom: 8,
-    width: 120,
-    height: 90,
-    opacity: 0.85,
+  sakuraCorner: { position: 'absolute', right: -16, bottom: 8, width: 120, height: 90, opacity: 0.85 },
+});
+
+/** ===== Estilos botón rojo ===== */
+const rb = StyleSheet.create({
+  base: {
+    backgroundColor: COLORS.redSolid,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#8E1C1C',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
-  cardFrameOverlay: {
-    left: -2, right: -2, top: -2, bottom: -2,
-    opacity: 0.4,
+  txt: { color: '#fff', fontWeight: '900', letterSpacing: 0.3, fontSize: 16 },
+  small: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10 },
+  txtSmall: { fontSize: 13, fontWeight: '800' },
+});
+
+/** ===== Modal superior de tips ===== */
+const m = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: COLORS.overlay,
+    justifyContent: 'flex-start', // ⬅️ se pega arriba
   },
+  topSheet: {
+    marginTop: 20,
+    marginHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E6EAF0',
+    padding: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  title: { fontSize: 16, fontWeight: '900', color: '#1A1A1A' },
+  body: { marginTop: 6, fontSize: 14, color: '#3B3B3B', lineHeight: 20 },
 });

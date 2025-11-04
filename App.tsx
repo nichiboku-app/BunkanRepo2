@@ -96,6 +96,7 @@ import B6VidaCotidianaMenu from "./src/screens/N5/B6Vida/B6VidaCotidianaMenu";
 import B7LecturaPracticaMenu from "./src/screens/N5/B7Lectura/B7LecturaPracticaMenu";
 import B8EvaluacionesLogrosMenu from "./src/screens/N5/B8Evaluaciones/B8EvaluacionesLogrosMenu";
 import ExamenFinalMapacheN5 from "./src/screens/N5/ExamenFinal/ExamenFinalMapacheN5";
+import N5_DiagnosticoScreen from "./src/screens/N5/N5_DiagnosticoScreen";
 
 // ✅ Bloque 3 — Números y Edad (tres actividades)
 // ✅ rutas correctas (carpeta B3_Familia)
@@ -199,6 +200,24 @@ import N1KanjiLessonScreen from "./src/screens/N1/N1KanjiLessonScreen";
 import N1LessonScreen from "./src/screens/N1/N1LessonScreen"; // placeholder abajo
 import N1IntroScreen from "./src/screens/N1IntroScreen";
 
+import N1GameScreen from "./src/screens/N1/N1GameScreen";
+import N1KanjiMockScreen from "./src/screens/N1/N1KanjiMockScreen";
+import N1QuickExamScreen from "./src/screens/N1/N1QuickExamScreen";
+import N1QuizScreen from "./src/screens/N1/N1QuizScreen";
+
+// App.tsx (imports)
+import N1_CultureScreen from "./src/screens/N1/lessons/N1_CultureScreen";
+import N1_EnvironmentScreen from "./src/screens/N1/lessons/N1_EnvironmentScreen";
+import N1_HealthScreen from "./src/screens/N1/lessons/N1_HealthScreen";
+import N1_InternationalScreen from "./src/screens/N1/lessons/N1_InternationalScreen";
+import N1_LawScreen from "./src/screens/N1/lessons/N1_LawScreen";
+import N1_OpinionScreen from "./src/screens/N1/lessons/N1_OpinionScreen";
+import N1_TechScreen from "./src/screens/N1/lessons/N1_TechScreen";
+import N1_WorkScreen from "./src/screens/N1/lessons/N1_WorkScreen";
+import N1_EconomyScreen from "./src/screens/N1/N1_EconomyScreen";
+import PoliticsScreen from "./src/screens/N1/PoliticsScreen";
+
+
 // import
 // Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -249,6 +268,12 @@ export default function App() {
                 component={OrigenesDelIdiomaScreen}
                 options={{ headerShown: true, title: "Orígenes del idioma" }}
               />
+              <Stack.Screen
+  name="N5_Diagnostico"
+  component={N5_DiagnosticoScreen}
+  options={{ headerShown: true, title: "Examen diagnóstico N5" }}
+/>
+
               <Stack.Screen
                 name="EscrituraN5"
                 component={EscrituraScreen}
@@ -545,6 +570,22 @@ export default function App() {
 <Stack.Screen name="N1Exam" component={N1ExamScreen} options={{ headerShown: false }} />
 <Stack.Screen name="N1KanjiLesson" component={N1KanjiLessonScreen} options={{ headerShown: false }} />
 
+<Stack.Screen name="N1Quiz" component={N1QuizScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1Game" component={N1GameScreen} options={{ headerShown: false }} />
+
+<Stack.Screen name="N1KanjiMock" component={N1KanjiMockScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1QuickExam" component={N1QuickExamScreen} options={{ headerShown: false }} />
+
+<Stack.Screen name="Politics" component={PoliticsScreen} options={{ headerShown: false }} />
+<Stack.Screen name="Economy"  component={N1_EconomyScreen}  options={{ headerShown: false }} />
+<Stack.Screen name="N1_Tech" component={N1_TechScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1_Culture" component={N1_CultureScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1_Law" component={N1_LawScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1_Environment" component={N1_EnvironmentScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1_Health" component={N1_HealthScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1_Work" component={N1_WorkScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1_Opinion" component={N1_OpinionScreen} options={{ headerShown: false }} />
+<Stack.Screen name="N1_International" component={N1_InternationalScreen} options={{ headerShown: false }} />
             </Stack.Navigator>
           </NavigationContainer>
         </B3ScoreProvider>

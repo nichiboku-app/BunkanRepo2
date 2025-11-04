@@ -230,4 +230,407 @@ export const N1_KANJI_META: N1KanjiMeta[] = [
       { jp: "懇切", reading: "こんせつ", es: "amable/detallado" },
     ],
   },
+
+  {
+    hex: "8AAD", k: "読", on: ["ドク"], kun: ["よ.む"],
+    es: "leer",
+    words: [
+      { jp: "読書", reading: "どくしょ", es: "lectura (actividad)" },
+      { jp: "読解", reading: "どっかい", es: "comprensión lectora" },
+      { jp: "読者", reading: "どくしゃ", es: "lector" },
+      { jp: "読む", reading: "よむ", es: "leer" },
+    ],
+  },
+  {
+    hex: "8A18", k: "記", on: ["キ"], kun: ["しる.す"],
+    es: "registrar; anotar",
+    words: [
+      { jp: "日記", reading: "にっき", es: "diario" },
+      { jp: "記録", reading: "きろく", es: "registro" },
+      { jp: "記事", reading: "きじ", es: "artículo (nota)" },
+      { jp: "記す", reading: "しるす", es: "anotar" },
+    ],
+  },
+  {
+    hex: "8A9E", k: "語", on: ["ゴ"], kun: ["かた.る", "かた.らう"],
+    es: "lengua; hablar",
+    words: [
+      { jp: "日本語", reading: "にほんご", es: "japonés" },
+      { jp: "語彙", reading: "ごい", es: "vocabulario" },
+      { jp: "語学", reading: "ごがく", es: "estudio de idiomas" },
+      { jp: "語る", reading: "かたる", es: "contar/relatar" },
+    ],
+  },
+  {
+    hex: "8A55", k: "評", on: ["ヒョウ"], kun: [],
+    es: "evaluar; crítica",
+    words: [
+      { jp: "評価", reading: "ひょうか", es: "evaluación" },
+      { jp: "批評", reading: "ひひょう", es: "crítica" },
+      { jp: "好評", reading: "こうひょう", es: "buena reputación" },
+      { jp: "定評", reading: "ていひょう", es: "prestigio (reconocido)" },
+    ],
+  },
+  {
+    hex: "8A08", k: "計", on: ["ケイ"], kun: ["はか.る"],
+    es: "medir; plan",
+    words: [
+      { jp: "計画", reading: "けいかく", es: "plan" },
+      { jp: "時計", reading: "とけい", es: "reloj" },
+      { jp: "統計", reading: "とうけい", es: "estadística" },
+      { jp: "計る", reading: "はかる", es: "medir" },
+    ],
+  },
+  {
+    hex: "89E3", k: "解", on: ["カイ", "ゲ"], kun: ["と.く", "と.ける"],
+    es: "resolver; desatar",
+    words: [
+      { jp: "理解", reading: "りかい", es: "comprensión" },
+      { jp: "誤解", reading: "ごかい", es: "malentendido" },
+      { jp: "解説", reading: "かいせつ", es: "explicación" },
+      { jp: "解く", reading: "とく", es: "resolver/desatar" },
+    ],
+  },
+  {
+    hex: "8996", k: "視", on: ["シ"], kun: ["み.る"],
+    es: "observar; vista",
+    words: [
+      { jp: "視覚", reading: "しかく", es: "visión" },
+      { jp: "無視", reading: "むし", es: "ignorar" },
+      { jp: "監視", reading: "かんし", es: "vigilancia" },
+      { jp: "視る", reading: "みる", es: "ver/observar (atento)" },
+    ],
+  },
+  {
+    hex: "898B", k: "見", on: ["ケン"], kun: ["み.る", "み.える", "み.せる"],
+    es: "ver; mostrar",
+    words: [
+      { jp: "意見", reading: "いけん", es: "opinión" },
+      { jp: "発見", reading: "はっけん", es: "descubrimiento" },
+      { jp: "見学", reading: "けんがく", es: "visita de estudio" },
+      { jp: "見せる", reading: "みせる", es: "mostrar" },
+    ],
+  },
+  {
+    hex: "77E5", k: "知", on: ["チ"], kun: ["し.る"],
+    es: "saber; conocer",
+    words: [
+      { jp: "知識", reading: "ちしき", es: "conocimiento" },
+      { jp: "通知", reading: "つうち", es: "aviso/notificación" },
+      { jp: "知人", reading: "ちじん", es: "conocido" },
+      { jp: "知る", reading: "しる", es: "saber" },
+    ],
+  },
+  {
+    hex: "7684", k: "的", on: ["テキ"], kun: ["まと"],
+    es: "objetivo; -mente",
+    words: [
+      { jp: "目的", reading: "もくてき", es: "objetivo" },
+      { jp: "具体的", reading: "ぐたいてき", es: "concreto" },
+      { jp: "象徴的", reading: "しょうちょうてき", es: "simbólico" },
+      { jp: "的", reading: "まと", es: "blanco/objetivo" },
+    ],
+  },
+  {
+    hex: "76EE", k: "目", on: ["モク", "ボク"], kun: ["め"],
+    es: "ojo; objetivo",
+    words: [
+      { jp: "目的", reading: "もくてき", es: "objetivo" },
+      { jp: "注目", reading: "ちゅうもく", es: "atención" },
+      { jp: "目標", reading: "もくひょう", es: "meta" },
+      { jp: "目", reading: "め", es: "ojo" },
+    ],
+  },
+  {
+    hex: "773C", k: "眼", on: ["ガン", "ゲン"], kun: ["まなこ"],
+    es: "globo ocular; mirada",
+    words: [
+      { jp: "眼科", reading: "がんか", es: "oftalmología" },
+      { jp: "主眼", reading: "しゅがん", es: "objetivo principal" },
+      { jp: "肉眼", reading: "にくがん", es: "ojo desnudo" },
+      { jp: "眼", reading: "まなこ", es: "ojo (literario)" },
+    ],
+  },
+  {
+    hex: "77ED", k: "短", on: ["タン"], kun: ["みじか.い"],
+    es: "corto; breve",
+    words: [
+      { jp: "短期", reading: "たんき", es: "corto plazo" },
+      { jp: "短所", reading: "たんしょ", es: "punto débil" },
+      { jp: "短縮", reading: "たんしゅく", es: "acortamiento" },
+      { jp: "短い", reading: "みじかい", es: "corto" },
+    ],
+  },
+  {
+    hex: "7D4C", k: "経", on: ["ケイ", "キョウ"], kun: ["へ.る"],
+    es: "pasar; economía",
+    words: [
+      { jp: "経済", reading: "けいざい", es: "economía" },
+      { jp: "経験", reading: "けいけん", es: "experiencia" },
+      { jp: "経由", reading: "けいゆ", es: "vía/por medio de" },
+      { jp: "経る", reading: "へる", es: "pasar por" },
+    ],
+  },
+  {
+    hex: "7D50", k: "結", on: ["ケツ"], kun: ["むす.ぶ"],
+    es: "atar; conclusión",
+    words: [
+      { jp: "結論", reading: "けつろん", es: "conclusión" },
+      { jp: "結婚", reading: "けっこん", es: "matrimonio" },
+      { jp: "結果", reading: "けっか", es: "resultado" },
+      { jp: "結ぶ", reading: "むすぶ", es: "atar/unir" },
+    ],
+  },
+  {
+    hex: "8003", k: "考", on: ["コウ"], kun: ["かんが.える"],
+    es: "pensar",
+    words: [
+      { jp: "考察", reading: "こうさつ", es: "consideración" },
+      { jp: "参考", reading: "さんこう", es: "referencia" },
+      { jp: "再考", reading: "さいこう", es: "reconsideración" },
+      { jp: "考える", reading: "かんがえる", es: "pensar" },
+    ],
+  },
+  {
+    hex: "8033", k: "耳", on: ["ジ"], kun: ["みみ"],
+    es: "oído; oreja",
+    words: [
+      { jp: "中耳炎", reading: "ちゅうじえん", es: "otitis media" },
+      { jp: "空耳", reading: "そらみみ", es: "oír mal / pareidolia auditiva" },
+      { jp: "耳鼻科", reading: "じびか", es: "otorrinolaringología" },
+      { jp: "耳", reading: "みみ", es: "oreja" },
+    ],
+  },
+  {
+    hex: "81EA", k: "自", on: ["ジ", "シ"], kun: ["みずか.ら"],
+    es: "sí mismo; auto-",
+    words: [
+      { jp: "自信", reading: "じしん", es: "autoconfianza" },
+      { jp: "自由", reading: "じゆう", es: "libertad" },
+      { jp: "自然", reading: "しぜん", es: "naturaleza" },
+      { jp: "自ら", reading: "みずから", es: "uno mismo" },
+    ],
+  },
+  {
+    hex: "8D70", k: "走", on: ["ソウ"], kun: ["はし.る"],
+    es: "correr",
+    words: [
+      { jp: "走行", reading: "そうこう", es: "circular (vehículo)" },
+      { jp: "競走", reading: "きょうそう", es: "carrera" },
+      { jp: "暴走", reading: "ぼうそう", es: "descontrolado" },
+      { jp: "走る", reading: "はしる", es: "correr" },
+    ],
+  },
+  {
+    hex: "8D77", k: "起", on: ["キ"], kun: ["お.きる", "お.こる", "お.こす"],
+    es: "levantarse; ocurrir",
+    words: [
+      { jp: "起動", reading: "きどう", es: "arranque" },
+      { jp: "起源", reading: "きげん", es: "origen" },
+      { jp: "早起き", reading: "はやおき", es: "madrugar" },
+      { jp: "起こす", reading: "おこす", es: "causar / levantar" },
+    ],
+  },
+  {
+    hex: "8DB3", k: "足", on: ["ソク"], kun: ["あし", "た.りる", "た.す"],
+    es: "pie; suficiente",
+    words: [
+      { jp: "不足", reading: "ふそく", es: "insuficiencia" },
+      { jp: "遠足", reading: "えんそく", es: "excursión" },
+      { jp: "満足", reading: "まんぞく", es: "satisfacción" },
+      { jp: "足りる", reading: "たりる", es: "bastar" },
+    ],
+  },
+  {
+    hex: "8EAB", k: "身", on: ["シン"], kun: ["み"],
+    es: "cuerpo; uno mismo",
+    words: [
+      { jp: "出身", reading: "しゅっしん", es: "procedencia" },
+      { jp: "身分", reading: "みぶん", es: "estatus" },
+      { jp: "自身", reading: "じしん", es: "uno mismo" },
+      { jp: "身", reading: "み", es: "cuerpo/mi ser" },
+    ],
+  },
+  {
+    hex: "9053", k: "道", on: ["ドウ"], kun: ["みち"],
+    es: "camino; vía",
+    words: [
+      { jp: "茶道", reading: "さどう／ちゃどう", es: "camino del té" },
+      { jp: "柔道", reading: "じゅうどう", es: "judo" },
+      { jp: "道具", reading: "どうぐ", es: "herramienta" },
+      { jp: "道", reading: "みち", es: "camino" },
+    ],
+  },
+  {
+    hex: "91D1", k: "金", on: ["キン", "コン"], kun: ["かね", "かな"],
+    es: "oro; dinero; metal",
+    words: [
+      { jp: "金属", reading: "きんぞく", es: "metal" },
+      { jp: "料金", reading: "りょうきん", es: "tarifa" },
+      { jp: "現金", reading: "げんきん", es: "efectivo" },
+      { jp: "金", reading: "かね", es: "dinero" },
+    ],
+  },
+  {
+    hex: "9577", k: "長", on: ["チョウ"], kun: ["なが.い"],
+    es: "largo; jefe",
+    words: [
+      { jp: "社長", reading: "しゃちょう", es: "presidente (empresa)" },
+      { jp: "成長", reading: "せいちょう", es: "crecimiento" },
+      { jp: "校長", reading: "こうちょう", es: "director (escuela)" },
+      { jp: "長い", reading: "ながい", es: "largo" },
+    ],
+  },
+  {
+    hex: "982D", k: "頭", on: ["トウ", "ズ"], kun: ["あたま"],
+    es: "cabeza",
+    words: [
+      { jp: "頭痛", reading: "ずつう", es: "dolor de cabeza" },
+      { jp: "先頭", reading: "せんとう", es: "cabeza (fila)" },
+      { jp: "頭脳", reading: "ずのう", es: "cerebro/intelecto" },
+      { jp: "頭", reading: "あたま", es: "cabeza" },
+    ],
+  },
+  {
+    hex: "9996", k: "首", on: ["シュ"], kun: ["くび"],
+    es: "cuello; jefe",
+    words: [
+      { jp: "首都", reading: "しゅと", es: "capital" },
+      { jp: "首相", reading: "しゅしょう", es: "primer ministro" },
+      { jp: "首位", reading: "しゅい", es: "primer lugar" },
+      { jp: "首", reading: "くび", es: "cuello" },
+    ],
+  },
+  {
+    hex: "610F", k: "意", on: ["イ"], kun: [],
+    es: "intención; idea",
+    words: [
+      { jp: "意味", reading: "いみ", es: "significado" },
+      { jp: "意見", reading: "いけん", es: "opinión" },
+      { jp: "意識", reading: "いしき", es: "conciencia" },
+      { jp: "決意", reading: "けつい", es: "determinación" },
+    ],
+  },
+  {
+    hex: "601D", k: "思", on: ["シ"], kun: ["おも.う"],
+    es: "pensar; creer",
+    words: [
+      { jp: "思考", reading: "しこう", es: "pensamiento" },
+      { jp: "思想", reading: "しそう", es: "ideología" },
+      { jp: "思い出", reading: "おもいで", es: "recuerdo" },
+      { jp: "思う", reading: "おもう", es: "pensar/creer" },
+    ],
+  },
+  {
+    hex: "60C5", k: "情", on: ["ジョウ"], kun: ["なさ.け"],
+    es: "emoción; situación",
+    words: [
+      { jp: "感情", reading: "かんじょう", es: "emoción" },
+      { jp: "事情", reading: "じじょう", es: "circunstancias" },
+      { jp: "表情", reading: "ひょうじょう", es: "expresión (facial)" },
+      { jp: "情け", reading: "なさけ", es: "compasión" },
+    ],
+  },
+  {
+    hex: "5FC3", k: "心", on: ["シン"], kun: ["こころ"],
+    es: "corazón; mente",
+    words: [
+      { jp: "中心", reading: "ちゅうしん", es: "centro" },
+      { jp: "心理", reading: "しんり", es: "psicología" },
+      { jp: "安心", reading: "あんしん", es: "tranquilidad" },
+      { jp: "心", reading: "こころ", es: "corazón/mente" },
+    ],
+  },
+  {
+    hex: "624B", k: "手", on: ["シュ"], kun: ["て"],
+    es: "mano",
+    words: [
+      { jp: "手段", reading: "しゅだん", es: "medio/recurso" },
+      { jp: "選手", reading: "せんしゅ", es: "jugador/atleta" },
+      { jp: "手紙", reading: "てがみ", es: "carta" },
+      { jp: "手", reading: "て", es: "mano" },
+    ],
+  },
+  {
+    hex: "65B0", k: "新", on: ["シン"], kun: ["あたら.しい"],
+    es: "nuevo",
+    words: [
+      { jp: "新聞", reading: "しんぶん", es: "periódico" },
+      { jp: "新規", reading: "しんき", es: "nuevo/reciente" },
+      { jp: "更新", reading: "こうしん", es: "actualización" },
+      { jp: "新しい", reading: "あたらしい", es: "nuevo" },
+    ],
+  },
+  {
+    hex: "66F8", k: "書", on: ["ショ"], kun: ["か.く"],
+    es: "escribir; documento",
+    words: [
+      { jp: "読書", reading: "どくしょ", es: "lectura (actividad)" },
+      { jp: "書類", reading: "しょるい", es: "documentos" },
+      { jp: "辞書", reading: "じしょ", es: "diccionario" },
+      { jp: "書く", reading: "かく", es: "escribir" },
+    ],
+  },
+  {
+    hex: "6709", k: "有", on: ["ユウ"], kun: ["あ.る"],
+    es: "tener; existir",
+    words: [
+      { jp: "有名", reading: "ゆうめい", es: "famoso" },
+      { jp: "所有", reading: "しょゆう", es: "propiedad" },
+      { jp: "有利", reading: "ゆうり", es: "ventajoso" },
+      { jp: "有る", reading: "ある", es: "haber/existir" },
+    ],
+  },
+  {
+    hex: "671F", k: "期", on: ["キ"], kun: [],
+    es: "período; plazo",
+    words: [
+      { jp: "学期", reading: "がっき", es: "semestre" },
+      { jp: "期限", reading: "きげん", es: "fecha límite" },
+      { jp: "期待", reading: "きたい", es: "expectativa" },
+      { jp: "短期", reading: "たんき", es: "corto plazo" },
+    ],
+  },
+  {
+    hex: "6C42", k: "求", on: ["キュウ"], kun: ["もと.める"],
+    es: "pedir; buscar",
+    words: [
+      { jp: "要求", reading: "ようきゅう", es: "exigencia" },
+      { jp: "追求", reading: "ついきゅう", es: "búsqueda" },
+      { jp: "需要と供給", reading: "じゅようときょうきゅう", es: "demanda y oferta" },
+      { jp: "求める", reading: "もとめる", es: "solicitar/buscar" },
+    ],
+  },
+  {
+    hex: "6C7A", k: "決", on: ["ケツ"], kun: ["き.める", "き.まる"],
+    es: "decidir",
+    words: [
+      { jp: "決定", reading: "けってい", es: "decisión" },
+      { jp: "解決", reading: "かいけつ", es: "solución" },
+      { jp: "決勝", reading: "けっしょう", es: "final (competición)" },
+      { jp: "決める", reading: "きめる", es: "decidir" },
+    ],
+  },
+  {
+    hex: "6D3B", k: "活", on: ["カツ"], kun: [],
+    es: "activo; vida",
+    words: [
+      { jp: "生活", reading: "せいかつ", es: "vida cotidiana" },
+      { jp: "活動", reading: "かつどう", es: "actividad" },
+      { jp: "活用", reading: "かつよう", es: "aprovechamiento" },
+      { jp: "活気", reading: "かっき", es: "vitalidad" },
+    ],
+  },
+  {
+    hex: "6D77", k: "海", on: ["カイ"], kun: ["うみ"],
+    es: "mar",
+    words: [
+      { jp: "海外", reading: "かいがい", es: "extranjero" },
+      { jp: "海岸", reading: "かいがん", es: "costa" },
+      { jp: "海水", reading: "かいすい", es: "agua de mar" },
+      { jp: "海", reading: "うみ", es: "mar" },
+    ],
+  },
+
+
 ];

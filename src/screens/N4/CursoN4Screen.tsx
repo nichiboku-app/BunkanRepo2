@@ -1,3 +1,4 @@
+// src/screens/N4/CursoN4Screen.tsx
 import { AntDesign } from "@expo/vector-icons";
 import type { NavigationProp } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
@@ -18,21 +19,92 @@ import { Fuji, Lantern, Sakura, Torii } from "../../../components/icons/Japanese
 
 const { width: W } = Dimensions.get("window");
 
-/* ========= ASSETS ========= */
-const BANNER_IMG = require("../../../assets/cursoN4/banner_2.webp");
+/* ========= ASSETS (según tu carpeta assets/cursoN4/) ========= */
+const BANNER_IMG = require("../../../assets/cursoN4/banner_warm_cropped.webp");
 const FOX_BANNER = require("../../../assets/cursoN4/fox_banner.webp");
 
-/* ========= HELPERS ========= */
-const MASK_GRAMMAR_TITLES = true;
-const maskTitle = (title: string) => {
-  let t = title.replace(/「[^」]*」/g, "").replace(/"[^"]*"/g, "");
-  t = t.split("–")[0].trim();
-  return t.replace(/\s{2,}/g, " ");
+// Imágenes con nombres en español (y algunos con typos, tal como existen)
+const CASA                 = require("../../../assets/cursoN4/casa.webp");
+const RESTAURANTE          = require("../../../assets/cursoN4/restaurante.webp");
+const TRANSPORTE_TYPO      = require("../../../assets/cursoN4/trasnporte.webp");            // (typo) existe así
+const ESCUELA              = require("../../../assets/cursoN4/escuela.webp");
+const HOSPITAL             = require("../../../assets/cursoN4/hospital.webp");
+const PLANES_CITAS         = require("../../../assets/cursoN4/planes_citas.webp");
+const OFICINA              = require("../../../assets/cursoN4/oficina.webp");
+const DAR_INSTRUCCIONES    = require("../../../assets/cursoN4/darintrucciones.webp");       // (typo) existe así
+const OPINIONES_CONSEJO    = require("../../../assets/cursoN4/opiniones_consejo.webp");
+const CAUSA_CONSECUENCIAS  = require("../../../assets/cursoN4/causa_consecuencias.webp");
+const COMPARACIONES        = require("../../../assets/cursoN4/comparaciones.webp");
+const DESEO_ESPERANZAS     = require("../../../assets/cursoN4/deseo_esperanzas.webp");
+const PASADO               = require("../../../assets/cursoN4/pasado.webp");
+const NARRAR_HISTORIAS     = require("../../../assets/cursoN4/narrar_historias.webp");
+const EVENTOS_FIESTAS_TYPO = require("../../../assets/cursoN4/evetnos_fiestas.webp");       // (typo) existe así
+const RUTINA               = require("../../../assets/cursoN4/rutina.webp");
+const TRANSFORMACIONES     = require("../../../assets/cursoN4/transformaciones.webp");
+const SUPOSICIONES         = require("../../../assets/cursoN4/suposiciones.webp");
+const PERMISO_PROHIBICION  = require("../../../assets/cursoN4/permiso_prohibicion.webp");
+const CONDICIONALES        = require("../../../assets/cursoN4/condicionales.webp");
+const INTENCION            = require("../../../assets/cursoN4/intencion.webp");
+// (también tienes intension.webp, pero usamos intencion.webp)
+const PERMISO_CAUSATIVO    = require("../../../assets/cursoN4/permiso_causativo.webp");
+const PARTICULAS_AVANZADAS = require("../../../assets/cursoN4/particulas_avanzadas.webp");
+const REPASO_FINAL_TYPO    = require("../../../assets/cursoN4/repasofinal.webp");           // (typo) existe así
+const SOLICITUD_FORMAL_TYPO= require("../../../assets/cursoN4/solicitudformal.webp");       // (typo) existe así
+
+// 4 fotos sueltas que tienes en esa carpeta (las usamos para completar mapeos faltantes)
+const PHOTO_45   = require("../../../assets/cursoN4/photo_2025_11_03_18_28_45.webp");
+const PHOTO_54   = require("../../../assets/cursoN4/photo_2025_11_03_18_28_54.webp");
+const PHOTO_2912 = require("../../../assets/cursoN4/photo_2025_11_03_18_29_12.webp");
+const PHOTO_2919 = require("../../../assets/cursoN4/photo_2025_11_03_18_29_19.webp");
+
+// Fallback rotatorio por si algún número no tuviera asignación directa
+const TOPIC_COVERS = [
+  CASA, RESTAURANTE, TRANSPORTE_TYPO, ESCUELA, HOSPITAL, PLANES_CITAS, OFICINA,
+  OPINIONES_CONSEJO, CAUSA_CONSECUENCIAS, COMPARACIONES, DESEO_ESPERANZAS, PASADO,
+  NARRAR_HISTORIAS, EVENTOS_FIESTAS_TYPO, RUTINA, TRANSFORMACIONES, SUPOSICIONES,
+  PERMISO_PROHIBICION, CONDICIONALES, INTENCION, PERMISO_CAUSATIVO, PARTICULAS_AVANZADAS,
+  REPASO_FINAL_TYPO, PHOTO_45, PHOTO_54, PHOTO_2912, PHOTO_2919,
+] as const;
+
+const coverForIdx = (n: number) => {
+  const m = TOPIC_COVERS.length;
+  const seed = (n * 9301 + 49297) % 233280;
+  const idx = seed % m;
+  return TOPIC_COVERS[idx];
 };
-const splitLeadingEmoji = (text: string) => {
-  const m = text.match(/^\p{Extended_Pictographic}/u);
-  if (!m) return { emoji: "", text };
-  return { emoji: m[0], text: text.slice(m[0].length).trim() };
+
+// Mapeo 1:1 por número de tema → imagen con el nombre que tienes
+const IMG_BY_TOPIC: Record<number, any> = {
+  1: PHOTO_45,              // Presentaciones avanzadas (foto)
+  2: CASA,                  // Casa
+  3: RESTAURANTE,           // Restaurante
+  4: PHOTO_54,              // Tiendas y centros (usamos una foto)
+  5: TRANSPORTE_TYPO,       // Transporte (archivo existe como "trasnporte.webp")
+  6: ESCUELA,               // Escuela
+  7: HOSPITAL,              // Hospital
+  8: PLANES_CITAS,          // Planes y citas
+  9: OFICINA,               // Oficina
+  10: PHOTO_2912,           // Proyectos y metas (foto)
+  11: SOLICITUD_FORMAL_TYPO,// Solicitudes formales (archivo existe como "solicitudformal.webp")
+  12: DAR_INSTRUCCIONES,    // Dar instrucciones (archivo existe como "darintrucciones.webp")
+  13: OPINIONES_CONSEJO,    // Opiniones y pensamientos
+  14: CAUSA_CONSECUENCIAS,  // Dar explicaciones (usamos causas/consecuencias)
+  15: COMPARACIONES,        // Comparaciones y preferencias
+  16: DESEO_ESPERANZAS,     // Deseos y esperanzas
+  17: PASADO,               // Hablar del pasado
+  18: NARRAR_HISTORIAS,     // Narrar historias
+  19: EVENTOS_FIESTAS_TYPO, // Eventos y fiestas (archivo existe como "evetnos_fiestas.webp")
+  20: CAUSA_CONSECUENCIAS,  // Causas y consecuencias
+  21: RUTINA,               // Rutinas y hábitos
+  22: TRANSFORMACIONES,     // Transformaciones
+  23: OPINIONES_CONSEJO,    // Dar opiniones y consejos
+  24: SUPOSICIONES,         // Suposiciones y probabilidades
+  25: PERMISO_PROHIBICION,  // Permiso y prohibición
+  26: CONDICIONALES,        // Condicionales
+  27: INTENCION,            // Intención
+  28: PERMISO_CAUSATIVO,    // Pasivo y causativo (usamos permiso_causativo)
+  29: PARTICULAS_AVANZADAS, // Partículas avanzadas
+  30: REPASO_FINAL_TYPO,    // Repaso final (archivo existe como "repasofinal.webp")
 };
 
 /* ========= DATA ========= */
@@ -80,7 +152,7 @@ const DATA: TopicRow[] = [
   { type: "topic", key: "t30", num: 30, title: "🎓 Repaso final + simulacro de conversación JLPT N4" },
 ];
 
-/* ========= Agrupación para carruseles ========= */
+/* ========= Agrupación ========= */
 type Topic = Extract<TopicRow, { type: "topic" }>;
 type Group = { key: string; title: string; items: Topic[] };
 const buildGroups = (rows: TopicRow[]): Group[] => {
@@ -101,8 +173,7 @@ const buildGroups = (rows: TopicRow[]): Group[] => {
   return out;
 };
 
-/* ========= UI ========= */
-// Tipado local mínimo para este screen (coincide con tu App.tsx)
+/* ========= Screen ========= */
 type RootStackParamList = {
   CursoN4: undefined;
   N4_Tema: { id: number; title: string };
@@ -110,22 +181,15 @@ type RootStackParamList = {
 
 export default function CursoN4Screen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const GROUPS = useMemo(() => buildGroups(DATA), []);
 
-  const LIST_DATA = useMemo(
-    () =>
-      MASK_GRAMMAR_TITLES
-        ? DATA.map((i) => (i.type === "topic" ? { ...i, title: maskTitle(i.title) } : i))
-        : DATA,
-    []
-  );
-
-  const GROUPS = useMemo(() => buildGroups(LIST_DATA), [LIST_DATA]);
+  const imageForTopic = (num: number) => IMG_BY_TOPIC[num] ?? coverForIdx(num);
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
-      {/* Banner superior (SIN desvanecer) */}
+      {/* ====== BANNER ====== */}
       <SafeAreaView>
         <View style={styles.banner}>
           <ExpoImage
@@ -134,63 +198,52 @@ export default function CursoN4Screen() {
             contentFit="cover"
             contentPosition="top center"
           />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.30)", "rgba(0,0,0,0.10)", "transparent", "rgba(0,0,0,0.35)"]}
+            locations={[0, 0.22, 0.55, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.bannerTextBox}>
+            <Text style={styles.bannerTitle} numberOfLines={1}>Kitsune・Curso N4</Text>
+            <Text style={styles.bannerSub} numberOfLines={2}>
+              30 unidades ・ Temas reales ・ Gramática con propósito
+            </Text>
+          </View>
         </View>
       </SafeAreaView>
 
-      {/* Banda roja */}
-      <LinearGradient
-        colors={["#C8736B", "#B86259"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerBand}
-      >
-        <Text style={styles.headerTitle}>Kitsune · Curso N4</Text>
-        <Text style={styles.headerSub}>30 unidades • Temas reales + Gramática</Text>
-      </LinearGradient>
-
-      {/* HERO “papel flotante” */}
-      <View style={styles.heroWrap}>
-        {/* líneas finas detrás (look cuaderno) */}
-        <View style={[styles.line, { top: 18 }]} />
-        <View style={[styles.line, { top: 66 }]} />
-        <View style={[styles.line, { top: 114 }]} />
-        <View style={[styles.line, { top: 162 }]} />
-
-        {/* tarjeta papel con círculo del zorro */}
-        <View style={styles.heroCard}>
-          <View style={styles.foxRing}>
+      {/* ====== Medallón ====== */}
+      <View style={styles.foxMedallionWrap}>
+        <View style={styles.goldRingOuter}>
+          <View style={styles.goldRingInner}>
             <View style={styles.foxCircle}>
-              <ExpoImage
-                source={FOX_BANNER}
-                style={StyleSheet.absoluteFill}
-                contentFit="cover"
-                contentPosition="top center"
-              />
+              <ExpoImage source={FOX_BANNER} style={StyleSheet.absoluteFill} contentFit="cover" />
             </View>
           </View>
-          <Text style={styles.heroTitle}>N4 レベルへようこそ</Text>
         </View>
-
-        <View style={styles.heroShadow} />
+        <Text style={styles.heroJP}>N4 レベルへようこそ</Text>
+        <Text style={styles.heroES} numberOfLines={2}>
+          「努力は必ず実を結ぶ」 — el esfuerzo siempre da frutos.
+        </Text>
       </View>
 
-      {/* Secciones + Carruseles */}
+      {/* ====== Secciones + carruseles ====== */}
       <FlatList
         data={GROUPS}
         keyExtractor={(g) => g.key}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 28, paddingTop: 6 }}
         renderItem={({ item }) => (
-          <View style={{ marginTop: 18 }}>
+          <View style={{ marginTop: 14 }}>
             <View style={styles.sectionRow}>
               {({
-                "Vida cotidiana y comunicación básica": <Sakura size={18} color="#7E4A45" style={{ marginRight: 6 }} />,
-                "Trabajo, responsabilidades y opiniones": <Lantern size={18} color="#7E4A45" style={{ marginRight: 6 }} />,
-                "Historias, recuerdos y experiencias": <Fuji size={18} color="#7E4A45" style={{ marginRight: 6 }} />,
-                "Comunicación avanzada y expresiones naturales": <Torii size={18} color="#7E4A45" style={{ marginRight: 6 }} />,
+                "Vida cotidiana y comunicación básica": <Sakura size={18} color="#E5C7A2" style={{ marginRight: 6 }} />,
+                "Trabajo, responsabilidades y opiniones": <Lantern size={18} color="#E5C7A2" style={{ marginRight: 6 }} />,
+                "Historias, recuerdos y experiencias": <Fuji size={18} color="#E5C7A2" style={{ marginRight: 6 }} />,
+                "Comunicación avanzada y expresiones naturales": <Torii size={18} color="#E5C7A2" style={{ marginRight: 6 }} />,
               } as Record<string, React.ReactNode>)[item.title] ?? (
-                <Torii size={18} color="#7E4A45" style={{ marginRight: 6 }} />
+                <Torii size={18} color="#E5C7A2" style={{ marginRight: 6 }} />
               )}
-              <Text style={styles.sectionTitle}>{item.title}</Text>
+              <Text style={styles.sectionTitle} numberOfLines={1}>{item.title}</Text>
             </View>
 
             <FlatList
@@ -204,34 +257,39 @@ export default function CursoN4Screen() {
               snapToInterval={CARD_W + 12}
               snapToAlignment="start"
               renderItem={({ item: t }) => {
-                const { emoji, text } = splitLeadingEmoji(t.title);
+                const emoji = (t.title.match(/^\p{Extended_Pictographic}/u) || ["✦"])[0];
+                const text = t.title.replace(/^\p{Extended_Pictographic}\s*/u, "");
                 return (
                   <Pressable
                     style={({ pressed }) => [styles.card, pressed && { transform: [{ translateY: 1 }] }]}
-                    onPress={() =>
-                      navigation.navigate("N4_Tema", {
-                        // 👇 nos aseguramos que sea número (por si algún día viene como string)
-                        id: Number(t.num),
-                        title: t.title,
-                      })
-                    }
+                    onPress={() => navigation.navigate("N4_Tema", { id: Number(t.num), title: t.title })}
                     accessibilityRole="button"
                     accessibilityLabel={`Abrir tema ${t.num}`}
                   >
-                    <View style={styles.cardRow}>
-                      <View style={styles.leadIcon}>
-                        <Text style={styles.leadEmoji}>{emoji || "✦"}</Text>
-                      </View>
-
-                      <Text style={styles.cardTitle} numberOfLines={2}>
-                        {text}
-                      </Text>
-
-                      <View style={styles.trailing}>
-                        <View style={styles.badge}>
-                          <Text style={styles.badgeText}>{t.num}</Text>
+                    <ExpoImage
+                      source={imageForTopic(t.num)}
+                      style={StyleSheet.absoluteFill}
+                      contentFit="cover"
+                    />
+                    <LinearGradient
+                      colors={["rgba(0,0,0,0.05)","rgba(0,0,0,0.35)","rgba(0,0,0,0.70)"]}
+                      locations={[0,0.45,1]}
+                      style={StyleSheet.absoluteFill}
+                    />
+                    <View style={styles.cardIn}>
+                      <View style={styles.cardHeaderRow}>
+                        <View style={styles.leadIcon}>
+                          <Text style={styles.leadEmoji}>{emoji}</Text>
                         </View>
-                        <AntDesign name="right" size={16} color="#B36B60" style={{ marginLeft: 6 }} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.cardTitle} numberOfLines={2}>{text}</Text>
+                        </View>
+                        <View style={styles.trailing}>
+                          <View style={styles.badge}>
+                            <Text style={styles.badgeText}>{t.num}</Text>
+                          </View>
+                          <AntDesign name="right" size={16} color="#F3D9B6" style={{ marginLeft: 6 }} />
+                        </View>
                       </View>
                     </View>
                   </Pressable>
@@ -247,151 +305,110 @@ export default function CursoN4Screen() {
 
 /* ========= STYLES ========= */
 const CARD_W = Math.floor(W * 0.86);
+const CREMA = "#F6E7D3";
+const CREMA_SUB = "rgba(246,231,211,0.92)";
+const BG = "#171C27";
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F7F3EF" },
+  root: { flex: 1, backgroundColor: BG },
 
-  /* Banner superior (sin fade) */
   banner: {
-    height: 120,
-    overflow: "hidden",
-    justifyContent: "flex-end",
-  },
-
-  /* Banda roja */
-  headerBand: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    paddingTop: 10,
+    height: 220,
     borderBottomLeftRadius: 18,
     borderBottomRightRadius: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  headerTitle: { fontSize: 22, fontWeight: "900", color: "#fff" },
-  headerSub:   { marginTop: 2, fontSize: 13, fontWeight: "600", color: "rgba(255,255,255,0.9)" },
-
-  /* HERO board */
-  heroWrap: {
-    marginTop: 10,
-    marginHorizontal: 14,
-    paddingVertical: 16,
-    borderRadius: 18,
-    backgroundColor: "#EFE8E2",
     overflow: "hidden",
+    marginHorizontal: 12,
+    marginTop: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
   },
-  line: {
+  bannerTextBox: {
     position: "absolute",
     left: 0,
     right: 0,
-    height: 1,
-    backgroundColor: "rgba(120,70,60,0.18)",
-  },
-  heroCard: {
-    marginHorizontal: 18,
-    borderRadius: 18,
-    backgroundColor: "#FFFBF6",
-    borderWidth: 1,
-    borderColor: "#EAD9D1",
+    bottom: 100,
+    minHeight: 56,
+    justifyContent: "flex-end",
     alignItems: "center",
-    paddingTop: 18,
-    paddingBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    paddingHorizontal: 16,
+  },
+  bannerTitle: {
+    fontSize: 24, fontWeight: "900", color: CREMA, letterSpacing: 0.3,
+    textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.35)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+  },
+  bannerSub: {
+    marginTop: 4, fontSize: 13, fontWeight: "700", color: CREMA_SUB, lineHeight: 18,
+    textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.35)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
   },
 
-  /* Zorro (mejor encuadre + aro) */
-  foxRing: {
-    width: 108,
-    height: 108,
-    borderRadius: 54,
-    backgroundColor: "#fff",
-    borderWidth: 3,
-    borderColor: "#E4C7B8",
+  foxMedallionWrap: {
     alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    marginBottom: 8,
+    marginTop: -75,
+    paddingBottom: 8,
+  },
+  goldRingOuter: {
+    width: 132, height: 132, borderRadius: 66,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(255,215,170,0.35)",
+    shadowColor: "#F7D190",
+    shadowOpacity: 0.9,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+  goldRingInner: {
+    width: 124, height: 124, borderRadius: 62,
+    borderWidth: 10, borderColor: "#E7C26A",
+    backgroundColor: BG,
+    alignItems: "center", justifyContent: "center",
   },
   foxCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "#EAD9D1",
-    backgroundColor: "#fff",
+    width: 92, height: 92, borderRadius: 46,
+    overflow: "hidden", borderWidth: 2, borderColor: "#F5E2C7", backgroundColor: "#fff",
   },
+  heroJP: { marginTop: 10, color: CREMA, fontWeight: "900", fontSize: 16, letterSpacing: 1 },
+  heroES: { marginTop: 4, color: "rgba(246,231,211,0.8)", fontWeight: "600", fontSize: 12, paddingHorizontal: 16, textAlign: "center" },
 
-  /* Título japonés dentro del hero */
-  heroTitle: {
-    fontWeight: "900",
-    color: "#6E2B27",
-    fontSize: 16,
-    letterSpacing: 1,
-  },
-
-  /* sombra bajo la tarjeta */
-  heroShadow: {
-    position: "absolute",
-    left: 40,
-    right: 40,
-    bottom: 10,
-    height: 10,
-    borderRadius: 6,
-    backgroundColor: "#000",
-    opacity: 0.08,
-  },
-
-  /* Secciones */
   sectionRow: {
-    marginTop: 16,
-    marginBottom: 10,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
+    marginTop: 12, marginBottom: 8, paddingHorizontal: 16,
+    flexDirection: "row", alignItems: "center",
   },
-  sectionTitle: { fontSize: 16, fontWeight: "800", color: "#7E4A45" },
+  sectionTitle: { fontSize: 16, fontWeight: "800", color: "#EBD9C4" },
 
-  /* Tarjetas (carrusel) */
   card: {
     width: CARD_W,
-    minHeight: 86,
+    height: 120,
     borderRadius: 16,
-    backgroundColor: "#FFFBF6",
+    overflow: "hidden",
+    backgroundColor: "#1E2533",
     borderWidth: 1,
-    borderColor: "#EAD9D1",
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderColor: "rgba(246,231,211,0.18)",
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
-  cardRow: { flexDirection: "row", alignItems: "center" },
+  cardIn: { flex: 1, padding: 14, justifyContent: "flex-end" },
+  cardHeaderRow: { flexDirection: "row", alignItems: "center" },
   leadIcon: {
-    width: 40, height: 40, borderRadius: 12,
-    backgroundColor: "#F3E3DD",
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: "rgba(246,231,211,0.14)",
     alignItems: "center", justifyContent: "center",
-    marginRight: 12, borderWidth: 1, borderColor: "#E5CFC7",
+    marginRight: 10, borderWidth: 1, borderColor: "rgba(246,231,211,0.28)",
   },
-  leadEmoji: { fontSize: 18 },
-  cardTitle: { flex: 1, fontSize: 16, fontWeight: "800", color: "#3E0B12", lineHeight: 22 },
+  leadEmoji: { fontSize: 17 },
+  cardTitle: { color: "#FFF5E5", fontWeight: "900", fontSize: 14, lineHeight: 18 },
   trailing: { flexDirection: "row", alignItems: "center", marginLeft: 10 },
   badge: {
-    minWidth: 28, height: 28, paddingHorizontal: 6, borderRadius: 14,
+    minWidth: 26, height: 26, paddingHorizontal: 6, borderRadius: 13,
     alignItems: "center", justifyContent: "center",
-    backgroundColor: "#FFF", borderWidth: 1, borderColor: "#E3BBB3",
+    backgroundColor: "#FFE9C6", borderWidth: 1, borderColor: "#E3BBB3",
   },
-  badgeText: { fontWeight: "900", color: "#B36B60" },
+  badgeText: { fontWeight: "900", color: "#6B3C2F", fontSize: 12 },
 });
