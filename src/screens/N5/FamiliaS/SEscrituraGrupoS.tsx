@@ -186,7 +186,12 @@ function Tile({
         {...pressProps}
         style={({ pressed }) => [styles.tileInner, bg, pressed && { opacity: 0.96 }]}
       >
-        <View style={[styles.iconBadge, tone === "ink" && { backgroundColor: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.45)" }]}>
+        <View
+          style={[
+            styles.iconBadge,
+            tone === "ink" && { backgroundColor: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.45)" },
+          ]}
+        >
           {icon}
         </View>
         <Text style={[styles.tileTitle, { color: textColor }]} numberOfLines={1}>
@@ -211,8 +216,28 @@ export default function FamiliaSScreen() {
     <View style={{ flex: 1, backgroundColor: "#EAF6FF" }}>
       {/* Fondo */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: "#EAF6FF" }]} />
-      <View style={{ position: "absolute", left: -100, top: -80, width: W * 0.9, height: W * 0.9, borderRadius: W * 0.9, backgroundColor: "rgba(173,216,230,0.25)" }} />
-      <View style={{ position: "absolute", right: -100, top: H * 0.2, width: W * 0.9, height: W * 0.9, borderRadius: W * 0.9, backgroundColor: "rgba(186,230,253,0.30)" }} />
+      <View
+        style={{
+          position: "absolute",
+          left: -100,
+          top: -80,
+          width: W * 0.9,
+          height: W * 0.9,
+          borderRadius: W * 0.9,
+          backgroundColor: "rgba(173,216,230,0.25)",
+        }}
+      />
+      <View
+        style={{
+          position: "absolute",
+          right: -100,
+          top: H * 0.2,
+          width: W * 0.9,
+          height: W * 0.9,
+          borderRadius: W * 0.9,
+          backgroundColor: "rgba(186,230,253,0.30)",
+        }}
+      />
       <SunGlow />
       <Cloud x={W} y={80} size={50} />
       <Cloud x={W * 1.2} y={140} size={40} delay={1200} />
@@ -312,6 +337,30 @@ export default function FamiliaSScreen() {
           />
         </View>
 
+        {/* Temas básicos (romaji) — CTA a la nueva pantalla */}
+        <View style={[styles.sectionHead, { marginTop: 16 }]}>
+          <Text style={styles.sectionTitle}>Temas básicos (romaji)</Text>
+          <BookOpen size={16} color="#0b2e59" />
+        </View>
+        <View style={styles.note}>
+          <Text style={styles.noteTxt}>
+            Países y nacionalidades, colores, formas, comida y la gramática{" "}
+            <Text style={styles.bold}>ga suki desu</Text> /{" "}
+            <Text style={styles.bold}>wa suki janai</Text> /{" "}
+            <Text style={styles.bold}>suki ja arimasen</Text>, explicado simple y con 5 actividades.
+          </Text>
+        </View>
+        <View style={styles.grid}>
+          <Tile
+            title="Temas básicos (N5)"
+            subtitle="romaji + 5 actividades"
+            icon={<Sparkles size={28} color="#0b2e59" />}
+            onPress={() => navigation.navigate("TemasBasicos")}
+            tone="mint"
+            span="full"
+          />
+        </View>
+
         {/* CTA — ancho completo, azul oscuro + texto blanco */}
         <View style={[styles.sectionHead, { marginTop: 16 }]}>
           <Text style={styles.sectionTitle}>Siguiente bloque</Text>
@@ -408,16 +457,20 @@ const styles = StyleSheet.create({
   },
 
   /* Paleta */
-  tileMint:  { backgroundColor: "#B9FBC0", borderColor: "rgba(11,46,89,0.16)" },
-  tileSky:   { backgroundColor: "#A3D8FF", borderColor: "rgba(11,46,89,0.16)" },
+  tileMint: { backgroundColor: "#B9FBC0", borderColor: "rgba(11,46,89,0.16)" },
+  tileSky: { backgroundColor: "#A3D8FF", borderColor: "rgba(11,46,89,0.16)" },
   tilePeach: { backgroundColor: "#FFD6A5", borderColor: "rgba(11,46,89,0.16)" },
-  tileInk:   { backgroundColor: "#0b2e59", borderColor: "rgba(255,255,255,0.28)" },
+  tileInk: { backgroundColor: "#0b2e59", borderColor: "rgba(255,255,255,0.28)" },
 
   iconBadge: {
-    width: 48, height: 48, borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.88)",
-    borderWidth: 2, borderColor: "rgba(11,46,89,0.5)",
-    alignItems: "center", justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(11,46,89,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   tileTitle: { fontWeight: "900", fontSize: 16, textAlign: "center" },
   tileSubtitle: { fontWeight: "700", fontSize: 12, textAlign: "center" },

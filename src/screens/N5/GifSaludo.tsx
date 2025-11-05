@@ -1,25 +1,139 @@
 // src/screens/N5/GifSaludo.tsx
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    Animated,
-    Easing,
-    Modal,
-    Pressable,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    Vibration,
-    View,
+  ActivityIndicator,
+  Animated,
+  Easing,
+  Linking,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  Vibration,
+  View,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
 import {
-    AchievementPayload,
-    awardAchievement,
-    getAchievement,
+  AchievementPayload,
+  awardAchievement,
+  getAchievement,
 } from '../../services/achievements';
 
-// ==== IDs de tus videos subidos a YouTube ====
+/* ================================
+   Reproductor embebido + fallback 150/153
+================================ */
+function YouTubeBox({ videoId }: { videoId: string }) {
+  const ref = useRef<YoutubeIframeRef>(null);
+  const [playing, setPlaying] = useState(true);
+  const [ready, setReady] = useState(false);
+  const [needGesture, setNeedGesture] = useState(true);  // empezamos mute
+  const [failed, setFailed] = useState<null | number>(null);
+
+  const openInApp = () => {
+    const url =
+      Platform.OS === 'ios'
+        ? `youtube://${videoId}`
+        : Platform.OS === 'android'
+        ? `vnd.youtube:${videoId}`
+        : `https://www.youtube.com/watch?v=${videoId}`;
+    Linking.openURL(url);
+  };
+
+  const onChangeState = useCallback((state: string) => {
+    if (state === 'playing') setReady(true);
+    if (state === 'ended') setPlaying(false);
+  }, []);
+
+  const onError = useCallback((e: string) => {
+    // La lib entrega string, intentamos parsear número común (150/101/5/2)
+    const code = Number(e);
+    if ([150, 101, 5, 2].includes(code)) {
+      setFailed(code);
+      setPlaying(false);
+    } else {
+      setFailed(code || -1);
+      setPlaying(false);
+    }
+  }, []);
+
+  return (
+    <View style={stylesYT.wrap}>
+      {!ready && !failed && (
+        <View style={stylesYT.loading}><ActivityIndicator /></View>
+      )}
+
+      {failed ? (
+        <Pressable style={[stylesYT.overlayBtn, stylesYT.errorBtn]} onPress={openInApp}>
+          <Text style={stylesYT.btnTxt}>Abrir en YouTube (error {failed})</Text>
+        </Pressable>
+      ) : (
+        <>
+          <YoutubePlayer
+            ref={ref}
+            height={'100%'}
+            width={'100%'}
+            videoId={videoId}
+            play={playing}
+            onReady={() => setReady(true)}
+            onError={onError}
+            onChangeState={onChangeState}
+            // Autoplay con mute (cumple políticas)
+            initialPlayerParams={{
+              controls: true,
+              rel: false,
+              modestbranding: true,
+              iv_load_policy: 3,
+              // La lib no expone "mute" directo; arrancamos, y dejamos el botón para habilitar sonido.
+            }}
+            webViewProps={{
+              allowsInlineMediaPlayback: true,
+              allowsFullscreenVideo: true,
+              // userGestureRequired en iOS para sonido: lo resolvemos con el botón
+            }}
+          />
+
+          {needGesture && ready && (
+            <Pressable
+              style={stylesYT.overlayBtn}
+              onPress={() => {
+                // gesto del usuario: quitamos overlay y dejamos que el usuario controle el volumen
+                setNeedGesture(false);
+                // Si quieres forzar sonido, puedes pausar y reanudar:
+                setPlaying(false);
+                setTimeout(() => setPlaying(true), 150);
+              }}
+            >
+              <Text style={stylesYT.btnTxt}>▶ Reproducir con sonido</Text>
+            </Pressable>
+          )}
+        </>
+      )}
+    </View>
+  );
+}
+
+const stylesYT = StyleSheet.create({
+  wrap: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000', borderRadius: 10, overflow: 'hidden' },
+  loading: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  overlayBtn: {
+    position: 'absolute', left: 0, right: 0, top: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  errorBtn: { backgroundColor: 'rgba(0,0,0,0.6)' },
+  btnTxt: {
+    color: '#fff', fontWeight: '800',
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderWidth: 1, borderColor: '#fff', borderRadius: 8,
+  },
+});
+
+/* ================================
+   Datos de los videos
+================================ */
 const YT = {
   konnichiwa: 'qI9Szm9y_m0',
   ohayoo: 'QhJxyWH8hhc',
@@ -29,7 +143,7 @@ const YT = {
 type Item = {
   id: string;
   youtubeId: string;
-  jp: string; // hiragana
+  jp: string;
   romaji: string;
   es: string;
   usage: {
@@ -127,57 +241,9 @@ const ITEMS: Item[] = [
   },
 ];
 
-// ========= HTML con Iframe API: autoplay una sola vez (sin loop) =========
-const youTubeHTML = (id: string) => `
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-<style>
-  html, body { margin:0; padding:0; background:#000; height:100%; overflow:hidden; }
-  #player { width:100%; height:100%; }
-</style>
-</head>
-<body>
-  <div id="player"></div>
-  <script>
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    var player;
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('player', {
-        videoId: '${id}',
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-          fs: 0,
-          playsinline: 1
-        },
-        events: { 'onReady': onPlayerReady }
-      });
-    }
-
-    function onPlayerReady() {
-      try {
-        player.mute();
-        player.playVideo();
-        setTimeout(function(){
-          player.unMute();
-          player.setVolume(100);
-        }, 400);
-      } catch(e) {}
-    }
-  </script>
-</body>
-</html>
-`;
-
-// ====== Toast de logro ======
+/* ================================
+   Toast de logro
+================================ */
 function AchievementToast({
   visible,
   title,
@@ -206,10 +272,12 @@ function AchievementToast({
   );
 }
 
+/* ================================
+   Pantalla principal
+================================ */
 const ACH_ID = 'gif_saludo_01';
 const XP_POINTS = 20;
 
-// Timers agnósticos
 type IntervalId = ReturnType<typeof globalThis.setInterval>;
 type TimeoutId  = ReturnType<typeof globalThis.setTimeout>;
 
@@ -217,20 +285,17 @@ export default function GifSaludo() {
   const [awarded, setAwarded] = useState<boolean | null>(null);
   const [showToast, setShowToast] = useState(false);
 
-  // === Estado de práctica rítmica ===
+  // Estado práctica rítmica
   const [practiceId, setPracticeId] = useState<string | null>(null);
   const [practiceIdx, setPracticeIdx] = useState(0);
   const [practiceSeqH, setPracticeSeqH] = useState<string[]>([]);
   const [practiceSeqR, setPracticeSeqR] = useState<string[]>([]);
 
-  // Evita doble toque al marcar aprendido
   const [isMarking, setIsMarking] = useState(false);
 
-  // Timers
   const intervalRef = useRef<IntervalId | null>(null);
   const timeoutRef  = useRef<TimeoutId  | null>(null);
 
-  // Cargar si ya existe el mini-logro
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -265,10 +330,7 @@ export default function GifSaludo() {
   }, []);
 
   const startPractice = useCallback((item: Item) => {
-    // Confirmación táctil y log (primer toque)
     Vibration.vibrate(10);
-    console.log('▶ startPractice', item.id);
-
     clearTimers();
     setPracticeId(item.id);
     setPracticeIdx(0);
@@ -289,10 +351,7 @@ export default function GifSaludo() {
     }, 650);
   }, [stopPractice]);
 
-  // Limpieza al desmontar
-  useEffect(() => {
-    return () => clearTimers();
-  }, []);
+  useEffect(() => () => clearTimers(), []);
 
   const markLearned = useCallback(async () => {
     if (awarded || isMarking) return;
@@ -313,7 +372,7 @@ export default function GifSaludo() {
       createdAt: Date.now(),
     };
     try {
-      await awardAchievement(ACH_ID, payload); // idempotente
+      await awardAchievement(ACH_ID, payload);
       setAwarded(true);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
@@ -346,30 +405,15 @@ export default function GifSaludo() {
         <View style={s.header}>
           <Text style={s.title}>👋 Saludos (video + práctica)</Text>
           <Text style={s.sub}>
-            Reproduce e **imita** postura, gesto y pronunciación (hiragana + romaji). Pulsa “Practicar pronunciación”
-            para ver las sílabas **resaltadas en ritmo** (sin kanji).
+            Reproduce e <Text style={{fontWeight:'bold'}}>imita</Text> postura, gesto y pronunciación (hiragana + romaji).
+            Pulsa “Practicar pronunciación” para ver las sílabas resaltadas en ritmo (sin kanji).
           </Text>
         </View>
 
         {ITEMS.map((it) => (
           <View key={it.id} style={s.card}>
-            {/* Caja 16:9 */}
             <View style={s.videoBox}>
-              <WebView
-                originWhitelist={['*']}
-                source={{ html: youTubeHTML(it.youtubeId) }}
-                style={s.webview}
-                javaScriptEnabled
-                domStorageEnabled
-                allowsFullscreenVideo={false}
-                automaticallyAdjustContentInsets={false}
-                allowsInlineMediaPlayback
-                mediaPlaybackRequiresUserAction={false}
-                setSupportMultipleWindows={false}
-                // 👇 que NO robe el primer tap del entorno
-                pointerEvents="none"
-                collapsable={false}
-              />
+              <YouTubeBox videoId={it.youtubeId} />
             </View>
 
             <Text style={s.jp}>{it.jp}</Text>
@@ -377,7 +421,6 @@ export default function GifSaludo() {
               {it.romaji} — <Text style={s.es}>{it.es}</Text>
             </Text>
 
-            {/* Botón robusto: onPressIn + hitSlop + prioridad de capa */}
             <Pressable
               onPressIn={() => startPractice(it)}
               style={({ pressed }) => [
@@ -468,6 +511,9 @@ export default function GifSaludo() {
   );
 }
 
+/* ================================
+   Estilos
+================================ */
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff' },
 
@@ -511,7 +557,6 @@ const s = StyleSheet.create({
     aspectRatio: 16 / 9,
     marginBottom: 8,
   },
-  webview: { flex: 1, backgroundColor: '#000' },
 
   jp: { fontSize: 18, fontWeight: '800', color: '#111827' },
   romaji: { fontSize: 13, color: '#374151', marginTop: 2, textTransform: 'none' },
@@ -524,7 +569,6 @@ const s = StyleSheet.create({
   pMono:  { fontSize: 13, color: '#111827', fontFamily: 'monospace' },
   pLight: { fontSize: 12, color: '#6b7280' },
 
-  // Botón genérico
   btn: {
     backgroundColor: '#10B981',
     borderRadius: 10,
@@ -532,13 +576,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   btnTxt: { color: '#fff', fontWeight: '800', textTransform: 'lowercase' },
-  // Prioridad de capa para ganarle a WebView
-  btnPriority: {
-    zIndex: 10,
-    elevation: 10,
-  },
+  btnPriority: { zIndex: 10, elevation: 10 },
 
-  // Toast
   toast: {
     position: 'absolute',
     top: 18,
@@ -554,7 +593,6 @@ const s = StyleSheet.create({
   toastTitle: { color: '#fff', fontWeight: '800', fontSize: 14, marginBottom: 2, textAlign: 'center' },
   toastSubtitle: { color: '#e5e7eb', fontSize: 12, textAlign: 'center' },
 
-  // Overlay práctica (Modal)
   practiceOverlay: {
     flex: 1,
     backgroundColor: 'rgba(17,24,39,0.55)',

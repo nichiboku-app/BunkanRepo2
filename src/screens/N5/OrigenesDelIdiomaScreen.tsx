@@ -1,37 +1,42 @@
 // src/screens/N5/OrigenesSerie.tsx
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useMemo, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
+  ImageBackground,
+  Linking,
   Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
+  useWindowDimensions
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
 import { useFeedbackSounds } from '../../hooks/useFeedbackSounds';
 
-// ====== Paddings globales ======
-const CONTENT_PAD = 20;
+/* ====== Layout y assets ====== */
+const CONTENT_PAD = 18;
 const CARD_PAD    = 16;
 const CARD_RADIUS = 16;
 
-// ====== Dimensiones fijas solicitadas ======
-const FIXED_CARD_TARGET_W = 350; // ancho objetivo de las tarjetas con imagen
-const FIXED_IMG_TARGET_H  = 250; // alto objetivo de las imágenes
+const FIXED_CARD_TARGET_W = 350;
+const FIXED_IMG_TARGET_H  = 240;
 
-// ====== Imágenes (quitamos IMG_HERO porque ahora es video) ======
 const IMG_KANJI    = require('../../../assets/images/origenes_kanji.webp');
 const IMG_HIRAGANA = require('../../../assets/images/origenes_hiragana.webp');
 const IMG_KATAKANA = require('../../../assets/images/origenes_katakana.webp');
 const IMG_MAP      = require('../../../assets/images/origenes_mapa.webp');
 
-// ====== YouTube ======
-const YT_URL = 'https://youtu.be/2bRN6Zr_XeU';
-const YT_EMBED = `https://www.youtube.com/embed/2bRN6Zr_XeU?autoplay=1&mute=0&controls=0&playsinline=1&rel=0&modestbranding=1`;
+// Fondo patrón seigaiha (ya lo tienes en IntroJapones)
+const BG_PATTERN   = require('../../../assets/icons/intro/bg_seigaiha.webp');
+
+/* ====== YouTube (dejamos el player como estaba) ====== */
+const VIDEO_ID = '2bRN6Zr_XeU';
+const YT_URL   = `https://youtu.be/${VIDEO_ID}`;
 
 /* =========================
    GLOSARIO (tooltips)
@@ -76,7 +81,7 @@ const GLOSSARY: Record<string, string> = {
   'です/ます': 'Sufijos/verbo-cópula de la forma cortés en japonés.',
 };
 
-/* ===== Tooltip (globo rojo) ===== */
+/* ===== Tooltip ===== */
 function useTooltip() {
   const [tip, setTip] = useState<{visible:boolean; title:string; text:string; x:number; y:number}>({
     visible: false, title: '', text: '', x: 0, y: 0,
@@ -87,7 +92,7 @@ function useTooltip() {
   return { tip, show, hide };
 }
 
-/* ===== Imagen automática con tamaño forzado ===== */
+/* ===== Imagen auto ===== */
 function AutoImage({
   source,
   bleed = false,
@@ -108,11 +113,8 @@ function AutoImage({
     width: forcedWidth ? (bleed ? forcedWidth : Math.max(0, forcedWidth - CARD_PAD * 2)) : '100%',
     resizeMode: 'contain',
   };
-  if (forcedHeight) {
-    styleBase.height = forcedHeight;
-  } else {
-    styleBase.aspectRatio = aspect;
-  }
+  if (forcedHeight) styleBase.height = forcedHeight;
+  else styleBase.aspectRatio = aspect;
 
   if (bleed) {
     return (
@@ -121,7 +123,6 @@ function AutoImage({
       </View>
     );
   }
-
   return (
     <Image
       source={source}
@@ -135,15 +136,28 @@ export default function OrigenesSerie() {
   const { width: screenW } = useWindowDimensions();
   const cardW = Math.min(FIXED_CARD_TARGET_W, screenW - CONTENT_PAD * 1);
 
-  // Mostrar/ocultar el reproductor según foco (evita que siga sonando al salir)
-  const [showPlayer, setShowPlayer] = useState(true);
+  // Player state (igual que antes, solo estilos nuevos)
+  const playerRef = useRef<YoutubeIframeRef>(null);
+  const [playing, setPlaying] = useState(true);
+  const [ready, setReady]   = useState(false);
+  const [error, setError]   = useState<string | null>(null);
+
   useFocusEffect(
-    React.useCallback(() => {
-      setShowPlayer(true);
-      return () => setShowPlayer(false);
+    useCallback(() => {
+      setPlaying(true);
+      return () => setPlaying(false);
     }, [])
   );
 
+  const onChangeState = useCallback((state: string) => {
+    if (state === 'ended') setPlaying(false);
+  }, []);
+  const onError = useCallback((e: string) => {
+    setError(e || 'unknown');
+    setPlaying(false);
+  }, []);
+
+  // Texto tocable en verde
   const Term = ({ k, children }: { k: keyof typeof GLOSSARY; children: React.ReactNode }) => (
     <Text
       onPress={(e) => {
@@ -154,7 +168,7 @@ export default function OrigenesSerie() {
       style={s.term}
       suppressHighlighting={false}
     >
-      <Text style={s.bold}>{children}</Text>
+      <Text style={s.termTxt}>{children}</Text>
     </Text>
   );
 
@@ -163,59 +177,39 @@ export default function OrigenesSerie() {
       [
         {
           q: '¿Cuál fue el gran cambio de la era Yayoi que impactó la formación del japonés?',
-          options: [
-            'Aislamiento total de la península coreana',
-            'Agricultura de arroz + contacto intenso con Corea',
-            'Nacimiento de hiragana y katakana',
-          ],
+          options: ['Aislamiento total de la península coreana','Agricultura de arroz + contacto intenso con Corea','Nacimiento de hiragana y katakana'],
           a: 1,
           why: 'El arroz y el intercambio con Corea impulsaron transformaciones tecnológicas y culturales clave.',
         },
         {
           q: '¿Qué describe mejor a manyōgana?',
-          options: [
-            'Un silabario simplificado como hiragana',
-            'Una lista moderna de kanji de uso común',
-            'Escribir japonés usando kanji por su sonido',
-          ],
+          options: ['Un silabario simplificado como hiragana','Una lista moderna de kanji de uso común','Escribir japonés usando kanji por su sonido'],
           a: 2,
           why: 'Manyōgana emplea kanji por su valor fonético; fue el puente hacia los silabarios.',
         },
         {
           q: '¿Cuál es el reparto actual correcto entre los sistemas de escritura?',
-          options: [
-            'Hiragana = préstamos; Katakana = gramática; Kanji = decorativos',
-            'Hiragana = gramática/nativas; Katakana = préstamos/onomatopeyas; Kanji = núcleo de significado',
-            'Hiragana = solo nombres propios; Katakana = solo marcas; Kanji = números',
-          ],
+          options: ['Hiragana = préstamos; Katakana = gramática; Kanji = decorativos','Hiragana = gramática/nativas; Katakana = préstamos/onomatopeyas; Kanji = núcleo de significado','Hiragana = solo nombres propios; Katakana = solo marcas; Kanji = números'],
           a: 1,
-          why: 'Así funciona la “banda de tres”: estructura (hiragana), brillo global (katakana) y significado condensado (kanji).',
+          why: 'Estructura (hiragana), préstamos/onomatopeyas (katakana) y significado (kanji).',
         },
         {
           q: '¿Cómo se llama el movimiento de Meiji que acercó la lengua escrita a la hablada?',
-          options: ['Rendaku', 'Genbun-itchi', 'Hyōjungo'],
+          options: ['Rendaku','Genbun-itchi','Hyōjungo'],
           a: 1,
-          why: 'Genbun-itchi buscó que los textos sonaran a conversación real. Hyōjungo es el estándar; rendaku es un fenómeno fonético.',
+          why: 'Genbun-itchi buscó que los textos sonaran a conversación real.',
         },
         {
           q: '¿Qué hace el rendaku en palabras compuestas?',
-          options: [
-            'Elimina vocales largas',
-            'Cambia katakana por hiragana',
-            'Vuelve sonora la consonante inicial del segundo elemento (k→g, t→d, etc.)',
-          ],
+          options: ['Elimina vocales largas','Cambia katakana por hiragana','Vuelve sonora la consonante inicial del segundo elemento (k→g, t→d, etc.)'],
           a: 2,
-          why: 'Por eso 手 + 紙 pasa de te + kami a てがみ (tegami).',
+          why: 'Por eso 手 + 紙 pasa a てがみ (tegami).',
         },
         {
           q: '¿Para qué sirve el furigana en un texto japonés?',
-          options: [
-            'Marcar el tema de la oración',
-            'Indicar la lectura (pronunciación) de un kanji',
-            'Convertir préstamos a katakana',
-          ],
+          options: ['Marcar el tema de la oración','Indicar la lectura (pronunciación) de un kanji','Convertir préstamos a katakana'],
           a: 1,
-          why: 'El furigana son pequeños signos (normalmente hiragana) que muestran cómo se lee un kanji.',
+          why: 'El furigana muestra cómo se lee un kanji.',
         },
       ] as { q: string; options: string[]; a: number; why: string }[],
     []
@@ -223,34 +217,69 @@ export default function OrigenesSerie() {
 
   return (
     <View style={s.root}>
-      <StatusBar backgroundColor="transparent" barStyle="dark-content" />
+      <StatusBar backgroundColor="#5f4b32" barStyle="light-content" />
+
+      {/* Fondo degradado + patrón */}
+      <LinearGradient
+        colors={['#F3E3C6', '#F2D7B3']}
+        start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <ImageBackground source={BG_PATTERN} resizeMode="repeat" style={StyleSheet.absoluteFill} imageStyle={{ opacity: 0.07 }} />
+
       <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="always">
-        {/* Tip interactivo */}
-        <View style={s.notice}>
-          <Text style={s.noticeTitle}>💡 Tip interactivo</Text>
-          <Text style={s.noticeText}>
-            Puedes tocar las <Text style={s.boldWhite}>palabras en negro</Text> dentro del texto para ver su
-            definición en un globo rojo.
+
+        {/* Encabezado grande estilo app de cine */}
+        <Text style={s.screenTitle}>Orígenes del idioma japonés</Text>
+
+        {/* Tarjeta del video */}
+        <View style={s.videoCard}>
+          <View style={s.videoBox}>
+            {!ready && !error && (
+              <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+                <ActivityIndicator />
+              </View>
+            )}
+            {error ? (
+              <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', padding: 12 }]}>
+                <Text style={{ color: '#fff', textAlign: 'center', marginBottom: 10 }}>
+                  No se puede reproducir embebido (código: {error}).
+                </Text>
+                <Pressable onPress={() => Linking.openURL(YT_URL)} style={({ pressed }) => [s.openBtn, pressed && { opacity: 0.85 }]}>
+                  <Text style={s.openBtnTxt}>Abrir video en YouTube</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <YoutubePlayer
+                ref={playerRef}
+                height={190}
+                width={'100%'}
+                videoId={VIDEO_ID}
+                play={playing}
+                webViewProps={{ allowsFullscreenVideo: true, allowsInlineMediaPlayback: true }}
+                initialPlayerParams={{ modestbranding: true, rel: false, controls: true, preventFullScreen: false }}
+                onReady={() => setReady(true)}
+                onError={onError}
+                onChangeState={onChangeState}
+              />
+            )}
+          </View>
+
+          <Pressable onPress={() => Linking.openURL(YT_URL)} style={({ pressed }) => [s.youtubeBtn, pressed && { opacity: 0.8 }]}>
+            <Text style={s.youtubeBtnTxt}>Ver video en YouTube</Text>
+          </Pressable>
+        </View>
+
+        {/* Tip: palabras en verde */}
+        <View style={s.tipCard}>
+          <Text style={s.tipTitle}>💡 Tip interactivo</Text>
+          <Text style={s.tipText}>
+            Las <Text style={s.termInline}>palabras en verde</Text> son tocables. Tócalas para ver una definición breve.
           </Text>
         </View>
 
-        {/* HERO + intro */}
-        <View style={s.card}>
-          {/* === YouTube en el espacio del HERO (misma altura/ancho que la imagen) === */}
-          {showPlayer ? (
-            <WebView
-              source={{ uri: YT_EMBED }}
-              style={s.heroImg}
-              javaScriptEnabled
-              allowsInlineMediaPlayback
-              mediaPlaybackRequiresUserAction={false} // Android: permitir autoplay con sonido
-              automaticallyAdjustContentInsets={false}
-              scrollEnabled={false}
-            />
-          ) : (
-            <View style={[s.heroImg, { backgroundColor: '#000' }]} />
-          )}
-
+        {/* Bloque de texto principal con términos tocables */}
+        <View style={s.textCard}>
           <Text style={s.h1}>Orígenes del idioma japonés</Text>
 
           <Text style={s.pJ}>
@@ -305,7 +334,7 @@ export default function OrigenesSerie() {
         </View>
 
         {/* Lo básico */}
-        <View style={s.card}>
+        <View style={s.textCard}>
           <Text style={s.h2}>Temporada 0: cómo suena y cómo se arma 🎧</Text>
 
           <Text style={s.pJ}>
@@ -329,19 +358,19 @@ export default function OrigenesSerie() {
 
         {/* Sistemas de escritura – tarjetas */}
         <View style={s.grid3}>
-          <View style={[s.card, { width: cardW, alignSelf: 'center' }]}>
+          <View style={[s.textCard, { width: cardW, alignSelf: 'center' }]}>
             <Text style={s.h3}>漢字 Kanji</Text>
             <Text style={s.pJ}>Ideogramas con <Text style={s.bold}>significado</Text>.</Text>
             <AutoImage source={IMG_KANJI} bleed forcedWidth={cardW} forcedHeight={FIXED_IMG_TARGET_H} />
           </View>
 
-          <View style={[s.card, { width: cardW, alignSelf: 'center' }]}>
+          <View style={[s.textCard, { width: cardW, alignSelf: 'center' }]}>
             <Text style={s.h3}>ひらがな Hiragana</Text>
             <Text style={s.pJ}>Silabario de la <Text style={s.bold}>gramática</Text> y palabras nativas.</Text>
             <AutoImage source={IMG_HIRAGANA} forcedWidth={cardW} forcedHeight={FIXED_IMG_TARGET_H} />
           </View>
 
-          <View style={[s.card, { width: cardW, alignSelf: 'center' }]}>
+          <View style={[s.textCard, { width: cardW, alignSelf: 'center' }]}>
             <Text style={s.h3}>カタカナ Katakana</Text>
             <Text style={s.pJ}>Silabario de <Text style={s.bold}>préstamos</Text> y onomatopeyas.</Text>
             <AutoImage source={IMG_KATAKANA} forcedWidth={cardW} forcedHeight={FIXED_IMG_TARGET_H} />
@@ -349,17 +378,12 @@ export default function OrigenesSerie() {
         </View>
 
         {/* Mapa */}
-        <View style={[s.card, { width: cardW, alignSelf: 'center' }]}>
+        <View style={[s.textCard, { width: cardW, alignSelf: 'center' }]}>
           <Text style={s.h2}>Mapa de rutas culturales 🗺️</Text>
           <Text style={s.pJ}>
             China → Corea → Japón: la escritura, la religión y la tecnología viajan y dejan huella.
           </Text>
-          <AutoImage
-            source={IMG_MAP}
-            forcedWidth={cardW}
-            forcedHeight={FIXED_IMG_TARGET_H}
-            bleed
-          />
+          <AutoImage source={IMG_MAP} forcedWidth={cardW} forcedHeight={FIXED_IMG_TARGET_H} bleed />
         </View>
 
         {/* Quiz */}
@@ -402,7 +426,7 @@ function QuizBlock({
   };
 
   return (
-    <View style={s.card}>
+    <View style={s.textCard}>
       <Text style={s.h2}>Mini-quiz (6)</Text>
       <Text style={[s.caption, { marginBottom: 8 }]}>
         Toca una opción y revisa la explicación. Puntuación: {correct}/{questions.length}
@@ -447,76 +471,107 @@ function QuizBlock({
   );
 }
 
-/* ==================
-   ESTILOS
-================== */
+/* ================== ESTILOS ================== */
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#fff', position: 'relative' },
-  content: { padding: CONTENT_PAD, paddingBottom: 40, gap: 12 },
+  root: { flex: 1, backgroundColor: '#F2D7B3' },
+  content: { padding: CONTENT_PAD, paddingBottom: 48, gap: 14 },
 
-  notice: {
-    backgroundColor: '#111827',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#1f2937',
-    borderLeftWidth: 4,
-    borderLeftColor: '#111827',
+  screenTitle: {
+    fontSize: 24, fontWeight: '900', color: '#2A1B0F',
+    textAlign: 'left', marginTop: 6, marginBottom: 8,
   },
-  noticeTitle: { color: '#ffffff', fontWeight: '800', marginBottom: 4, fontSize: 14 },
-  noticeText:  { color: '#ffffff', fontSize: 13, lineHeight: 20 },
-  boldWhite:   { color: '#ffffff', fontWeight: '800' },
 
-  card: {
-    backgroundColor: '#fff',
+  // Tarjeta video
+  videoCard: {
+    borderRadius: 20,
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.75)',
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
+    shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 6 },
+  },
+  videoBox: {
+    height: 190, borderRadius: 16, overflow: 'hidden', backgroundColor: '#000',
+  },
+  youtubeBtn: {
+    marginTop: 10,
+    alignSelf: 'center',
+    paddingHorizontal: 18, paddingVertical: 10,
+    backgroundColor: '#F1E9DC',
+    borderRadius: 24,
+    borderWidth: 1, borderColor: '#CBB6A0',
+  },
+  youtubeBtnTxt: { color: '#2A1B0F', fontWeight: '800' },
+
+  // Tip
+  tipCard: {
+    marginTop: 14,
+    backgroundColor: '#0F172A',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#0B1224',
+  },
+  tipTitle: { color: '#fff', fontWeight: '900', marginBottom: 6, fontSize: 14 },
+  tipText:  { color: '#fff', fontSize: 13, lineHeight: 20 },
+  termInline: { color: '#0ea5a3', fontWeight: '900' },
+
+  // Cards de texto
+  textCard: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: CARD_RADIUS,
     padding: CARD_PAD,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#eadfcd',
   },
 
-  h1: { color: '#111827', fontSize: 22, fontWeight: '800', marginTop: 12, marginBottom: 6 },
-  h2: { color: '#111827', fontSize: 18, fontWeight: '800', marginBottom: 8 },
-  h3: { color: '#111827', fontSize: 16, fontWeight: '700', marginBottom: 6 },
+  h1: { color: '#2A1B0F', fontSize: 20, fontWeight: '900', marginBottom: 8 },
+  h2: { color: '#2A1B0F', fontSize: 18, fontWeight: '900', marginBottom: 8 },
+  h3: { color: '#2A1B0F', fontSize: 16, fontWeight: '800', marginBottom: 6 },
 
   pJ: {
-    color: '#374151',
+    color: '#3b2b1b',
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'justify',
     marginBottom: 12,
-    letterSpacing: 0.1,
   },
   caption: { color: '#6b7280', fontSize: 12 },
 
   grid3: { gap: 15 },
 
-  // Mantiene el espacio exacto del antiguo IMG_HERO
-  heroImg: {
-    width: '100%',
-    height: 190,
-    borderRadius: 14,
-    marginBottom: 8,
-    overflow: 'hidden',
+  // Fallback open
+  openBtn: {
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: '#ff0000',
+    borderRadius: 10,
   },
+  openBtnTxt: { color: '#fff', fontWeight: '900' },
 
-  bold: { fontWeight: '800', color: '#111827' },
-  term: { paddingHorizontal: 2 },
+  bold: { fontWeight: '900', color: '#2A1B0F' },
+
+  // Termino tocable (verde)
+  term: { paddingHorizontal: 1 },
+  termTxt: {
+    color: '#0ea5a3', // verde turquesa
+    fontWeight: '900',
+  },
 
   // Quiz
   opt: {
     borderWidth: 1,
-    borderColor: '#cfd6df',
-    borderRadius: 10,
+    borderColor: '#d8cbb8',
+    borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
   },
   optOk: { backgroundColor: '#c8f7c5', borderColor: '#8ee08a' },
   optNo: { backgroundColor: '#fde2e2', borderColor: '#f5b5b5' },
-  optTxt: { color: '#111827', fontSize: 14 },
+  optTxt: { color: '#2A1B0F', fontSize: 14 },
 
-  // Tooltip (rojo)
+  // Tooltip rojo
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(17,24,39,0.25)',

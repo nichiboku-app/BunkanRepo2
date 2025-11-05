@@ -12,6 +12,7 @@ export type RootStackParamList = {
   IntroJapones: undefined;
   Hiragana: undefined;
   TemaN5: { title?: string } | undefined;
+  TemaGramaticaFamiliaN5: undefined;
 
   // Pantallas separadas N5
   OrigenesDelIdioma: undefined;
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   N5_Diagnostico: undefined;
   // Ejercicios
   VowelExercises: undefined;
+    TemasBasicos: undefined;
 
   // Reproductor
   VideoIntroModal: { videoId?: string } | undefined;

@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   ImageBackground,
   Pressable,
@@ -19,8 +19,8 @@ import {
 import type { RootStackParamList as AppRoutes } from '../../types';
 import { rememberLocation } from '../services/progress';
 
-/* ===== RUTAS EXACTAS ===== */
-const BG_FUJI      = require('../../assets/intro/imagen_fuji.webp');   // 500x350 (AR 10:7)
+/* ===== ASSETS ===== */
+const BG_FUJI      = require('../../assets/intro/imagen_fuji.webp');      // 500x350 (AR 10:7)
 const FRAME_ROJO   = require('../../assets/intro/marco_rojo.webp');
 const FRAME_DORADO = require('../../assets/frames/marco_dorado.webp');
 const ICON_VIDEO   = require('../../assets/intro/icono_video.webp');
@@ -36,15 +36,15 @@ const PATTERN      = require('../../assets/icons/intro/bg_seigaiha.webp');
 type Nav = NativeStackNavigationProp<AppRoutes>;
 
 /* ===== KNOBS ===== */
-const BG_AR          = 10 / 7;  // aspecto exacto 500x350
-const BG_OFFSET_Y    = 0;       // mueve la imagen verticalmente (px). negativo = arriba
-const TOP_FADE       = true;    // oscurecer arriba un poco para contraste
-const BOTTOM_SEAM_H  = 80;      // altura del degradado blanco que se mezcla con el panel
+const BG_AR          = 10 / 7;
+const BG_OFFSET_Y    = 0;
+const TOP_FADE       = true;
+const BOTTOM_SEAM_H  = 80;
 const PANEL_RADIUS   = 36;
 const BTN_HEIGHT     = 116;
 const CONTENT_PAD    = 12;
 
-// 9-slice afinado para el marco ROJO
+// 9-slice del marco rojo
 const RED_CAPS = { top: 34, left: 34, bottom: 34, right: 34 };
 const RED_OUTER_PADDING = 12;
 
@@ -59,27 +59,24 @@ export default function IntroJaponesScreen() {
   const SIDE = 16;
   const GAP  = 12;
 
-  // Alto del fondo para mostrar SIEMPRE la imagen completa sin distorsión
   const bgHeight = useMemo(() => Math.round(width / BG_AR), [width]);
 
-  // Altura visible antes del panel (máx ~48% pantalla; min 240 px)
   const visibleTop = useMemo(
     () => Math.min(bgHeight, Math.max(240, Math.floor(height * 0.48))),
     [bgHeight, height]
   );
 
-  // 3 columnas exactas
   const CARD_W = useMemo(
     () => Math.floor((width - SIDE * 2 - GAP * 2) / 3),
     [width]
   );
 
   return (
-    <View style={s.root}>
+    <View style={s.root} pointerEvents="box-none">
       <StatusBar translucent={false} backgroundColor="#6B0015" barStyle="light-content" />
 
-      {/* ===== Fondo Fuji RESPONSIVE (imagen completa, sin corte) ===== */}
-      <View style={{ height: visibleTop, overflow: 'hidden' }}>
+      {/* ===== Fondo Fuji ===== */}
+      <View style={{ height: visibleTop, overflow: 'hidden' }} pointerEvents="none">
         <ExpoImage
           source={BG_FUJI}
           style={{ width, height: bgHeight, position: 'absolute', top: BG_OFFSET_Y }}
@@ -87,7 +84,6 @@ export default function IntroJaponesScreen() {
           cachePolicy="memory-disk"
         />
 
-        {/* Oscurecer parte superior (opcional) */}
         {TOP_FADE && (
           <LinearGradient
             colors={['rgba(0,0,0,0.30)', 'rgba(0,0,0,0.00)']}
@@ -98,7 +94,6 @@ export default function IntroJaponesScreen() {
           />
         )}
 
-        {/* 👇 Degradado BLANCO pegado al fondo (ya no hay banda negra) */}
         <LinearGradient
           colors={['rgba(255,255,255,0)', 'rgba(255,255,255,1)']}
           start={{ x: 0.5, y: 0 }}
@@ -117,7 +112,7 @@ export default function IntroJaponesScreen() {
 
             {/* Subtemas (marco DORADO) */}
             <Text style={s.sectionTitle}>Subtemas principales</Text>
-            <View style={[s.row, { paddingHorizontal: SIDE }]}>
+            <View style={[s.row, { paddingHorizontal: SIDE }]} pointerEvents="box-none">
               <FramedButtonGold
                 icon={ICON_SCROLL}
                 label="Orígenes del idioma"
@@ -141,9 +136,9 @@ export default function IntroJaponesScreen() {
               />
             </View>
 
-            {/* Actividades (marco ROJO 9-slice) */}
+            {/* Actividades (marco ROJO) */}
             <Text style={[s.sectionTitle, { marginTop: 28 }]}>Actividades</Text>
-            <View style={[s.row, { paddingHorizontal: SIDE }]}>
+            <View style={[s.row, { paddingHorizontal: SIDE }]} pointerEvents="box-none">
               <FramedButtonRed
                 icon={ICON_VIDEO}
                 label="Video introductorio"
@@ -182,7 +177,8 @@ export default function IntroJaponesScreen() {
             <Pressable
               onPress={() => go('Hiragana')}
               style={({ pressed }) => [s.nextBtn, pressed && s.pressed, { marginHorizontal: SIDE }]}
-              hitSlop={10}
+              hitSlop={12}
+              accessibilityRole="button"
             >
               <Text style={s.nextBtnText}>Siguiente capítulo: Hiragana ➜</Text>
             </Pressable>
@@ -193,9 +189,7 @@ export default function IntroJaponesScreen() {
   );
 }
 
-/* ===== Botones ===== */
-
-// DORADO (overlay)
+/* ===== Botón DORADO: Pressable como contenedor raíz ===== */
 function FramedButtonGold({
   icon,
   label,
@@ -212,25 +206,40 @@ function FramedButtonGold({
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <View style={[btnGold.wrap, style]}>
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      hitSlop={16}
+      style={({ pressed }) => [
+        btnGold.wrap,
+        style,
+        { zIndex: 1 }, // asegúralo por encima de overlays
+        pressed && { transform: [{ scale: 0.98 }], opacity: 0.92 },
+      ]}
+    >
+      {/* Cuerpo clickeable */}
+      <View
+        style={[
           btnGold.body,
-          { backgroundColor: bg, height: BTN_HEIGHT, padding: CONTENT_PAD },
-          pressed && { transform: [{ scale: 0.98 }], opacity: 0.92 },
+          { backgroundColor: bg, height: BTN_HEIGHT, padding: CONTENT_PAD, width: '100%' },
         ]}
       >
         <ExpoImage source={icon} style={btnGold.icon} contentFit="contain" />
         <Text style={[btnGold.text, { color: textColor }]}>{label}</Text>
-      </Pressable>
+      </View>
 
-      <ExpoImage source={FRAME_DORADO} style={btnGold.frame} contentFit="fill" pointerEvents="none" />
-    </View>
+      {/* Marco dorado dentro del mismo Pressable pero sin capturar toques */}
+      <ExpoImage
+        source={FRAME_DORADO}
+        style={btnGold.frame}
+        contentFit="fill"
+        pointerEvents="none"
+      />
+    </Pressable>
   );
 }
 
-// ROJO (9-slice)
+/* ===== Botón ROJO (9-slice) ===== */
 function FramedButtonRed({
   icon,
   label,
@@ -247,31 +256,38 @@ function FramedButtonRed({
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <ImageBackground
-      source={FRAME_ROJO}
-      resizeMode="stretch"
-      capInsets={RED_CAPS}
-      style={[btnRed.wrap, style, { padding: RED_OUTER_PADDING }]}
-      imageStyle={btnRed.frameImg}
-    >
+    <View style={[btnRed.wrap, style, { padding: RED_OUTER_PADDING }]} pointerEvents="box-none">
+      {/* Fondo 9-slice SIN interceptar toques */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <ImageBackground
+          source={FRAME_ROJO}
+          resizeMode="stretch"
+          capInsets={RED_CAPS}
+          style={StyleSheet.absoluteFill}
+          imageStyle={btnRed.frameImg}
+        />
+      </View>
+
       <Pressable
         onPress={onPress}
+        accessibilityRole="button"
+        hitSlop={16}
         style={({ pressed }) => [
           btnRed.body,
-          { backgroundColor: bg, height: BTN_HEIGHT, padding: CONTENT_PAD },
+          { backgroundColor: bg, height: BTN_HEIGHT, padding: CONTENT_PAD, width: '100%', zIndex: 1 },
           pressed && { transform: [{ scale: 0.98 }], opacity: 0.92 },
         ]}
       >
         <ExpoImage source={icon} style={btnRed.icon} contentFit="contain" />
         <Text style={[btnRed.text, { color: textColor }]}>{label}</Text>
       </Pressable>
-    </ImageBackground>
+    </View>
   );
 }
 
 /* ===== Styles ===== */
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#fff' }, // 👈 blanco para evitar bandas
+  root: { flex: 1, backgroundColor: '#fff' },
 
   panelWrap: {
     flex: 1,
@@ -353,7 +369,7 @@ const btnGold = StyleSheet.create({
 });
 
 const btnRed = StyleSheet.create({
-  wrap: { borderRadius: 16 },
+  wrap: { position: 'relative', borderRadius: 16 },
   frameImg: { borderRadius: 16 },
   body: {
     borderRadius: 12,

@@ -35,6 +35,7 @@ import OrigenesDelIdiomaScreen from "./src/screens/N5/OrigenesDelIdiomaScreen";
 import QuizCultural from "./src/screens/N5/QuizCultural";
 import SubtemaScreen from "./src/screens/N5/SubtemaScreen";
 import TemaN5 from "./src/screens/N5/TemaN5";
+import TemasBasicosScreen from "./src/screens/N5/TemasBasicos/TemasBasicosScreen";
 import VocabularioGrupoK from "./src/screens/N5/VocabularioGrupoK";
 import VowelExercisesScreen from "./src/screens/VowelExercisesScreen";
 
@@ -42,7 +43,9 @@ import VowelExercisesScreen from "./src/screens/VowelExercisesScreen";
 import ADictadoVisual from "./src/screens/N5/ADictadoVisual";
 
 // Modal de video N5
+import TemaGramaticaFamiliaScreen from "./src/screens/N5/TemaGramatica/FamiliaScreen";
 import VideoIntroModal from "./src/screens/N5/VideoIntroModal";
+
 
 // ✅ Pantallas reales (Grupo A)
 import PronunciacionGrupoA from "./src/screens/N5/PronunciacionGrupoA";
@@ -284,6 +287,12 @@ export default function App() {
                 component={CulturaScreen}
                 options={{ headerShown: true, title: "Cultura básica" }}
               />
+              <Stack.Screen
+  name="TemasBasicos"
+  component={TemasBasicosScreen}
+  options={{ headerShown: true, title: "Temas básicos (N5)" }}
+/>
+
               <Stack.Screen name="Subtema" component={SubtemaScreen} options={{ headerShown: false }} />
               <Stack.Screen
                 name="TemaN5"
@@ -366,6 +375,11 @@ export default function App() {
                 options={{ headerShown: true, title: "Trazo animado — Grupo A" }}
                 children={() => <Placeholder title="TrazoAnimadoGrupoA" />}
               />
+              <Stack.Screen
+  name="TemaGramaticaFamiliaN5"
+  component={TemaGramaticaFamiliaScreen} // tu componente
+  options={{ title: "Tema y gramática: Familia (N5)" }}
+/>
 
               {/* === Grupo K === */}
               <Stack.Screen

@@ -21,12 +21,6 @@ const { width: W, height: H } = Dimensions.get("window");
 
 /* =========================================================
    BOTÓN GENÉRICO CON EFECTOS PREMIUM
-   - Tilt 3D según toque
-   - Ripple radial controlado
-   - Shimmer/ink-swipe mejorado
-   - "Respiración" idle sutil
-   - Borde con glow al presionar
-   API compatible con tu NichiBtn original
    ========================================================= */
 
 type Palette = {
@@ -34,9 +28,9 @@ type Palette = {
   border: string;
   text: string;
   subText?: string;
-  accent?: string; // íconos/labels
-  shine: string; // color de la banda de brillo (ink-swipe)
-  ripple: string; // Android ripple (se conserva)
+  accent?: string;
+  shine: string;
+  ripple: string;
 };
 
 type NichiBtnProps = {
@@ -44,16 +38,15 @@ type NichiBtnProps = {
   desc?: string;
   onPress: () => void;
   palette: Palette;
-  centerText?: boolean; // para botones de navegación centrados
-  rightAdornment?: React.ReactNode; // p.ej. tag "Premium"
+  centerText?: boolean;
+  rightAdornment?: React.ReactNode;
   style?: any;
 };
 
-// util para variación sutil por título (evita repetición visual)
 function hashStr(s: string) {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
-  return (h >>> 0) / 2 ** 32; // 0..1
+  return (h >>> 0) / 2 ** 32;
 }
 
 function useShineSweep(seed = 0) {
@@ -83,14 +76,13 @@ function useShineSweep(seed = 0) {
 }
 
 function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, style }: NichiBtnProps) {
-  // ===== animaciones =====
-  const press = useRef(new Animated.Value(0)).current; // 0 idle, 1 pressed
-  const breathe = useRef(new Animated.Value(0)).current; // idle micro movimiento
-  const tiltX = useRef(new Animated.Value(0)).current; // -1..1
-  const tiltY = useRef(new Animated.Value(0)).current; // -1..1
-  // borde/acento
+  const press = useRef(new Animated.Value(0)).current;
+  const breathe = useRef(new Animated.Value(0)).current;
+  const tiltX = useRef(new Animated.Value(0)).current;
+  const tiltY = useRef(new Animated.Value(0)).current;
+
   const [box, setBox] = useState({ w: 0, h: 0 });
-  const [ripples, setRipples] = useState<Array<{ key: number; x: number; y: number; a: Animated.Value; scale: number }>>([]);
+  const [ripples, setRipples] = useState<{ key: number; x: number; y: number; a: Animated.Value; scale: number }[]>([]);
   const rippleKey = useRef(0);
   const seed = useMemo(() => hashStr(title), [title]);
 
@@ -99,7 +91,8 @@ function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, s
   const rotateY = tiltY.interpolate({ inputRange: [-1, 1], outputRange: ["-6deg", "6deg"] });
   const liftY = breathe.interpolate({ inputRange: [0, 1], outputRange: [0, -2.2] });
   const accentOpacity = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
-useEffect(() => {
+
+  useEffect(() => {
     const d = 2200 + Math.round(seed * 900);
     Animated.loop(
       Animated.sequence([
@@ -120,7 +113,7 @@ useEffect(() => {
     const dx = Math.max(x, box.w - x);
     const dy = Math.max(y, box.h - y);
     const radius = Math.sqrt(dx * dx + dy * dy);
-    const base = 140; // px del círculo
+    const base = 140;
     const scale = (radius * 2) / base;
     const key = rippleKey.current++;
     const a = new Animated.Value(0);
@@ -138,7 +131,7 @@ useEffect(() => {
       Animated.spring(press, { toValue: 1, useNativeDriver: true, stiffness: 240, damping: 20, mass: 0.9 }),
       Animated.timing(tiltX, { toValue: (locationY / Math.max(box.h, 1)) * 2 - 1, duration: 140, useNativeDriver: true }),
       Animated.timing(tiltY, { toValue: (locationX / Math.max(box.w, 1)) * 2 - 1, duration: 140, useNativeDriver: true }),
-      ]).start();
+    ]).start();
   };
 
   const pressOut = () => {
@@ -146,12 +139,11 @@ useEffect(() => {
       Animated.spring(press, { toValue: 0, useNativeDriver: true, stiffness: 220, damping: 18, mass: 0.9 }),
       Animated.timing(tiltX, { toValue: 0, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       Animated.timing(tiltY, { toValue: 0, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      ]).start();
+    ]).start();
   };
 
-  // decor sutil anti-repetición
   const blobRot = useMemo(() => `${(seed * 20 - 10).toFixed(2)}deg`, [seed]);
-  const blobOp = useMemo(() => 0.12 + (seed * 0.12), [seed]);
+  const blobOp = useMemo(() => 0.12 + seed * 0.12, [seed]);
 
   return (
     <Animated.View
@@ -162,18 +154,11 @@ useEffect(() => {
       ]}
       onLayout={onLayout}
     >
-      {/* decor blob */}
       <Animated.View pointerEvents="none" style={[styles.decor, { opacity: blobOp, transform: [{ rotate: blobRot }] }]} />
 
       <Animated.View
         style={{
-          transform: [
-            { perspective: 800 },
-            { rotateX },
-            { rotateY },
-            { scale },
-          ],
-          // sombras iOS
+          transform: [{ perspective: 800 }, { rotateX }, { rotateY }, { scale }],
           shadowColor: "#000",
           shadowOpacity: 0.22,
           shadowRadius: 10,
@@ -187,20 +172,21 @@ useEffect(() => {
           android_ripple={{ color: palette.ripple }}
           style={styles.btnPressable}
         >
-          {/* Ink-swipe diagonal */}
           <Animated.View
             pointerEvents="none"
             style={[styles.shine, { backgroundColor: palette.shine, transform: [{ translateX: sweep }, { rotateZ: "-12deg" }] }]}
           />
 
-          {/* barra acento izquierda (pulso de opacidad, driver nativo) */}
           <Animated.View
             pointerEvents="none"
-            style={[styles.accentBar, { backgroundColor: (palette.accent ?? palette.text) + "22", opacity: accentOpacity }]} />
+            style={[styles.accentBar, { backgroundColor: (palette.accent ?? palette.text) + "22", opacity: accentOpacity }]}
+          />
 
           <View style={[styles.btnContent, centerText && { alignItems: "center" }]}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.btnTitle, { color: palette.text }]} numberOfLines={1}>{title}</Text>
+              <Text style={[styles.btnTitle, { color: palette.text }]} numberOfLines={1}>
+                {title}
+              </Text>
               {!!desc && (
                 <Text style={[styles.btnDesc, { color: palette.subText ?? palette.text }]} numberOfLines={2}>
                   {desc}
@@ -210,17 +196,19 @@ useEffect(() => {
             {!!rightAdornment && <View style={{ marginLeft: 10 }}>{rightAdornment}</View>}
           </View>
 
-          {/* ripples controlados */}
           {ripples.map((r) => (
             <Animated.View
               key={r.key}
               pointerEvents="none"
-              style={[styles.ripple, {
-                left: r.x,
-                top: r.y,
-                transform: [{ scale: r.a.interpolate({ inputRange: [0, 1], outputRange: [0.01, r.scale] }) }],
-                opacity: r.a.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] }),
-              }]}
+              style={[
+                styles.ripple,
+                {
+                  left: r.x,
+                  top: r.y,
+                  transform: [{ scale: r.a.interpolate({ inputRange: [0, 1], outputRange: [0.01, r.scale] }) }],
+                  opacity: r.a.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] }),
+                },
+              ]}
             />
           ))}
         </Pressable>
@@ -229,7 +217,7 @@ useEffect(() => {
   );
 }
 
-/* ============================ Paletas listas ============================ */
+/* ============================ Paletas ============================ */
 const CRIMSON = "#B32133";
 
 const PALETTES = {
@@ -248,7 +236,7 @@ const PALETTES = {
     text: "#111827",
     subText: "#6B7280",
     accent: CRIMSON,
-    shine: "rgba(0,0,0,0.04)", // sutil para fondo claro
+    shine: "rgba(0,0,0,0.04)",
     ripple: "rgba(179,33,51,0.08)",
   } satisfies Palette,
   dark: {
@@ -257,7 +245,7 @@ const PALETTES = {
     text: "#FFFFFF",
     subText: "#E6EDF7",
     accent: "#93C5FD",
-    shine: "rgba(255,255,255,0.26)", // brillo claro para fondo oscuro
+    shine: "rgba(255,255,255,0.26)",
     ripple: "rgba(255,255,255,0.14)",
   } satisfies Palette,
   red: {
@@ -275,12 +263,11 @@ const PALETTES = {
     text: "#1E1B12",
     subText: "#3A2F12",
     accent: "#1E1B12",
-    shine: "rgba(255,255,255,0.45)", // shimmer visible en CTA
+    shine: "rgba(255,255,255,0.45)",
     ripple: "rgba(0,0,0,0.10)",
   } satisfies Palette,
 };
 
-/* ====== Adornos específicos ====== */
 function PremiumTag() {
   return (
     <View style={styles.lockTag}>
@@ -291,10 +278,9 @@ function PremiumTag() {
 }
 
 /* =========================================================
-   FONDO “UKIYO-E” CON CICLO DÍA↔NOCHE (inicia en NOCHE)
+   FONDO ANIMADO
    ========================================================= */
 function DayNightFujiBackground({ cycleMs = 24000 }: { cycleMs?: number }) {
-  // t: 0 → noche, 1 → día, vuelve a 0 (arranca en 0 = noche)
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = () => {
@@ -307,13 +293,13 @@ function DayNightFujiBackground({ cycleMs = 24000 }: { cycleMs?: number }) {
     return () => t.stopAnimation();
   }, [t, cycleMs]);
 
-  const dayOp = t; // 0..1
-  const nightOp = Animated.subtract(1, t); // 1..0
+  const dayOp = t;
+  const nightOp = Animated.subtract(1, t);
   const SEA_Y = H * 0.72;
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      {/* ===== NOCHE ===== */}
+      {/* NOCHE */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: nightOp }]}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0C1A2A" }]} />
         <GlowDisc x={W * 0.30} y={H * 0.22} r={W * 0.75} color="#E11D48" op={0.18} />
@@ -329,7 +315,7 @@ function DayNightFujiBackground({ cycleMs = 24000 }: { cycleMs?: number }) {
         <Seigaiha y={SEA_Y + 0.14 * H} rowH={50} color="#062437" stroke="#E6EEF7" speed={11000} amp={10} />
       </Animated.View>
 
-      {/* ===== DÍA ===== */}
+      {/* DÍA */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: dayOp }]}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: "#BFE3FF" }]} />
         <GlowDisc x={W * 0.65} y={H * 0.20} r={W * 0.70} color="#FCD34D" op={0.25} />
@@ -352,31 +338,74 @@ function DayNightFujiBackground({ cycleMs = 24000 }: { cycleMs?: number }) {
 
 /* ----- Elementos del fondo ----- */
 function GlowDisc({ x, y, r, color, op = 0.18 }: { x: number; y: number; r: number; color: string; op?: number }) {
-  return (
-    <View style={{ position: "absolute", left: x - r, top: y - r, width: r * 2, height: r * 2, borderRadius: r * 2, backgroundColor: color, opacity: op }} />
-  );
+  return <View style={{ position: "absolute", left: x - r, top: y - r, width: r * 2, height: r * 2, borderRadius: r * 2, backgroundColor: color, opacity: op }} />;
 }
 
 function PaperGrain({ light = false }: { light?: boolean }) {
   const dots = useMemo(
-    () => Array.from({ length: 28 }).map((_, i) => ({ key: i, x: Math.random() * W, y: Math.random() * H * 0.55, s: 1 + Math.random() * 2, op: (light ? 0.06 : 0.05) + Math.random() * 0.05 })),
+    () =>
+      Array.from({ length: 28 }).map((_, i) => ({
+        key: i,
+        x: Math.random() * W,
+        y: Math.random() * H * 0.55,
+        s: 1 + Math.random() * 2,
+        op: (light ? 0.06 : 0.05) + Math.random() * 0.05,
+      })),
     [light]
   );
   return (
     <View style={StyleSheet.absoluteFill}>
       {dots.map((d) => (
-        <View key={d.key} style={{ position: "absolute", left: d.x, top: d.y, width: d.s, height: d.s, borderRadius: 12, backgroundColor: light ? "#0B1520" : "#ffffff", opacity: d.op }} />
+        <View
+          key={d.key}
+          style={{
+            position: "absolute",
+            left: d.x,
+            top: d.y,
+            width: d.s,
+            height: d.s,
+            borderRadius: 12,
+            backgroundColor: light ? "#0B1520" : "#ffffff",
+            opacity: d.op,
+          }}
+        />
       ))}
     </View>
   );
 }
 
-function Fuji({ y, palette = "night" }: { y: number; palette?: "day" | "night" }) {
+function Fuji({ y, palette = "day" }: { y: number; palette?: "day" | "night" }) {
   const base = palette === "day" ? "#2C4E7A" : "#1D3557";
   return (
     <View style={{ position: "absolute", top: y, left: W * 0.12 }}>
-      <View style={{ width: 0, height: 0, borderLeftWidth: W * 0.30, borderRightWidth: W * 0.30, borderBottomWidth: W * 0.20, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: base, opacity: 0.97 }} />
-      <View style={{ position: "absolute", top: 6, left: W * 0.30 - W * 0.11, width: 0, height: 0, borderLeftWidth: W * 0.11, borderRightWidth: W * 0.11, borderBottomWidth: W * 0.07, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: "#F1F5F9" }} />
+      <View
+        style={{
+          width: 0,
+          height: 0,
+          borderLeftWidth: W * 0.3,
+          borderRightWidth: W * 0.3,
+          borderBottomWidth: W * 0.2,
+          borderLeftColor: "transparent",
+          borderRightColor: "transparent",
+          borderBottomColor: base,
+          opacity: 0.97,
+        }}
+      />
+      <View
+        style={{
+          position: "absolute",
+          top: 6,
+          left: W * 0.3 - W * 0.11,
+          width: 0,
+          height: 0,
+          borderLeftWidth: W * 0.11,
+          borderRightWidth: W * 0.11,
+          borderBottomWidth: W * 0.07,
+          borderLeftColor: "transparent",
+          borderRightColor: "transparent",
+          borderBottomColor: "#F1F5F9",
+        }}
+      />
     </View>
   );
 }
@@ -406,7 +435,21 @@ function Torii({ x, y }: { x: number; y: number }) {
   );
 }
 
-function Cloud({ xStart, y, size = 44, speed = 16000, delay = 0, opacity = 0.9 }: { xStart: number; y: number; size?: number; speed?: number; delay?: number; opacity?: number }) {
+function Cloud({
+  xStart,
+  y,
+  size = 44,
+  speed = 16000,
+  delay = 0,
+  opacity = 0.9,
+}: {
+  xStart: number;
+  y: number;
+  size?: number;
+  speed?: number;
+  delay?: number;
+  opacity?: number;
+}) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     let alive = true;
@@ -418,7 +461,11 @@ function Cloud({ xStart, y, size = 44, speed = 16000, delay = 0, opacity = 0.9 }
       });
     };
     const s = setTimeout(fly, delay);
-    return () => { alive = false; clearTimeout(s); t.stopAnimation(); };
+    return () => {
+      alive = false;
+      clearTimeout(s);
+      t.stopAnimation();
+    };
   }, [delay, speed, t]);
   const tx = t.interpolate({ inputRange: [0, 1], outputRange: [xStart, -120] });
   return (
@@ -436,7 +483,10 @@ function Pill({ w, h }: { w: number; h: number }) {
 }
 
 function StarField({ count = 50 }: { count?: number }) {
-  const stars = useMemo(() => Array.from({ length: count }).map((_, i) => ({ id: i, x: Math.random() * W, y: Math.random() * H * 0.45, s: 1 + Math.random() * 2.2 })), [count]);
+  const stars = useMemo(
+    () => Array.from({ length: count }).map((_, i) => ({ id: i, x: Math.random() * W, y: Math.random() * H * 0.45, s: 1 + Math.random() * 2.2 })),
+    [count]
+  );
   return (
     <View style={StyleSheet.absoluteFill}>
       {stars.map((s) => (
@@ -461,7 +511,6 @@ function Twinkle({ x, y, size }: { x: number; y: number; size: number }) {
   return <Animated.View style={{ position: "absolute", left: x, top: y, width: size, height: size, borderRadius: size, backgroundColor: "#F8FAFC", opacity: t }} />;
 }
 
-/* ===== Sol/Luna (trayectorias) ===== */
 function SunArc({ p }: { p: any }) {
   const tx = p.interpolate({ inputRange: [0, 1], outputRange: [W * 0.1, W * 0.8] });
   const ty = p.interpolate({ inputRange: [0, 0.5, 1], outputRange: [H * 0.26, H * 0.14, H * 0.26] });
@@ -482,7 +531,6 @@ function MoonArc({ p }: { p: any }) {
   );
 }
 
-/* ===== Olas seigaiha animadas ===== */
 function Seigaiha({ y, rowH, color, stroke, speed = 16000, amp = 8 }: { y: number; rowH: number; color: string; stroke: string; speed?: number; amp?: number }) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -512,7 +560,20 @@ function Seigaiha({ y, rowH, color, stroke, speed = 16000, amp = 8 }: { y: numbe
                   {Array.from({ length: Math.ceil(W / step) + 3 }).map((__, cx) => {
                     const left = cx * step + yOffset;
                     return (
-                      <View key={cx} style={{ position: "absolute", left, width: r * 2, height: r * 2, borderRadius: r * 2, borderWidth: 2, borderColor: stroke, backgroundColor: "transparent", top: -r }} />
+                      <View
+                        key={cx}
+                        style={{
+                          position: "absolute",
+                          left,
+                          width: r * 2,
+                          height: r * 2,
+                          borderRadius: r * 2,
+                          borderWidth: 2,
+                          borderColor: stroke,
+                          backgroundColor: "transparent",
+                          top: -r,
+                        }}
+                      />
                     );
                   })}
                 </View>
@@ -528,7 +589,14 @@ function Seigaiha({ y, rowH, color, stroke, speed = 16000, amp = 8 }: { y: numbe
 /* ======================= Fuegos artificiales (夜) ======================= */
 function FireworksOverlay() {
   const bursts = useMemo(
-    () => Array.from({ length: 5 }).map((_, i) => ({ id: i, x: W * (0.15 + Math.random() * 0.7), y: H * (0.12 + Math.random() * 0.20), colors: i % 2 ? ["#F472B6", "#FCD34D", "#60A5FA"] : ["#F87171", "#34D399", "#A78BFA"], delay: 600 * i })),
+    () =>
+      Array.from({ length: 5 }).map((_, i) => ({
+        id: i,
+        x: W * (0.15 + Math.random() * 0.7),
+        y: H * (0.12 + Math.random() * 0.2),
+        colors: i % 2 ? ["#F472B6", "#FCD34D", "#60A5FA"] : ["#F87171", "#34D399", "#A78BFA"],
+        delay: 600 * i,
+      })),
     []
   );
   return (
@@ -540,7 +608,21 @@ function FireworksOverlay() {
   );
 }
 
-function FireworkBurst({ x, y, colors, delay = 0, duration = 1200, radius = 90 }: { x: number; y: number; colors: string[]; delay?: number; duration?: number; radius?: number }) {
+function FireworkBurst({
+  x,
+  y,
+  colors,
+  delay = 0,
+  duration = 1200,
+  radius = 90,
+}: {
+  x: number;
+  y: number;
+  colors: string[];
+  delay?: number;
+  duration?: number;
+  radius?: number;
+}) {
   const p = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     let alive = true;
@@ -552,27 +634,59 @@ function FireworkBurst({ x, y, colors, delay = 0, duration = 1200, radius = 90 }
       });
     };
     const s = setTimeout(loop, delay);
-    return () => { alive = false; clearTimeout(s); p.stopAnimation(); };
+    return () => {
+      alive = false;
+      clearTimeout(s);
+      p.stopAnimation();
+    };
   }, [p, delay, duration]);
 
-  const dirs = useMemo(() => [
-    [1, 0], [0.866, 0.5], [0.5, 0.866], [0, 1], [-0.5, 0.866], [-0.866, 0.5],
-    [-1, 0], [-0.866, -0.5], [-0.5, -0.866], [0, -1], [0.5, -0.866], [0.866, -0.5],
-  ], []);
+  const dirs = useMemo(
+    () => [
+      [1, 0],
+      [0.866, 0.5],
+      [0.5, 0.866],
+      [0, 1],
+      [-0.5, 0.866],
+      [-0.866, 0.5],
+      [-1, 0],
+      [-0.866, -0.5],
+      [-0.5, -0.866],
+      [0, -1],
+      [0.5, -0.866],
+      [0.866, -0.5],
+    ],
+    []
+  );
 
   const coreScale = p.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0.2, 1, 0.5] });
   const coreOp = p.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 1, 0] });
 
   return (
     <View style={{ position: "absolute", left: x, top: y }}>
-      <Animated.View style={{ position: "absolute", left: -6, top: -6, width: 12, height: 12, borderRadius: 12, backgroundColor: colors[0], transform: [{ scale: coreScale }], opacity: coreOp }} />
+      <Animated.View
+        style={{ position: "absolute", left: -6, top: -6, width: 12, height: 12, borderRadius: 12, backgroundColor: colors[0], transform: [{ scale: coreScale }], opacity: coreOp }}
+      />
       {dirs.map(([dx, dy], i) => {
         const px = p.interpolate({ inputRange: [0, 1], outputRange: [0, dx * radius] });
         const py = p.interpolate({ inputRange: [0, 1], outputRange: [0, dy * radius] });
         const fade = p.interpolate({ inputRange: [0, 0.7, 1], outputRange: [0.9, 0.9, 0] });
         const col = colors[i % colors.length];
         return (
-          <Animated.View key={i} style={{ position: "absolute", left: 0, top: 0, width: 6, height: 6, borderRadius: 6, backgroundColor: col, transform: [{ translateX: px }, { translateY: py }], opacity: fade }} />
+          <Animated.View
+            key={i}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: 6,
+              height: 6,
+              borderRadius: 6,
+              backgroundColor: col,
+              transform: [{ translateX: px }, { translateY: py }],
+              opacity: fade,
+            }}
+          />
         );
       })}
     </View>
@@ -581,13 +695,16 @@ function FireworkBurst({ x, y, colors, delay = 0, duration = 1200, radius = 90 }
 
 /* ======================= Grullas volando (昼) ======================= */
 function TsuruFlight() {
-  const flock = useMemo(() => [
-    { id: 1, dir: "ltr" as const, delay: 200, size: 28, yBase: H * 0.22, arc: H * 0.08, speed: 9000 },
-    { id: 2, dir: "rtl" as const, delay: 1400, size: 32, yBase: H * 0.18, arc: H * 0.06, speed: 10000 },
-    { id: 3, dir: "ltr" as const, delay: 2400, size: 26, yBase: H * 0.26, arc: H * 0.07, speed: 9500 },
-    { id: 4, dir: "rtl" as const, delay: 3200, size: 30, yBase: H * 0.20, arc: H * 0.09, speed: 11000 },
-    { id: 5, dir: "ltr" as const, delay: 4200, size: 24, yBase: H * 0.24, arc: H * 0.07, speed: 10500 },
-  ], []);
+  const flock = useMemo(
+    () => [
+      { id: 1, dir: "ltr" as const, delay: 200, size: 28, yBase: H * 0.22, arc: H * 0.08, speed: 9000 },
+      { id: 2, dir: "rtl" as const, delay: 1400, size: 32, yBase: H * 0.18, arc: H * 0.06, speed: 10000 },
+      { id: 3, dir: "ltr" as const, delay: 2400, size: 26, yBase: H * 0.26, arc: H * 0.07, speed: 9500 },
+      { id: 4, dir: "rtl" as const, delay: 3200, size: 30, yBase: H * 0.2, arc: H * 0.09, speed: 11000 },
+      { id: 5, dir: "ltr" as const, delay: 4200, size: 24, yBase: H * 0.24, arc: H * 0.07, speed: 10500 },
+    ],
+    []
+  );
   return (
     <View style={StyleSheet.absoluteFill}>
       {flock.map((c) => (
@@ -597,7 +714,21 @@ function TsuruFlight() {
   );
 }
 
-function Tsuru({ dir = "ltr", delay = 0, size = 28, yBase = H * 0.2, arc = H * 0.07, speed = 10000 }: { dir?: "ltr" | "rtl"; delay?: number; size?: number; yBase?: number; arc?: number; speed?: number }) {
+function Tsuru({
+  dir = "ltr",
+  delay = 0,
+  size = 28,
+  yBase = H * 0.2,
+  arc = H * 0.07,
+  speed = 10000,
+}: {
+  dir?: "ltr" | "rtl";
+  delay?: number;
+  size?: number;
+  yBase?: number;
+  arc?: number;
+  speed?: number;
+}) {
   const p = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     let alive = true;
@@ -609,7 +740,11 @@ function Tsuru({ dir = "ltr", delay = 0, size = 28, yBase = H * 0.2, arc = H * 0
       });
     };
     const s = setTimeout(loop, delay);
-    return () => { alive = false; clearTimeout(s); p.stopAnimation(); };
+    return () => {
+      alive = false;
+      clearTimeout(s);
+      p.stopAnimation();
+    };
   }, [p, delay, speed]);
   const from = dir === "ltr" ? -80 : W + 80;
   const to = dir === "ltr" ? W + 80 : -80;
@@ -624,7 +759,7 @@ function Tsuru({ dir = "ltr", delay = 0, size = 28, yBase = H * 0.2, arc = H * 0
 }
 
 /* =========================================================
-   PANTALLA: Hiragana — Grupo W–N (con botones unificados)
+   PANTALLA: Hiragana — Grupo W–N (REORDENADA)
    ========================================================= */
 export default function HiraganaWNMenu() {
   const navigation = useNavigation<Nav>();
@@ -635,17 +770,18 @@ export default function HiraganaWNMenu() {
         <View style={styles.header}>
           <Text style={styles.kicker}>Hiragana — Grupo W–N</Text>
           <Text style={styles.title}>わ・を・ん / contracciones</Text>
-          <Text style={styles.subtitle}>Noche con fuegos artificiales, día con grullas sobre olas ukiyo-e. El ciclo inicia en la noche.</Text>
+          <Text style={styles.subtitle}>
+            Noche con fuegos artificiales, día con grullas sobre olas ukiyo-e. El ciclo inicia en la noche.
+          </Text>
         </View>
 
-        {/* ====== Cards base (light) con efectos mejorados ====== */}
+        {/* 1) Contenido base */}
         <NichiBtn
           title="📖 Lectura de frases cortas"
           desc="Lee y entiende con soporte visual."
           palette={PALETTES.light}
           onPress={() => navigation.navigate("WN_LecturaFrases")}
         />
-
         <NichiBtn
           title="🎯 Examen final — lecturas"
           desc="Cierre con ん y comprobación general."
@@ -653,7 +789,26 @@ export default function HiraganaWNMenu() {
           onPress={() => navigation.navigate("WN_PracticaNFinal")}
         />
 
-        {/* ====== CTA dorada con brillo más marcado ====== */}
+        {/* 2) NAV: subir estos dos antes del CTA Premium */}
+        <View style={styles.navBlock}>
+          <NichiBtn
+            title="← Volver a Y–R (やゆよ・らりるれろ)"
+            palette={PALETTES.dark}
+            centerText
+            onPress={() => navigation.navigate("HiraganaYRMenu")}
+          />
+          <NichiBtn
+            title="Ir a UNIDAD 2 — Katakana"
+            palette={PALETTES.red}
+            centerText
+            onPress={() => navigation.navigate("KatakanaMenu")}
+          />
+        </View>
+
+        {/* Separador visual */}
+        <View style={styles.sep} />
+
+        {/* 3) CTA Premium (queda debajo de los dos NAV) */}
         <NichiBtn
           title="✨ Desbloquear NICHI·BOKU Premium"
           palette={PALETTES.gold}
@@ -663,31 +818,42 @@ export default function HiraganaWNMenu() {
 
         <Text style={styles.sectionTitle}>Incluido en Premium</Text>
 
-        {/* ====== Premium cards con tag ====== */}
+        {/* 4) Bloques Premium (bajados para que no se desacomoden) */}
         <NichiBtn
           title="Bloque 3: Vocabulario esencial (10 temas)"
           palette={PALETTES.premium}
           rightAdornment={<PremiumTag />}
           onPress={() => navigation.navigate("B3VocabularioMenu")}
         />
-        <NichiBtn title="Bloque 4: Gramática I" palette={PALETTES.premium} rightAdornment={<PremiumTag />} onPress={() => navigation.navigate("B4GramaticaIMenu")} />
-        <NichiBtn title="Bloque 5: Gramática II" palette={PALETTES.premium} rightAdornment={<PremiumTag />} onPress={() => navigation.navigate("B5GramaticaIIMenu")} />
-        <NichiBtn title="Bloque 6: Vida cotidiana" palette={PALETTES.premium} rightAdornment={<PremiumTag />} onPress={() => navigation.navigate("B6VidaCotidianaMenu")} />
-        <NichiBtn title="Bloque 7: Lectura y práctica" palette={PALETTES.premium} rightAdornment={<PremiumTag />} onPress={() => navigation.navigate("B7LecturaPracticaMenu")} />
-        <NichiBtn title="Bloque 8: Evaluaciones y logros" palette={PALETTES.premium} rightAdornment={<PremiumTag />} onPress={() => navigation.navigate("B8EvaluacionesLogrosMenu")} />
-
-        {/* ====== Navegación con variantes dark/red ====== */}
         <NichiBtn
-          title="← Volver a Y–R (やゆよ・らりるれろ)"
-          palette={PALETTES.dark}
-          centerText
-          onPress={() => navigation.navigate("HiraganaYRMenu")}
+          title="Bloque 4: Gramática I"
+          palette={PALETTES.premium}
+          rightAdornment={<PremiumTag />}
+          onPress={() => navigation.navigate("B4GramaticaIMenu")}
         />
         <NichiBtn
-          title="Ir a UNIDAD 2 — Katakana"
-          palette={PALETTES.red}
-          centerText
-          onPress={() => navigation.navigate("KatakanaMenu")}
+          title="Bloque 5: Gramática II"
+          palette={PALETTES.premium}
+          rightAdornment={<PremiumTag />}
+          onPress={() => navigation.navigate("B5GramaticaIIMenu")}
+        />
+        <NichiBtn
+          title="Bloque 6: Vida cotidiana"
+          palette={PALETTES.premium}
+          rightAdornment={<PremiumTag />}
+          onPress={() => navigation.navigate("B6VidaCotidianaMenu")}
+        />
+        <NichiBtn
+          title="Bloque 7: Lectura y práctica"
+          palette={PALETTES.premium}
+          rightAdornment={<PremiumTag />}
+          onPress={() => navigation.navigate("B7LecturaPracticaMenu")}
+        />
+        <NichiBtn
+          title="Bloque 8: Evaluaciones y logros"
+          palette={PALETTES.premium}
+          rightAdornment={<PremiumTag />}
+          onPress={() => navigation.navigate("B8EvaluacionesLogrosMenu")}
         />
 
         <View style={{ height: 40 }} />
@@ -699,7 +865,13 @@ export default function HiraganaWNMenu() {
 /* ========================================================= ESTILOS ========================================================= */
 const styles = StyleSheet.create({
   container: { padding: 16, paddingTop: 98, gap: 12 },
-  header: { backgroundColor: "rgba(12,26,42,0.78)", borderRadius: 14, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.18)", padding: 12 },
+  header: {
+    backgroundColor: "rgba(12,26,42,0.78)",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.18)",
+    padding: 12,
+  },
   kicker: { color: "#93C5FD", fontWeight: "900", letterSpacing: 1 },
   title: { color: "#E6EDF7", fontWeight: "900", fontSize: 18, marginTop: 2 },
   subtitle: { color: "rgba(230,237,247,0.92)", marginTop: 2, fontWeight: "700" },
@@ -720,7 +892,17 @@ const styles = StyleSheet.create({
   sectionTitle: { marginTop: 16, marginBottom: 2, fontSize: 16, fontWeight: "900", color: "#DCE1F0" },
 
   /* Premium tag */
-  lockTag: { flexDirection: "row", gap: 6, alignItems: "center", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: "#e5b8bf", backgroundColor: "#fde8ec" },
+  lockTag: {
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#e5b8bf",
+    backgroundColor: "#fde8ec",
+  },
   lockTxt: { fontSize: 12, fontWeight: "900", color: CRIMSON },
 
   /* CTA borde marcado para gold */
@@ -728,4 +910,11 @@ const styles = StyleSheet.create({
 
   /* decor */
   decor: { position: "absolute", right: -26, bottom: -26, width: 150, height: 150, borderRadius: 28, backgroundColor: "#FFFFFF" },
+
+  /* NAV block y separador */
+  navBlock: { marginTop: 4, gap: 8 },
+  sep: { height: 8 },
+  
+  /* ripple circle */
+  ripple: { position: "absolute", width: 140, height: 140, borderRadius: 999, backgroundColor: "#ffffff" },
 });

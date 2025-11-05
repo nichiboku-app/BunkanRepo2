@@ -10,9 +10,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useFeedbackSounds } from '../../hooks/useFeedbackSounds';
 
-/* ===== Imágenes ===== */
+/* ===== Imágenes (ajusta rutas si cambias carpetas) ===== */
+const BANNER_BAMBOO = require('../../../assets/backgrounds/bamboo_banner_transparent.webp');
+
 const IMG_HIRAGANA = require('../../../assets/images/origenes_hiragana.webp');
 const IMG_KATAKANA = require('../../../assets/images/origenes_katakana.webp');
 const IMG_KANJI    = require('../../../assets/images/origenes_kanji.webp');
@@ -40,15 +41,12 @@ const GLOSSARY: Record<string, string> = {
 
 /* Tooltip simple */
 function useTooltip() {
-  const [tip, setTip] = useState<{
-    visible: boolean; title: string; text: string; x: number; y: number;
-  }>({ visible: false, title: '', text: '', x: 0, y: 0 });
-
+  const [tip, setTip] = useState<{ visible: boolean; title: string; text: string; x: number; y: number }>(
+    { visible: false, title: '', text: '', x: 0, y: 0 }
+  );
   const show = (title: string, text: string, x: number, y: number) =>
     setTip({ visible: true, title, text, x, y });
-
   const hide = () => setTip(t => ({ ...t, visible: false }));
-
   return { tip, show, hide };
 }
 
@@ -56,73 +54,32 @@ function useTooltip() {
    ROMAJI (kana → pronunciación)
 ========================= */
 const ROMAJI: Record<string, string> = {
-  // a-i-u-e-o
-  'あ':'a','い':'i','う':'u','え':'e','お':'o',
-  'ア':'a','イ':'i','ウ':'u','エ':'e','オ':'o',
-  // k
-  'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
-  'カ':'ka','キ':'ki','ク':'ku','ケ':'ke','コ':'ko',
-  // s
-  'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
-  'サ':'sa','シ':'shi','ス':'su','セ':'se','ソ':'so',
-  // t
-  'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
-  'タ':'ta','チ':'chi','ツ':'tsu','テ':'te','ト':'to',
-  // n
-  'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
-  'ナ':'na','ニ':'ni','ヌ':'nu','ネ':'ne','ノ':'no',
-  // h
-  'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
-  'ハ':'ha','ヒ':'hi','フ':'fu','ヘ':'he','ホ':'ho',
-  // m
-  'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
-  'マ':'ma','ミ':'mi','ム':'mu','メ':'me','モ':'mo',
-  // y
-  'や':'ya','ゆ':'yu','よ':'yo',
-  'ヤ':'ya','ユ':'yu','ヨ':'yo',
-  // r
-  'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
-  'ラ':'ra','リ':'ri','ル':'ru','レ':'re','ロ':'ro',
-  // w + n
-  'わ':'wa','を':'wo','ん':'n',
-  'ワ':'wa','ヲ':'wo','ン':'n',
-  // dakuon/handakuon
-  'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
-  'ガ':'ga','ギ':'gi','グ':'gu','ゲ':'ge','ゴ':'go',
-  'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
-  'ザ':'za','ジ':'ji','ズ':'zu','ゼ':'ze','ゾ':'zo',
-  'だ':'da','ぢ':'ji','づ':'zu','で':'de','ど':'do',
-  'ダ':'da','ヂ':'ji','ヅ':'zu','デ':'de','ド':'do',
-  'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
-  'バ':'ba','ビ':'bi','ブ':'bu','ベ':'be','ボ':'bo',
-  'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po',
-  'パ':'pa','ピ':'pi','プ':'pu','ペ':'pe','ポ':'po',
-  // yōon (hiragana)
-  'きゃ':'kya','きゅ':'kyu','きょ':'kyo',
-  'ぎゃ':'gya','ぎゅ':'gyu','ぎょ':'gyo',
-  'しゃ':'sha','しゅ':'shu','しょ':'sho',
-  'じゃ':'ja','じゅ':'ju','じょ':'jo',
-  'ちゃ':'cha','ちゅ':'chu','ちょ':'cho',
-  'にゃ':'nya','にゅ':'nyu','にょ':'nyo',
-  'ひゃ':'hya','ひゅ':'hyu','ひょ':'hyo',
-  'びゃ':'bya','びゅ':'byu','びょ':'byo',
-  'ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo',
-  'みゃ':'mya','みゅ':'myu','みょ':'myo',
-  'りゃ':'rya','りゅ':'ryu','りょ':'ryo',
-  // yōon (katakana)
-  'キャ':'kya','キュ':'kyu','キョ':'kyo',
-  'ギャ':'gya','ギュ':'gyu','ギョ':'gyo',
-  'シャ':'sha','シュ':'shu','ショ':'sho',
-  'ジャ':'ja','ジュ':'ju','ジョ':'jo',
-  'チャ':'cha','チュ':'chu','チョ':'cho',
-  'ニャ':'nya','ニュ':'nyu','ニョ':'nyo',
-  'ヒャ':'hya','ヒュ':'hyu','ヒョ':'hyo',
-  'ビャ':'bya','ビュ':'byu','ビョ':'byo',
-  'ピャ':'pya','ピュ':'pyu','ピョ':'pyo',
-  'ミャ':'mya','ミュ':'myu','ミョ':'myo',
-  'リャ':'rya','リュ':'ryu','リョ':'ryo',
+  'あ':'a','い':'i','う':'u','え':'e','お':'o','ア':'a','イ':'i','ウ':'u','エ':'e','オ':'o',
+  'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko','カ':'ka','キ':'ki','ク':'ku','ケ':'ke','コ':'ko',
+  'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so','サ':'sa','シ':'shi','ス':'su','セ':'se','ソ':'so',
+  'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to','タ':'ta','チ':'chi','ツ':'tsu','テ':'te','ト':'to',
+  'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no','ナ':'na','ニ':'ni','ヌ':'nu','ネ':'ne','ノ':'no',
+  'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho','ハ':'ha','ヒ':'hi','フ':'fu','ヘ':'he','ホ':'ho',
+  'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo','マ':'ma','ミ':'mi','ム':'mu','メ':'me','モ':'mo',
+  'や':'ya','ゆ':'yu','よ':'yo','ヤ':'ya','ユ':'yu','ヨ':'yo',
+  'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro','ラ':'ra','リ':'ri','ル':'ru','レ':'re','ロ':'ro',
+  'わ':'wa','を':'wo','ん':'n','ワ':'wa','ヲ':'wo','ン':'n',
+  'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go','ガ':'ga','ギ':'gi','グ':'gu','ゲ':'ge','ゴ':'go',
+  'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo','ザ':'za','ジ':'ji','ズ':'zu','ゼ':'ze','ゾ':'zo',
+  'だ':'da','ぢ':'ji','づ':'zu','で':'de','ど':'do','ダ':'da','ヂ':'ji','ヅ':'zu','デ':'de','ド':'do',
+  'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo','バ':'ba','ビ':'bi','ブ':'bu','ベ':'be','ボ':'bo',
+  'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po','パ':'pa','ピ':'pi','プ':'pu','ペ':'pe','ポ':'po',
+  'きゃ':'kya','きゅ':'kyu','きょ':'kyo','ぎゃ':'gya','ぎゅ':'gyu','ぎょ':'gyo',
+  'しゃ':'sha','しゅ':'shu','しょ':'sho','じゃ':'ja','じゅ':'ju','じょ':'jo',
+  'ちゃ':'cha','ちゅ':'chu','ちょ':'cho','にゃ':'nya','にゅ':'nyu','にょ':'nyo',
+  'ひゃ':'hya','ひゅ':'hyu','ひょ':'hyo','びゃ':'bya','びゅ':'byu','びょ':'byo','ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo',
+  'みゃ':'mya','みゅ':'myu','みょ':'myo','りゃ':'rya','りゅ':'ryu','りょ':'ryo',
+  'キャ':'kya','キュ':'kyu','キョ':'kyo','ギャ':'gya','ギュ':'gyu','ギョ':'gyo',
+  'シャ':'sha','シュ':'shu','ショ':'sho','ジャ':'ja','ジュ':'ju','ジョ':'jo',
+  'チャ':'cha','チュ':'chu','チョ':'cho','ニャ':'nya','ニュ':'nyu','ニョ':'nyo',
+  'ヒャ':'hya','ヒュ':'hyu','ヒョ':'hyo','ビャ':'bya','ビュ':'byu','ビョ':'byo','ピャ':'pya','ピュ':'pyu','ピョ':'pyo',
+  'ミャ':'mya','ミュ':'myu','ミョ':'myo','リャ':'rya','リュ':'ryu','リョ':'ryo',
 };
-
 const VOWELS = ['a', 'i', 'u', 'e', 'o'];
 
 /** Gojūon (básico) */
@@ -173,30 +130,12 @@ const DAKUON_ROW_LABELS = ['g','z','d','b','p'];
 
 /** Yōon (kya, sha, …) */
 const H_YOON_GROUPS: string[][] = [
-  ['きゃ','きゅ','きょ'],
-  ['ぎゃ','ぎゅ','ぎょ'],
-  ['しゃ','しゅ','しょ'],
-  ['じゃ','じゅ','じょ'],
-  ['ちゃ','ちゅ','ちょ'],
-  ['にゃ','にゅ','にょ'],
-  ['ひゃ','ひゅ','ひょ'],
-  ['びゃ','びゅ','びょ'],
-  ['ぴゃ','ぴゅ','ぴょ'],
-  ['みゃ','みゅ','みょ'],
-  ['りゃ','りゅ','りょ'],
+  ['きゃ','きゅ','きょ'],['ぎゃ','ぎゅ','ぎょ'],['しゃ','しゅ','しょ'],['じゃ','じゅ','じょ'],['ちゃ','ちゅ','ちょ'],
+  ['にゃ','にゅ','にょ'],['ひゃ','ひゅ','ひょ'],['びゃ','びゅ','びょ'],['ぴゃ','ぴゅ','ぴょ'],['みゃ','みゅ','みょ'],['りゃ','りゅ','りょ'],
 ];
 const K_YOON_GROUPS: string[][] = [
-  ['キャ','キュ','キョ'],
-  ['ギャ','ギュ','ギョ'],
-  ['シャ','シュ','ショ'],
-  ['ジャ','ジュ','ジョ'],
-  ['チャ','チュ','チョ'],
-  ['ニャ','ニュ','ニョ'],
-  ['ヒャ','ヒュ','ヒョ'],
-  ['ビャ','ビュ','ビョ'],
-  ['ピャ','ピュ','ピョ'],
-  ['ミャ','ミュ','ミョ'],
-  ['リャ','リュ','リョ'],
+  ['キャ','キュ','キョ'],['ギャ','ギュ','ギョ'],['シャ','シュ','ショ'],['ジャ','ジュ','ジョ'],['チャ','チュ','チョ'],
+  ['ニャ','ニュ','ニョ'],['ヒャ','ヒュ','ヒョ'],['ビャ','ビュ','ビョ'],['ピャ','ピュ','ピョ'],['ミャ','ミュ','ミョ'],['リャ','リュ','リョ'],
 ];
 
 /** 20 Kanji de ejemplo */
@@ -234,28 +173,21 @@ export default function EscrituraScreen() {
   const speakKana = (kana: string) => {
     if (!kana?.trim()) return;
     try {
-      // detener cualquier reproducción anterior para evitar solapamientos
       Speech.stop();
-      Speech.speak(kana, {
-        language: 'ja-JP',
-        pitch: 1.0,
-        rate: 0.9,
-      });
+      Speech.speak(kana, { language: 'ja-JP', pitch: 1.0, rate: 0.9 });
     } catch {}
   };
 
-  // Mostrar tooltip + reproducir audio
   const pronounce = (kana: string, x: number, y: number) => {
     const clean = (kana || '').trim();
     if (!clean) return;
-    // 1) audio
     speakKana(clean);
-    // 2) tooltip con romaji
     const r = ROMAJI[clean];
     const text = r ? `Se pronuncia: ${r}` : 'Aún no tengo la transcripción exacta 🙈 (próximamente).';
     show(clean, text, x, y);
   };
 
+  // Palabra tocable (verde)
   const Term = ({ k, children }: { k: keyof typeof GLOSSARY; children: React.ReactNode }) => (
     <Text
       onPressIn={(e) => {
@@ -263,12 +195,12 @@ export default function EscrituraScreen() {
         show(String(children), GLOSSARY[k], pageX, pageY);
       }}
       style={s.term}
+      suppressHighlighting={false}
     >
-      <Text style={s.bold}>{children}</Text>
+      <Text style={s.termInner}>{children}</Text>
     </Text>
   );
 
-  // --- Quiz (identifica sistema) ---
   type QuizItem = { c: string; correct: 'Hiragana'|'Katakana'|'Kanji'; why: string };
   const questions: QuizItem[] = useMemo(
     () => [
@@ -285,26 +217,26 @@ export default function EscrituraScreen() {
   return (
     <View style={s.root}>
       <StatusBar backgroundColor="transparent" barStyle="dark-content" />
-      <ScrollView
-        contentContainerStyle={s.content}
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled
-      >
-        {/* AVISO INTERACTIVO */}
+      <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+
+        {/* TIP arriba */}
         <View style={s.notice}>
           <Text style={s.noticeTitle}>💡 Tip interactivo</Text>
           <Text style={s.noticeText}>
-            Toca las <Text style={s.boldWhite}>palabras en negro</Text> o cualquier <Text style={s.boldWhite}>cuadro de las tablas</Text> para escuchar la pronunciación y ver un globo rojo con la lectura.
+            Toca las <Text style={s.boldWhite}>palabras en <Text style={s.boldWhite}>verde</Text></Text> o cualquier
+            <Text style={s.boldWhite}> cuadro de las tablas</Text> para escuchar y ver su definición/lectura.
           </Text>
         </View>
 
-        {/* HISTORIA + IMÁGENES */}
-        <View style={s.card}>
+        {/* TARJETA 1: Historia + imágenes */}
+        <Card>
+          <CardBanner />
           <Text style={s.h1}>Cómo nació la escritura japonesa ✍️</Text>
           <Text style={s.pJ}>
-            Antes de los teclados, Japón escribía con <Term k="kanji">kanji</Term> prestados de China. Para anotar el japonés
-            tal cual sonaba, surgió <Term k="manyōgana">manyōgana</Term> (kanji por sonido). Con el tiempo, esa idea se simplificó en
-            dos silabarios: <Term k="hiragana">hiragana</Term>, de curvas fluidas, y <Term k="katakana">katakana</Term>, de líneas rectas y ángulos.
+            Antes de los teclados, Japón escribía con <Term k="kanji">kanji</Term> prestados de China.
+            Para anotar el japonés tal cual sonaba, surgió <Term k="manyōgana">manyōgana</Term> (kanji por sonido).
+            Con el tiempo, esa idea se simplificó en dos silabarios: <Term k="hiragana">hiragana</Term>, de curvas fluidas,
+            y <Term k="katakana">katakana</Term>, de líneas rectas y ángulos.
           </Text>
 
           <View style={s.grid3}>
@@ -332,10 +264,11 @@ export default function EscrituraScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </Card>
 
-        {/* EXPLICACIÓN ON/KUN */}
-        <View style={s.card}>
+        {/* TARJETA 2: on/kun */}
+        <Card>
+          <CardBanner />
           <Text style={s.h2}>Kanji: on’yomi y kun’yomi 🔎</Text>
           <Text style={s.pJ}>
             La <Term k="on’yomi">on’yomi</Term> es la lectura de origen chino, muy común en <Text style={s.bold}>compuestos</Text>:
@@ -343,47 +276,50 @@ export default function EscrituraScreen() {
             読む（よむ）, 読んだ（よんだ）. Identifica el <Term k="radicales">radical</Term>, memoriza lecturas frecuentes y apóyate en
             <Term k="furigana"> furigana</Term>.
           </Text>
-        </View>
+        </Card>
 
         {/* TABLAS */}
-        <KanaGrid
-          title="Hiragana — gojūon (básico)"
-          rows={HIRAGANA_TABLE}
-          rowLabels={ROW_LABELS}
-          onPronounce={pronounce}
-        />
-        <KanaGrid
-          title="Hiragana — dakuon / handakuon"
-          rows={HIRAGANA_DAKUON}
-          rowLabels={DAKUON_ROW_LABELS}
-          onPronounce={pronounce}
-        />
-        <YoonGrid
-          title="Hiragana — yōon (ゃ/ゅ/ょ)"
-          groups={H_YOON_GROUPS}
-          onPronounce={pronounce}
-        />
+        <Card>
+          <CardBanner />
+          <Text style={s.h2}>Hiragana — gojūon (básico)</Text>
+          <KanaGridSimple rows={HIRAGANA_TABLE} rowLabels={ROW_LABELS} onPronounce={pronounce} />
+        </Card>
 
-        <KanaGrid
-          title="Katakana — gojūon (básico)"
-          rows={KATAKANA_TABLE}
-          rowLabels={ROW_LABELS}
-          onPronounce={pronounce}
-        />
-        <KanaGrid
-          title="Katakana — dakuon / handakuon"
-          rows={KATAKANA_DAKUON}
-          rowLabels={DAKUON_ROW_LABELS}
-          onPronounce={pronounce}
-        />
-        <YoonGrid
-          title="Katakana — yōon (ャ/ュ/ョ)"
-          groups={K_YOON_GROUPS}
-          onPronounce={pronounce}
-        />
+        <Card>
+          <CardBanner />
+          <Text style={s.h2}>Hiragana — dakuon / handakuon</Text>
+          <KanaGridSimple rows={HIRAGANA_DAKUON} rowLabels={DAKUON_ROW_LABELS} onPronounce={pronounce} />
+        </Card>
 
-        {/* 20 KANJI DE EJEMPLO */}
-        <View style={s.card}>
+        <Card>
+          <CardBanner />
+          <Text style={s.h2}>Hiragana — yōon (ゃ/ゅ/ょ)</Text>
+          <YoonGridSimple groups={H_YOON_GROUPS} onPronounce={pronounce} />
+          <Text style={s.caption}>* Yōon = combinación con ゃ/ゅ/ょ. Ej.: き + ゃ → きゃ = <Text style={s.bold}>kya</Text>.</Text>
+        </Card>
+
+        <Card>
+          <CardBanner />
+          <Text style={s.h2}>Katakana — gojūon (básico)</Text>
+          <KanaGridSimple rows={KATAKANA_TABLE} rowLabels={ROW_LABELS} onPronounce={pronounce} />
+        </Card>
+
+        <Card>
+          <CardBanner />
+          <Text style={s.h2}>Katakana — dakuon / handakuon</Text>
+          <KanaGridSimple rows={KATAKANA_DAKUON} rowLabels={DAKUON_ROW_LABELS} onPronounce={pronounce} />
+        </Card>
+
+        <Card>
+          <CardBanner />
+          <Text style={s.h2}>Katakana — yōon (ャ/ュ/ョ)</Text>
+          <YoonGridSimple groups={K_YOON_GROUPS} onPronounce={pronounce} />
+          <Text style={s.caption}>* Yōon = combinación con ャ/ュ/ョ.</Text>
+        </Card>
+
+        {/* 20 KANJI */}
+        <Card>
+          <CardBanner />
           <Text style={s.h2}>20 kanji para abrir camino</Text>
           <View style={s.kanjiGrid}>
             {KANJI_EXAMPLES.map((k, i) => (
@@ -397,15 +333,19 @@ export default function EscrituraScreen() {
           <Text style={[s.caption, { marginTop: 8 }]}>
             Tip: aprende radical, cuenta trazos y practica el orden de escritura (shodō).
           </Text>
-        </View>
+        </Card>
 
         {/* QUIZ */}
-        <IdentifyQuiz questions={questions} />
+        <Card>
+          <CardBanner />
+          <IdentifyQuiz questions={questions} />
+        </Card>
+
       </ScrollView>
 
       {/* OVERLAY ROJO (glosario + pronunciación) */}
       {tip.visible && (
-        <Pressable style={s.overlay} onPress={() => hide()}>
+        <Pressable style={s.overlay} onPress={hide}>
           <View style={[s.tooltip, { top: Math.max(tip.y - 120, 90), left: 16, right: 16 }]}>
             <Text style={s.tooltipTitle}>{tip.title}</Text>
             <Text style={s.tooltipText}>{tip.text}</Text>
@@ -417,24 +357,28 @@ export default function EscrituraScreen() {
 }
 
 /* =========================
-   COMPONENTES: Tablas
+   Componentes de tarjeta
 ========================= */
-function KanaGrid({
-  title,
-  rows,
-  rowLabels,
-  onPronounce,
+function Card({ children }: { children: React.ReactNode }) {
+  return <View style={s.card}>{children}</View>;
+}
+function CardBanner() {
+  return <Image source={BANNER_BAMBOO} style={s.banner} resizeMode="cover" />;
+}
+
+/* =========================
+   Grids simplificados dentro de tarjeta
+========================= */
+function KanaGridSimple({
+  rows, rowLabels, onPronounce,
 }: {
-  title: string;
   rows: string[][];
   rowLabels: string[];
   onPronounce: (kana: string, x: number, y: number) => void;
 }) {
   return (
-    <View style={s.card}>
-      <Text style={s.h2}>{title}</Text>
-
-      {/* Cabecera de vocales */}
+    <>
+      {/* Cabecera vocales */}
       <View style={[s.row, s.rowHead]}>
         <View style={[s.cellHead, { width: 38 }]} />
         {VOWELS.map((v) => (
@@ -444,7 +388,6 @@ function KanaGrid({
         ))}
       </View>
 
-      {/* Filas */}
       {rows.map((r, i) => (
         <View key={i} style={s.row}>
           <View style={[s.cellHead, { width: 38 }]}>
@@ -455,9 +398,7 @@ function KanaGrid({
             return (
               <Pressable
                 key={`${i}-${j}`}
-                onPressIn={(e) =>
-                  onPronounce(kana.trim(), e.nativeEvent.pageX, e.nativeEvent.pageY)
-                }
+                onPressIn={(e) => onPronounce(kana.trim(), e.nativeEvent.pageX, e.nativeEvent.pageY)}
                 android_ripple={{ color: '#fca5a5' }}
                 style={[s.cell, s.cellBorder]}
               >
@@ -467,91 +408,60 @@ function KanaGrid({
           })}
         </View>
       ))}
-    </View>
+    </>
   );
 }
 
-function YoonGrid({
-  title,
-  groups,
-  onPronounce,
+function YoonGridSimple({
+  groups, onPronounce,
 }: {
-  title: string;
   groups: string[][];
   onPronounce: (kana: string, x: number, y: number) => void;
 }) {
   return (
-    <View style={s.card}>
-      <Text style={s.h2}>{title}</Text>
-      <View style={s.yoonWrap}>
-        {groups.map((g, idx) => (
-          <View key={idx} style={s.yoonGroup}>
-            {g.map((syll, j) => (
-              <Pressable
-                key={j}
-                onPressIn={(e) =>
-                  onPronounce(syll, e.nativeEvent.pageX, e.nativeEvent.pageY)
-                }
-                android_ripple={{ color: '#fca5a5' }}
-                style={s.yoonCell}
-              >
-                <Text style={s.yoonTxt}>{syll}</Text>
-              </Pressable>
-            ))}
-          </View>
-        ))}
-      </View>
-      <Text style={[s.caption, { marginTop: 8 }]}>
-        * Yōon = combinación con ゃ/ゅ/ょ (pequeños). Ej.: き + ゃ → きゃ = <Text style={s.bold}>kya</Text>.
-      </Text>
+    <View style={s.yoonWrap}>
+      {groups.map((g, idx) => (
+        <View key={idx} style={s.yoonGroup}>
+          {g.map((syll, j) => (
+            <Pressable
+              key={j}
+              onPressIn={(e) => onPronounce(syll, e.nativeEvent.pageX, e.nativeEvent.pageY)}
+              android_ripple={{ color: '#fca5a5' }}
+              style={s.yoonCell}
+            >
+              <Text style={s.yoonTxt}>{syll}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ))}
     </View>
   );
 }
 
-/* ===========================
-   QUIZ: identifica el sistema
-=========================== */
+/* =========================
+   Quiz
+========================= */
 type ScriptKind = 'Hiragana' | 'Katakana' | 'Kanji';
-
 function IdentifyQuiz({
   questions,
 }: {
   questions: { c: string; correct: ScriptKind; why: string }[];
 }) {
-  const { playCorrect, playWrong } = useFeedbackSounds();
-  const [answers, setAnswers] = React.useState<number[]>(
-    Array(questions.length).fill(-1)
-  );
+  const [answers, setAnswers] = React.useState<number[]>(Array(questions.length).fill(-1));
 
   const press = (qIdx: number, optIndex: number) => {
-    const okIndex = (['Hiragana', 'Katakana', 'Kanji'] as ScriptKind[]).indexOf(
-      questions[qIdx].correct
-    );
-
-    setAnswers(prev => {
-      const next = [...prev];
-      next[qIdx] = optIndex;
-      return next;
-    });
-
-    try {
-      if (optIndex === okIndex) {
-        void playCorrect();
-      } else {
-        void playWrong();
-      }
-    } catch {}
+    const okIndex = (['Hiragana', 'Katakana', 'Kanji'] as ScriptKind[]).indexOf(questions[qIdx].correct);
+    setAnswers(prev => { const next = [...prev]; next[qIdx] = optIndex; return next; });
   };
 
   return (
-    <View style={s.card}>
+    <View>
       <Text style={s.h2}>Identifica el sistema</Text>
-
       {questions.map((q, qIdx) => (
         <View key={qIdx} style={{ marginBottom: 16 }}>
           <Text style={s.h3}>{qIdx + 1}. {q.c}</Text>
           <View style={{ gap: 8, marginTop: 6 }}>
-            {(['Hiragana', 'Katakana', 'Kanji'] as ScriptKind[]).map((opt, i) => {
+            {(['Hiragana','Katakana','Kanji'] as ScriptKind[]).map((opt, i) => {
               const chosen = answers[qIdx] === i;
               const ok = opt === q.correct;
               return (
@@ -569,9 +479,7 @@ function IdentifyQuiz({
           {answers[qIdx] !== -1 && (
             <Text style={[s.pJ, { marginTop: 6 }]}>
               {(answers[qIdx] === (['Hiragana','Katakana','Kanji'] as ScriptKind[]).indexOf(q.correct))
-                ? '✅ ¡Correcto!'
-                : '❌ No exactamente.'}{' '}
-              {q.why}
+                ? '✅ ¡Correcto!' : '❌ No exactamente.'} {q.why}
             </Text>
           )}
         </View>
@@ -581,32 +489,56 @@ function IdentifyQuiz({
 }
 
 /* =========================
-   ESTILOS (tema claro)
+   ESTILOS (tema con fondo verde claro)
 ========================= */
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#fff', position: 'relative' },
+  root: { flex: 1, backgroundColor: '#ECFDF5' }, // verde claro
   content: { padding: 20, paddingBottom: 40, gap: 12 },
 
   // Aviso
   notice: {
-    backgroundColor: '#111827',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: '#1f2937',
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: '#111827',
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
   },
   noticeTitle: { color: '#fff', fontWeight: '800', marginBottom: 4, fontSize: 14 },
   noticeText: { color: '#fff', fontSize: 13, lineHeight: 20 },
   boldWhite: { color: '#fff', fontWeight: '800' },
 
-  // Tarjetas base
+  // Tarjeta
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    overflow: 'hidden',
+    gap: 8,
   },
+
+  // Banner superior de cada tarjeta
+  banner: { width: '100%', height: 52, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
+
+  // Tipografía
+  h1: { color: '#111827', fontSize: 22, fontWeight: '800' },
+  h2: { color: '#111827', fontSize: 18, fontWeight: '800', marginBottom: 6 },
+  h3: { color: '#111827', fontSize: 16, fontWeight: '700', marginBottom: 6 },
+
+  pJ: { color: '#374151', fontSize: 14, lineHeight: 22, textAlign: 'justify' },
+  p: { color: '#374151', fontSize: 14, lineHeight: 20 },
+  caption: { color: '#6b7280', fontSize: 12 },
+
+  // grid de 3 tarjetas pequeñas
+  grid3: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   cardLite: {
     flex: 1,
     backgroundColor: '#fff',
@@ -615,26 +547,6 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-
-  // Tipografía
-  h1: { color: '#111827', fontSize: 22, fontWeight: '800', marginBottom: 6 },
-  h2: { color: '#111827', fontSize: 18, fontWeight: '800', marginBottom: 8 },
-  h3: { color: '#111827', fontSize: 16, fontWeight: '700', marginBottom: 6 },
-
-  pJ: {
-    color: '#374151',
-    fontSize: 14,
-    lineHeight: 22,
-    textAlign: 'justify',
-    marginBottom: 12,
-  },
-  p: { color: '#374151', fontSize: 14, lineHeight: 20 },
-  caption: { color: '#6b7280', fontSize: 12 },
-
-  // grid de 3 tarjetas
-  grid3: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
-
-  // imágenes mini
   thumb: { width: '100%', height: 100, borderRadius: 10, marginBottom: 8, resizeMode: 'cover' },
 
   // Tablas
@@ -679,20 +591,14 @@ const s = StyleSheet.create({
   kanjiMeaning: { color: '#374151' },
 
   // Quiz
-  opt: {
-    borderWidth: 1,
-    borderColor: '#cfd6df',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: '#ffffff',
-  },
+  opt: { borderWidth: 1, borderColor: '#cfd6df', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#ffffff' },
   optOk: { backgroundColor: '#c8f7c5', borderColor: '#8ee08a' },
   optNo: { backgroundColor: '#fde2e2', borderColor: '#f5b5b5' },
   optTxt: { color: '#111827', fontSize: 14 },
 
-  // Término tocable y tooltip rojo
+  // Term & tooltip
   term: { paddingHorizontal: 2 },
+  termInner: { fontWeight: '800', color: '#16a34a' }, // VERDE tocable
   bold: { fontWeight: '800', color: '#111827' },
 
   overlay: {
