@@ -2,9 +2,10 @@
 require("dotenv").config({ quiet: true });
 
 /**
- * Config de Firebase:
- * - "authDomain" corregido.
- * - El bucket suele ser "<project-id>.appspot.com".
+ * Config de Firebase
+ * - authDomain corregido.
+ * - storageBucket usualmente "<project-id>.appspot.com".
+ * - Lee primero de variables de entorno y usa fallback válidos.
  */
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY || "AIzaSyAbJi5h4-YnWZ5Nq0_QGf0W-IhLCdnKyHM",
@@ -28,8 +29,8 @@ module.exports = {
     ios: {
       bundleIdentifier: "com.nichiboku.app",
       supportsTablet: true,
-      // Permiso de micrófono para grabación con expo-audio
       infoPlist: {
+        // Permiso de micrófono para actividades de pronunciación
         NSMicrophoneUsageDescription:
           "Necesitamos acceso al micrófono para actividades de pronunciación y grabación de audio.",
       },
@@ -42,7 +43,7 @@ module.exports = {
         backgroundColor: "#ffffff",
       },
       navigationBar: { visible: "leanback" },
-      // Permisos necesarios para grabar con expo-audio
+      // Permisos para grabación con expo-audio
       permissions: ["android.permission.RECORD_AUDIO"],
     },
 
@@ -57,8 +58,11 @@ module.exports = {
     },
 
     plugins: [
+      // ✅ Requerido por tu proyecto
       "expo-router",
       "expo-font",
+
+      // ✅ Splash
       [
         "expo-splash-screen",
         {
@@ -68,7 +72,8 @@ module.exports = {
           backgroundColor: "#ffffff",
         },
       ],
-      // ✅ Reemplazo de expo-av (SDK 54+): usa expo-audio + expo-video
+
+      // ✅ Reemplazo de expo-av (SDK 54+)
       [
         "expo-audio",
         {
@@ -77,7 +82,11 @@ module.exports = {
         },
       ],
       "expo-video",
-      // ✅ Lo que pedía Expo para poder escribir la config
+
+      // ✅ Necesario para el warning que te salió (localización regional)
+      "expo-localization",
+
+      // ✅ Mantengo tu web browser
       "expo-web-browser",
     ],
 

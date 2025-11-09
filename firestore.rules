@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null }
+    function isAdmin()    { return isSignedIn() && request.auth.token.admin == true }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid }
+
+    // ===== Colección principal de usuarios (Usuarios) =====
+    match /Usuarios/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) || isAdmin();
+
+      // Solo permitir ciertos cambios en update (ej. xp no puede bajar)
+      allow update: if isOwner(uid) || isAdmin()
+        && request.resource.data.keys().hasAll(['updatedAt']) // siempre marca updatedAt
+        && request.resource.data.xp >= resource.data.xp;      // nunca disminuir XP
+
+      // ---- Subcolección de logros ----
+      match /logros/{achId} {
+        // leer: dueño o admin
+        allow read: if isOwner(uid) || isAdmin();
+
+        // crear: dueño/admin y SOLO si NO existe todavía
+        allow create: if (isOwner(uid) || isAdmin())
+          && !exists(/databases/$(database)/documents/Usuarios/$(uid)/logros/$(achId));
+
+        // bloquear sobreescrituras y borrados desde cliente
+        allow update, delete: if false;
+      }
+
+      // Cualquier otra subcolección: solo dueño/admin
+      match /{sub=**} {
+        allow read, write: if isOwner(uid) || isAdmin();
+      }
+    }
+
+    // ===== Si además usas /users, duplica (o migra a uno solo a futuro) =====
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) || isAdmin();
+      allow update: if isOwner(uid) || isAdmin();
+
+      match /logros/{achId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create: if (isOwner(uid) || isAdmin())
+          && !exists(/databases/$(database)/documents/users/$(uid)/logros/$(achId));
+        allow update, delete: if false;
+      }
+
+      match /{sub=**} {
+        allow read, write: if isOwner(uid) || isAdmin();
+      }
+    }
+
+    // ===== Anuncios públicos =====
+    match /announcements/{postId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Denegar todo lo demás
+    match /{document=**} { allow read, write: if false; }
+  }
+}

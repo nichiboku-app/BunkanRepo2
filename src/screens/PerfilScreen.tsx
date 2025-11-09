@@ -1,15 +1,17 @@
 // src/screens/PerfilScreen.tsx
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Dimensions,
   Image,
   ImageBackground,
   ImageSourcePropType,
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -26,15 +28,27 @@ import {
   collection,
   doc,
   onSnapshot,
-  onSnapshot as onSnapshotCol,
   orderBy,
   query,
+  updateDoc,
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
+
+import { pushUserEvent } from '../services/events';
+import {
+  getRanks,
+  ProfileLive,
+  Ranks,
+  streamProfile,
+  updateDisplayName,
+} from '../services/profile';
 import { pickAndSaveAvatar } from '../services/uploadAvatar';
 
-const { width } = Dimensions.get('window');
+// 👇 selector de país
+import type { CountryCode } from 'react-native-country-picker-modal';
+import CountrySelect from '../components/CountrySelect';
 
+const { width } = Dimensions.get('window');
 const BG_HEIGHT = Math.round(width * 0.62);
 const CARD_RADIUS = 26;
 
@@ -44,10 +58,22 @@ const RING_WIDTH = 13;
 const RING_GAP = 18;
 const AVATAR_INNER = AVATAR_OUTER - 2 * (RING_WIDTH + RING_GAP);
 
-// Cache-busting helper
-function bust(url: string, v?: number | string) {
-  if (!v) return url;
-  return url.includes('?') ? `${url}&v=${v}` : `${url}?v=${v}`;
+/** Seguro contra undefined en url */
+function bust(u?: string, v?: number | string) {
+  if (!u) return '';
+  const hasQuery = u.indexOf('?') !== -1;
+  return hasQuery ? `${u}&v=${v ?? Date.now()}` : `${u}?v=${v ?? Date.now()}`;
+}
+
+/** Normaliza el código a uno válido. Evita 'XX', vacío o strings raros. */
+function normalizeCCA2(code?: string | null): CountryCode {
+  const c = (code ?? '').toString().trim().toUpperCase();
+  // Rechaza placeholders comunes
+  if (!c || c === 'XX' || c.length !== 2) return 'MX';
+  // Lista breve de fallback si quieres ser aún más estricto:
+  // const COMMON = new Set(['MX','US','AR','CO','CL','PE','ES','BR','UY','PY','BO','EC','VE','GT','SV','HN','NI','CR','PA','DO','CU','PR','CA','JP','KR','CN','DE','FR','IT','GB']);
+  // if (!COMMON.has(c)) return 'MX';
+  return c as CountryCode;
 }
 
 // 🔸 Mapa de iconos por id de logro (ajústalo a tus assets)
@@ -60,12 +86,45 @@ const ACH_SRC: Record<string, ImageSourcePropType> = {
 const DEFAULT_ACH = require('../../assets/icons/logro_n1.webp');
 
 export default function PerfilScreen() {
+  const user = auth.currentUser;
+  const uid = user?.uid ?? '';
+
+  // ===== estado =====
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
-  const [achievements, setAchievements] = useState<Array<{ id: string; sub?: string }>>([]);
+  const [achievements, setAchievements] = useState<{ id: string; sub?: string }[]>([]);
+
+  const [profile, setProfile] = useState<ProfileLive | null>(null);
+  const [stats, setStats] = useState<ProfileLive['stats'] | null>(null);
+  const [ranks, setRanks] = useState<Ranks>({ world: null, local: null });
+
+  // modal editar nombre
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+
+  // selector de país
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [countryCode, setCountryCode] = useState<CountryCode>('MX');
 
   const onPickCover = () => {};
-  const onEditName = () => {};
+  const openEditName = () => {
+    setNameDraft(profile?.displayName ?? '');
+    setShowNameModal(true);
+  };
+  const submitEditName = async () => {
+    try {
+      if (!uid) return;
+      const trimmed = nameDraft.trim();
+      if (!trimmed) {
+        Alert.alert('Nombre vacío', 'Escribe un nombre para continuar.');
+        return;
+      }
+      await updateDisplayName(uid, trimmed);
+      setShowNameModal(false);
+    } catch (e: any) {
+      Alert.alert('Ups', e?.message ?? 'No se pudo actualizar tu nombre.');
+    }
+  };
 
   const onPickAvatar = async () => {
     try {
@@ -80,7 +139,7 @@ export default function PerfilScreen() {
     }
   };
 
-  // Foto de perfil desde Firestore/auth
+  // Foto de perfil desde Firestore/auth (seguro al usar bust)
   useEffect(() => {
     const u = auth.currentUser;
     if (!u) return;
@@ -104,24 +163,68 @@ export default function PerfilScreen() {
     return () => unsub();
   }, []);
 
-  // 🔥 Suscripción a logros acumulados del usuario (Usuarios/{uid}/logros)
+  // 🔥 Suscripción a logros del usuario (Usuarios/{uid}/userAchievements)
   useEffect(() => {
-    const u = auth.currentUser;
-    if (!u) return;
-
-    const colRef = collection(db, 'Usuarios', u.uid, 'logros');
+    if (!uid) return;
+    const colRef = collection(db, 'Usuarios', uid, 'userAchievements');
     const q = query(colRef, orderBy('unlockedAt', 'desc'));
 
-    const unsub = onSnapshotCol(q, (snap) => {
+    const unsub = onSnapshot(q, (snap) => {
       const rows = snap.docs.map((d) => ({
-        id: (d.get('id') as string) || d.id,
-        sub: (d.get('sub') as string) || undefined,
+        id: d.id,
+        sub: d.id,
       }));
       setAchievements(rows);
     });
 
     return () => unsub();
-  }, []);
+  }, [uid]);
+
+  // 🔄 stream user + stats en tiempo real
+  useEffect(() => {
+    if (!uid) return;
+
+    let draft: ProfileLive = {
+      displayName: '',
+      email: user?.email ?? '',
+      countryCode: 'XX',
+      lastActiveAt: undefined,
+      stats: null,
+    };
+
+    const unsub = streamProfile(uid, (piece) => {
+      draft = { ...draft, ...piece, stats: piece.stats ?? draft.stats };
+      setProfile(draft);
+      setStats(draft.stats);
+
+      // sincroniza selector de país al valor del perfil (normalizado)
+      const next = normalizeCCA2(piece.countryCode as string | undefined);
+      setCountryCode(next);
+    });
+
+    return unsub;
+  }, [uid]);
+
+  // 🏅 ranks
+  useEffect(() => {
+    if (!uid) return;
+    (async () => {
+      try {
+        const r = await getRanks(uid);
+        setRanks(r);
+      } catch {
+        // si falla, dejamos los ranks en null
+      }
+    })();
+  }, [uid, stats?.points, profile?.countryCode]);
+
+  // % meta semanal
+  const weeklyText = useMemo(() => {
+    if (!stats) return '0/0';
+    const prog = stats.weeklyProgress ?? 0;
+    const goal = stats.weeklyGoal ?? 0;
+    return `${prog}/${goal}`;
+  }, [stats?.weeklyProgress, stats?.weeklyGoal]);
 
   // Sonido al entrar
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -161,6 +264,31 @@ export default function PerfilScreen() {
       };
     }, []),
   );
+
+  // Botón temporal para probar suma de puntos
+  const add50 = async () => {
+    if (!uid) return;
+    await pushUserEvent(uid, 'lesson_completed', 50);
+    Alert.alert('OK', 'Se agregaron +50 puntos (prueba).');
+  };
+
+  // Guardar país seleccionado (siempre válido)
+  const saveCountry = async (cca2: CountryCode) => {
+    try {
+      if (!uid) return;
+      const safe = normalizeCCA2(cca2);
+      setCountryCode(safe);
+      await updateDoc(doc(db, 'Usuarios', uid), { countryCode: safe });
+      setShowCountryPicker(false);
+      const r = await getRanks(uid); // Recalcular ranks (local depende del país)
+      setRanks(r);
+    } catch (e: any) {
+      Alert.alert('Ups', e?.message ?? 'No se pudo actualizar tu país.');
+    }
+  };
+
+  // Código seguro que mostramos / enviamos al picker
+  const safeCCA2 = normalizeCCA2(profile?.countryCode ?? countryCode);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -221,11 +349,11 @@ export default function PerfilScreen() {
 
           {/* Nombre + lapicito */}
           <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1} onPress={onEditName}>
-              Mapache Medina
+            <Text style={styles.name} numberOfLines={1} onPress={openEditName}>
+              {profile?.displayName || 'Sin nombre'}
             </Text>
             <TouchableOpacity
-              onPress={onEditName}
+              onPress={openEditName}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <EditIcon width={22} height={22} />
@@ -234,26 +362,35 @@ export default function PerfilScreen() {
 
           {/* Email */}
           <Text style={styles.email} numberOfLines={1}>
-            mapache@gmail.com
+            {profile?.email || user?.email || ''}
           </Text>
 
-          {/* Botón premium */}
-          <TouchableOpacity style={styles.premiumBtn} activeOpacity={0.9}>
+          {/* País (cambiar) */}
+          <TouchableOpacity
+            style={styles.countryBtn}
+            onPress={() => setShowCountryPicker(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.countryTxt}>País: {safeCCA2} (cambiar)</Text>
+          </TouchableOpacity>
+
+          {/* Botón premium (temporal: suma +50 para probar) */}
+          <TouchableOpacity style={styles.premiumBtn} activeOpacity={0.9} onPress={add50}>
             <CrownIcon width={18} height={18} />
             <Text style={styles.premiumTxt}>Obtener premium</Text>
           </TouchableOpacity>
 
-          {/* Stats + separadores (puedes conectar XP real luego) */}
+          {/* Stats + separadores */}
           <View style={styles.statsRow}>
-            <Stat label="Puntos" value="825" />
+            <Stat label="Puntos" value={`${stats?.points ?? 0}`} />
             <View style={styles.dividerWrap}>
               <Image source={dividerImg} style={styles.dividerIcon} resizeMode="contain" />
             </View>
-            <Stat label="Nivel mundial" value="#2481" />
+            <Stat label="Nivel mundial" value={ranks.world ? `#${ranks.world}` : '…'} />
             <View style={styles.dividerWrap}>
               <Image source={dividerImg} style={styles.dividerIcon} resizeMode="contain" />
             </View>
-            <Stat label="Nivel local" value="#56" />
+            <Stat label="Nivel local" value={ranks.local ? `#${ranks.local}` : '…'} />
           </View>
 
           {/* ====== BLOQUE INFERIOR (4 TARJETAS) ====== */}
@@ -280,7 +417,7 @@ export default function PerfilScreen() {
                     resizeMode="contain"
                   />
                   <View style={{ marginLeft: 10 }}>
-                    <Text style={styles.metaBig}>3/5</Text>
+                    <Text style={styles.metaBig}>{weeklyText}</Text>
                     <Text style={styles.metaLabel}>Racha de{'\n'}estudio</Text>
                   </View>
                 </View>
@@ -297,27 +434,13 @@ export default function PerfilScreen() {
                 />
                 <Text style={styles.cardTitle}>Racha de estudio</Text>
 
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.hScroll}
-                >
+                <View style={styles.hScroll}>
                   <IconWithLabel
                     src={require('../../assets/icons/samurai.webp') as ImageSourcePropType}
                     label="Samurai"
                   />
-                  <LevelPill text="L1" />
-                  <LevelPill
-                    text="L3"
-                    icon={require('../../assets/icons/l3.webp') as ImageSourcePropType}
-                  />
-                  <LevelPill
-                    text="L5"
-                    icon={require('../../assets/icons/l5.webp') as ImageSourcePropType}
-                  />
-                  <LevelPill text="L7" />
-                  <LevelPill text="L9" />
-                </ScrollView>
+                  <LevelPill text={`L${Math.max(1, Math.min(9, stats?.streakCount ?? 0))}`} />
+                </View>
               </Card>
             </View>
 
@@ -353,7 +476,7 @@ export default function PerfilScreen() {
                 </ScrollView>
               </Card>
 
-              {/* Juegos */}
+              {/* Juegos (se implementará V2) */}
               <Card>
                 <Image
                   source={
@@ -390,6 +513,40 @@ export default function PerfilScreen() {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+
+      {/* ===== Modal editar nombre ===== */}
+      <Modal visible={showNameModal} transparent animationType="fade" onRequestClose={() => setShowNameModal(false)}>
+        <View style={styles.modalBg}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Editar nombre</Text>
+            <TextInput
+              value={nameDraft}
+              onChangeText={setNameDraft}
+              placeholder="Tu nombre"
+              style={styles.modalInput}
+              maxLength={40}
+            />
+            <View style={styles.modalRow}>
+              <TouchableOpacity onPress={() => setShowNameModal(false)} style={[styles.modalBtn, { backgroundColor: '#eee' }]}>
+                <Text>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={submitEditName} style={[styles.modalBtn, { backgroundColor: '#c9a23a' }]}>
+                <Text style={{ fontWeight: '700' }}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ===== Selector de país ===== */}
+      {showCountryPicker && (
+        <CountrySelect
+          visible
+          onClose={() => setShowCountryPicker(false)}
+          initialCountryCode={safeCCA2}
+          onSelect={(cca2) => saveCountry(cca2)}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -450,17 +607,14 @@ function Achievement({ src, sub }: { src: ImageSourcePropType; sub: string }) {
 }
 
 /* —————— Estilos —————— */
-
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#ffffff' },
   scroll: { flex: 1 },
   cc: { paddingBottom: 16, backgroundColor: '#ffffff' },
 
-  /* Fondo montañas */
   bg: { width: '100%', height: BG_HEIGHT, backgroundColor: '#fff' },
   bgImage: {},
 
-  /* Tarjeta blanca */
   card: {
     marginTop: -CARD_RADIUS,
     borderTopLeftRadius: CARD_RADIUS,
@@ -471,7 +625,6 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
   },
 
-  /* Avatar */
   avatarAbs: {
     position: 'absolute',
     top: -AVATAR_OUTER / 2,
@@ -522,7 +675,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
   },
 
-  /* Nombre y correo */
   nameRow: {
     marginTop: 10,
     flexDirection: 'row',
@@ -534,7 +686,16 @@ const styles = StyleSheet.create({
   name: { fontSize: 24, lineHeight: 30, textAlign: 'center', fontWeight: '800', maxWidth: '90%' },
   email: { marginTop: 2, textAlign: 'center', color: '#777' },
 
-  /* Premium */
+  countryBtn: {
+    alignSelf: 'center',
+    marginTop: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
+    backgroundColor: '#f2efe9',
+  },
+  countryTxt: { color: '#5a4a33', fontWeight: '700' },
+
   premiumBtn: {
     alignSelf: 'center',
     marginTop: 10,
@@ -548,7 +709,6 @@ const styles = StyleSheet.create({
   },
   premiumTxt: { color: '#1b1200', fontWeight: '800' },
 
-  /* Stats + separadores */
   statsRow: {
     marginTop: 16,
     backgroundColor: '#f5efe6',
@@ -567,7 +727,6 @@ const styles = StyleSheet.create({
   statLabel: { color: '#7b6d5a', marginBottom: 6 },
   statValue: { fontSize: 22, fontWeight: '900' },
 
-  /* BLOQUE INFERIOR */
   bottomWrap: { marginTop: 16, gap: 14 },
   row: { flexDirection: 'row', gap: 14 },
 
@@ -644,6 +803,29 @@ const styles = StyleSheet.create({
   pointsImg: { width: 20, height: 20 },
   pointsTxt: { color: '#2f7a3b', fontWeight: '800' },
 
-  // Mensaje cuando no hay logros todavía
   emptyAch: { color: '#6b6b6b', fontStyle: 'italic', paddingHorizontal: 8 },
+
+  modalBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCard: {
+    width: '86%',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '800', marginBottom: 10 },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  modalRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
+  modalBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
 });

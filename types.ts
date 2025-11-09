@@ -67,6 +67,7 @@ export type RootStackParamList = {
   FamiliaNH: undefined;
   NLecturaGuiada: undefined;
   HRoleplaySaludo: undefined;
+    CrearCuenta: undefined;
 
   // Menús y subpantallas Hiragana
   HiraganaMMenu: undefined;

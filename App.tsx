@@ -68,6 +68,7 @@ import TQuizEscucha from "./src/screens/N5/FamiliaS/TQuizEscucha";
 import TTrazoGif from "./src/screens/N5/FamiliaS/TTrazoGif";
 
 // familia N
+import CrearCuentaScreen from "./src/screens/CrearCuentaScreen";
 import FamiliaNHScreen from "./src/screens/N5/FamiliaN/FamiliaNHScreen";
 import HRoleplaySaludoScreen from "./src/screens/N5/FamiliaN/HRoleplaySaludoScreen";
 import NLecturaGuiadaScreen from "./src/screens/N5/FamiliaN/NLecturaGuiadaScreen";
@@ -314,6 +315,8 @@ export default function App() {
                 component={VocabularioGrupoK}
                 options={{ headerShown: true, title: "Vocabulario — Grupo K" }}
               />
+              <Stack.Screen name="CrearCuenta" component={CrearCuentaScreen} options={{ headerShown: false }} />
+
               <Stack.Screen name="ATarjetas" component={AtarjetasScreen} options={{ headerShown: false }} />
               <Stack.Screen
                 name="MatchingGrupoK"
