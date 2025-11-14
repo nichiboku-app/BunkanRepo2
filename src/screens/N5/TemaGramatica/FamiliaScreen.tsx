@@ -2,20 +2,27 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as Speech from "expo-speech";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    Pressable,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    Vibration,
-    View,
+  Animated,
+  Dimensions,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  Vibration,
+  View,
 } from "react-native";
 import type { RootStackParamList } from "../../../../types";
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
+
+// 🎯 XP / Logros
+import {
+  AchievementPayload,
+  awardAchievement, // idempotente
+  getAchievement,
+} from "../../../services/achievements";
 
 type Props = NativeStackScreenProps<RootStackParamList, "TemaGramaticaFamiliaN5">;
 
@@ -151,9 +158,20 @@ type Q = {
   tip?: string;
 };
 
-function QuizSection({ title, color, questions }: { title: string; color: string; questions: Q[] }) {
+function QuizSection({
+  title,
+  color,
+  questions,
+  onSolved,
+}: {
+  title: string;
+  color: string;
+  questions: Q[];
+  onSolved?: (score: number, total: number) => void; // 👉 reporta al padre al terminar
+}) {
   const [selected, setSelected] = useState<(number | null)[]>(() => Array(questions.length).fill(null));
   const [score, setScore] = useState<number | null>(null);
+  const [reported, setReported] = useState(false);
 
   // 🔊 Hook de sonidos
   const { playCorrect, playWrong } = useFeedbackSounds();
@@ -164,7 +182,6 @@ function QuizSection({ title, color, questions }: { title: string; color: string
     next[qi] = ci;
     setSelected(next);
 
-    // reproducir sonido según acierto/error
     if (ci === questions[qi].answerIndex) {
       await playCorrect();
     } else {
@@ -180,8 +197,12 @@ function QuizSection({ title, color, questions }: { title: string; color: string
         if (ci === questions[i].answerIndex) s += 1;
       });
       setScore(s);
+      if (!reported && onSolved) {
+        setReported(true);
+        onSolved(s, questions.length);
+      }
     }
-  }, [selected, questions]);
+  }, [selected, questions, onSolved, reported]);
 
   return (
     <View style={[styles.card, { backgroundColor: color }]}>
@@ -229,6 +250,31 @@ function QuizSection({ title, color, questions }: { title: string; color: string
         </View>
       )}
     </View>
+  );
+}
+
+/* ======== Toast/Badge simple ======== */
+function AchievementToast({ visible, subtitle }: { visible: boolean; subtitle: string }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (visible) {
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 240, useNativeDriver: true }),
+        Animated.delay(2200),
+        Animated.timing(opacity, { toValue: 0, duration: 280, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible]);
+  if (!visible) return null;
+  return (
+    <Animated.View style={{
+      position: "absolute", top: 18, left: 16, right: 16,
+      padding: 12, borderRadius: 12, backgroundColor: "#111827",
+      borderWidth: 1, borderColor: "#374151", opacity,
+    }}>
+      <Text style={{ color: "#fff", fontWeight: "800", textAlign: "center" }}>🏅 ¡Logro desbloqueado!</Text>
+      <Text style={{ color: "#e5e7eb", textAlign: "center", marginTop: 2 }}>{subtitle}</Text>
+    </Animated.View>
   );
 }
 
@@ -309,8 +355,93 @@ const quiz4: Q[] = [
   { prompt: "Yo soy Leslie y vivo en Puebla:", choices: ["Watashi wa Leslie desu. Puebla ni sundeimasu.", "Watashi Leslie desu ka. Puebla wa sundeimasu.", "Watashi wa Leslie ka. Puebla ni sundeimasu ka.", "Watashi no Leslie desu. Puebla no sundeimasu."], answerIndex: 0, tip: "Frases simples: A wa B desu. Lugar ni sundeimasu." },
 ];
 
+/* ======== IDs y XP ======== */
+const FIRST_OPEN_ID = "tema_familia_first_open";
+const MAIN_ACH_ID  = "tema_familia_kazoku";
+const ENTRY_XP = 10;   // +10 XP al entrar (opcional)
+const SUCCESS_XP = 20; // +20 XP al completar todo
+const MAIN_ACH_TITLE = "kazoku";
+
 /* ======== Pantalla ======== */
 export default function TemaGramaticaFamiliaScreen({}: Props) {
+  // 🏁 Estado de logros
+  const [showToast, setShowToast] = useState(false);
+  const [alreadyCompleted, setAlreadyCompleted] = useState<boolean | null>(null);
+  const [sectionsSolved, setSectionsSolved] = useState(0);
+  const solvedSetRef = useRef<Set<number>>(new Set());
+
+  // 🎁 Al entrar: +10 XP (idempotente)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const exists = await getAchievement(FIRST_OPEN_ID);
+        if (!exists) {
+          const payload: AchievementPayload = {
+            title: "first_open",
+            description: "Primera visita al tema de Familia.",
+            icon: "open_book",
+            badgeColor: "#bcd7ff",
+            points: ENTRY_XP,
+            xp: ENTRY_XP,
+            type: "entry",
+            sub: "tema_familia",
+            version: 1,
+            createdAt: Date.now(),
+          };
+          await awardAchievement(FIRST_OPEN_ID, payload);
+        }
+      } catch {}
+      try {
+        const main = await getAchievement(MAIN_ACH_ID);
+        if (mounted) setAlreadyCompleted(!!main);
+      } catch {
+        if (mounted) setAlreadyCompleted(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // ✅ Callback cuando cada sección se completa por primera vez
+  const onSectionSolved = useCallback((index: number) => (score: number, total: number) => {
+    const set = solvedSetRef.current;
+    if (!set.has(index)) {
+      set.add(index);
+      setSectionsSolved(set.size);
+    }
+  }, []);
+
+  // 🏆 Cuando las 4 secciones estén resueltas, otorgar logro principal (+20 XP)
+  useEffect(() => {
+    (async () => {
+      if (alreadyCompleted) return;
+      if (sectionsSolved < 4) return;
+      try {
+        const exists = await getAchievement(MAIN_ACH_ID);
+        if (exists) return;
+
+        const payload: AchievementPayload = {
+          title: MAIN_ACH_TITLE, // "kazoku"
+          description: "Completaste todas las actividades del tema Familia (uchi/soto, partículas y 'ni sundeimasu').",
+          icon: "family_kazoku",
+          badgeColor: "#F1C27B",
+          points: SUCCESS_XP,
+          xp: SUCCESS_XP,
+          score: 4,
+          total: 4,
+          type: "lesson",
+          sub: "tema_familia",
+          version: 1,
+          createdAt: Date.now(),
+        };
+        await awardAchievement(MAIN_ACH_ID, payload);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2800);
+        setAlreadyCompleted(true);
+      } catch {}
+    })();
+  }, [sectionsSolved, alreadyCompleted]);
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
@@ -342,6 +473,11 @@ export default function TemaGramaticaFamiliaScreen({}: Props) {
           <Text style={styles.sub}>
             Aprende a presentarte, usar “wa”, “no”, “ka”, y “ni sundeimasu”. Todo en romaji.
           </Text>
+          {alreadyCompleted ? (
+            <Text style={{ color: "#d1fae5", backgroundColor: "#065f46", marginTop: 8, padding: 6, borderRadius: 8, textAlign: "center" }}>
+              Logro “{MAIN_ACH_TITLE}” ya obtenido (+{SUCCESS_XP} XP)
+            </Text>
+          ) : null}
         </View>
 
         {/* Presentación */}
@@ -384,13 +520,15 @@ export default function TemaGramaticaFamiliaScreen({}: Props) {
         </Section>
 
         {/* ACTIVIDADES (4 x 5) */}
-        <QuizSection title="⑦ Actividad 1: Partículas" color="rgba(255,255,255,0.96)" questions={quiz1} />
-        <QuizSection title="⑧ Actividad 2: Presentación" color="rgba(255,245,210,0.96)" questions={quiz2} />
-        <QuizSection title="⑨ Actividad 3: Uchi / Soto / Familia" color="rgba(220,255,240,0.96)" questions={quiz3} />
-        <QuizSection title="⑩ Actividad 4: 'ni sundeimasu'" color="rgba(210,230,255,0.96)" questions={quiz4} />
+        <QuizSection title="⑦ Actividad 1: Partículas" color="rgba(255,255,255,0.96)" questions={quiz1} onSolved={onSectionSolved(0)} />
+        <QuizSection title="⑧ Actividad 2: Presentación" color="rgba(255,245,210,0.96)" questions={quiz2} onSolved={onSectionSolved(1)} />
+        <QuizSection title="⑨ Actividad 3: Uchi / Soto / Familia" color="rgba(220,255,240,0.96)" questions={quiz3} onSolved={onSectionSolved(2)} />
+        <QuizSection title="⑩ Actividad 4: 'ni sundeimasu'" color="rgba(210,230,255,0.96)" questions={quiz4} onSolved={onSectionSolved(3)} />
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <AchievementToast visible={showToast} subtitle={`${MAIN_ACH_TITLE} (+${SUCCESS_XP} XP)`} />
     </View>
   );
 }

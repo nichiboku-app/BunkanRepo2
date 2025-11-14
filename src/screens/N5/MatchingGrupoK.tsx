@@ -1,7 +1,9 @@
 // src/screens/N5/MatchingGrupoK.tsx
 import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +15,10 @@ import {
   TapGestureHandler,
 } from "react-native-gesture-handler";
 import { useFeedbackSounds } from "../../hooks/useFeedbackSounds";
+import {
+  awardAchievement,
+  getAchievement,
+} from "../../services/achievements";
 
 /** ===== Dataset base (K/G) ===== */
 type Item = { id: string; jp: string; es: string };
@@ -71,9 +77,9 @@ function CardTap({
     <TapGestureHandler
       ref={tapRef}
       enabled={!locked}
-      maxDeltaX={10}        // tolerancia de desplazamiento horizontal
-      maxDeltaY={10}        // tolerancia de desplazamiento vertical
-      maxDist={12}          // tolerancia de distancia total
+      maxDeltaX={10}
+      maxDeltaY={10}
+      maxDist={12}
       numberOfTaps={1}
       shouldCancelWhenOutside={false}
       simultaneousHandlers={simultaneousHandlers}
@@ -84,24 +90,40 @@ function CardTap({
       }}
     >
       <View
-        // estilo de "botón" visual
         style={[
           styles.card,
           locked && styles.cardLocked,
           active && styles.cardActive,
         ]}
       >
-        {/* pointerEvents="none" para que texto no intercepte */}
         <View pointerEvents="none">{children}</View>
       </View>
     </TapGestureHandler>
   );
 }
 
+/** ===== Toast / aviso ===== */
+function useToast() {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const [visible, setVisible] = useState(false);
+  const show = () => {
+    setVisible(true);
+    Animated.sequence([
+      Animated.timing(opacity, { toValue: 1, duration: 240, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+      Animated.delay(2200),
+      Animated.timing(opacity, { toValue: 0, duration: 260, easing: Easing.in(Easing.ease), useNativeDriver: true }),
+    ]).start(() => setVisible(false));
+  };
+  return { visible, opacity, show };
+}
+
 /** ===== Pantalla ===== */
+const ACH_ID = "matching_grupo_k";
+const ACH_SUB = "Matching";
+const ACH_XP = 20;
+
 export default function MatchingGrupoK() {
   const [fontsLoaded] = useFonts({ NotoSansJP_700Bold });
-
   const { playCorrect, playWrong } = useFeedbackSounds();
 
   const [roundSeed, setRoundSeed] = useState(0);
@@ -121,6 +143,25 @@ export default function MatchingGrupoK() {
   const [attempts, setAttempts] = useState(0);
 
   const isDone = matched.length === roundPairs.length;
+
+  // logro ya otorgado?
+  const [already, setAlready] = useState<boolean | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const ach = await getAchievement(ACH_ID);
+        if (!mounted) return;
+        setAlready(!!ach);
+      } catch {
+        if (mounted) setAlready(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Toast
+  const toast = useToast();
 
   // ref para permitir gestos simultáneos con el ScrollView
   const scrollSimultaneousRef = useRef<any>(null);
@@ -164,12 +205,27 @@ export default function MatchingGrupoK() {
     Vibration.vibrate(15);
   };
 
+  // Otorgar logro al completar (idempotente)
+  useEffect(() => {
+    if (!isDone || already === null) return;
+    if (already) return; // ya estaba
+    (async () => {
+      try {
+        await awardAchievement(ACH_ID, { xp: ACH_XP, sub: ACH_SUB, meta: { screenKey: "N5_MatchingGrupoK" } });
+        setAlready(true);
+        toast.show();
+      } catch {
+        // silencioso: no bloquear UX del juego
+      }
+    })();
+  }, [isDone, already, toast]);
+
   return (
     <ScrollView
       ref={scrollSimultaneousRef}
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 24 }}
-      keyboardShouldPersistTaps="always"  // más agresivo que "handled"
+      keyboardShouldPersistTaps="always"
     >
       {/* Header */}
       <View style={styles.header}>
@@ -254,6 +310,14 @@ export default function MatchingGrupoK() {
           <Text style={styles.primaryBtnText}>{isDone ? "Nueva ronda" : "Rebarajar"}</Text>
         </View>
       </TapGestureHandler>
+
+      {/* Toast logro */}
+      {toast.visible && (
+        <Animated.View style={[styles.toast, { opacity: toast.opacity }]}>
+          <Text style={styles.toastTitle}>🏅 ¡Logro desbloqueado!</Text>
+          <Text style={styles.toastSubtitle}>Matching (+{ACH_XP} XP)</Text>
+        </Animated.View>
+      )}
     </ScrollView>
   );
 }
@@ -317,4 +381,18 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   primaryBtnText: { color: "#fff", fontWeight: "900" },
+
+  toast: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    right: 16,
+    backgroundColor: "#111827",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#374151",
+    padding: 12,
+  },
+  toastTitle: { color: "#fff", fontWeight: "800", fontSize: 14, textAlign: "center" },
+  toastSubtitle: { color: "#e5e7eb", fontSize: 12, textAlign: "center", marginTop: 2 },
 });

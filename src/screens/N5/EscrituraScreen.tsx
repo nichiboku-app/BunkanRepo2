@@ -1,6 +1,6 @@
 // src/screens/N5/EscrituraScreen.tsx
 import * as Speech from 'expo-speech';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -10,6 +10,9 @@ import {
   Text,
   View,
 } from 'react-native';
+
+/* ★★★ XP/Logros ★★★ */
+import { awardOnSuccess, useAwardOnEnter } from '../../services/achievements';
 
 /* ===== Imágenes (ajusta rutas si cambias carpetas) ===== */
 const BANNER_BAMBOO = require('../../../assets/backgrounds/bamboo_banner_transparent.webp');
@@ -77,7 +80,7 @@ const ROMAJI: Record<string, string> = {
   'キャ':'kya','キュ':'kyu','キョ':'kyo','ギャ':'gya','ギュ':'gyu','ギョ':'gyo',
   'シャ':'sha','シュ':'shu','ショ':'sho','ジャ':'ja','ジュ':'ju','ジョ':'jo',
   'チャ':'cha','チュ':'chu','チョ':'cho','ニャ':'nya','ニュ':'nyu','ニョ':'nyo',
-  'ヒャ':'hya','ヒュ':'hyu','ヒョ':'hyo','ビャ':'bya','ビュ':'byu','ビョ':'byo','ピャ':'pya','ピュ':'pyu','ピョ':'pyo',
+  'ヒャ':'hya','ヒュ':'hyu','ヒョ':'hyo','ビャ':'bya','ビュ':'byo','ビョ':'byo','ピャ':'pya','ピュ':'pyu','ピョ':'pyo',
   'ミャ':'mya','ミュ':'myu','ミョ':'myo','リャ':'rya','リュ':'ryu','リョ':'ryo',
 };
 const VOWELS = ['a', 'i', 'u', 'e', 'o'];
@@ -168,6 +171,33 @@ const KANJI_EXAMPLES: KanjiItem[] = [
 ========================= */
 export default function EscrituraScreen() {
   const { tip, show, hide } = useTooltip();
+
+  /* ▼▼▼ XP al entrar (primera visita + repetición) ▼▼▼ */
+  useAwardOnEnter('N5_Escritura', {
+    xpOnEnter: 10,
+    repeatXp: 5,
+    achievementId: 'intro_primera_visita',
+    achievementSub: 'N5',
+    meta: { label: 'Escritura N5' },
+  });
+
+  // Modal final de logro
+  const [showCongrats, setShowCongrats] = useState(false);
+  const [finalScore, setFinalScore] = useState<{ ok: number; total: number }>({ ok: 0, total: 0 });
+
+  const handleQuizComplete = useCallback(async (ok: number, total: number) => {
+    setFinalScore({ ok, total });
+    setShowCongrats(true);
+    try {
+      // +20 XP + logro "senseidevista" (idempotente)
+      await awardOnSuccess('N5_Escritura', {
+        xpOnSuccess: 20,
+        achievementId: 'senseidevista',
+        achievementSub: 'N5',
+        meta: { score: ok, total },
+      });
+    } catch {}
+  }, []);
 
   // 🔊 Hablar una sílaba (kana) con voz japonesa
   const speakKana = (kana: string) => {
@@ -338,7 +368,7 @@ export default function EscrituraScreen() {
         {/* QUIZ */}
         <Card>
           <CardBanner />
-          <IdentifyQuiz questions={questions} />
+          <IdentifyQuiz questions={questions} onComplete={handleQuizComplete} />
         </Card>
 
       </ScrollView>
@@ -349,6 +379,19 @@ export default function EscrituraScreen() {
           <View style={[s.tooltip, { top: Math.max(tip.y - 120, 90), left: 16, right: 16 }]}>
             <Text style={s.tooltipTitle}>{tip.title}</Text>
             <Text style={s.tooltipText}>{tip.text}</Text>
+          </View>
+        </Pressable>
+      )}
+
+      {/* MODAL DE LOGRO FINAL */}
+      {showCongrats && (
+        <Pressable style={s.congratsOverlay} onPress={() => setShowCongrats(false)}>
+          <View style={s.congratsCard}>
+            <Text style={s.congratsTitle}>🎉 ¡Logro desbloqueado!</Text>
+            <Text style={s.congratsName}>senseidevista</Text>
+            <Text style={s.congratsXP}>+20 XP</Text>
+            <Text style={s.congratsScore}>Puntuación: {finalScore.ok}/{finalScore.total}</Text>
+            <Text style={s.congratsHint}>Toca para cerrar</Text>
           </View>
         </Pressable>
       )}
@@ -444,15 +487,36 @@ function YoonGridSimple({
 type ScriptKind = 'Hiragana' | 'Katakana' | 'Kanji';
 function IdentifyQuiz({
   questions,
+  onComplete,
 }: {
   questions: { c: string; correct: ScriptKind; why: string }[];
+  onComplete?: (ok: number, total: number) => void;
 }) {
   const [answers, setAnswers] = React.useState<number[]>(Array(questions.length).fill(-1));
+  const [finished, setFinished] = React.useState(false);
 
   const press = (qIdx: number, optIndex: number) => {
     const okIndex = (['Hiragana', 'Katakana', 'Kanji'] as ScriptKind[]).indexOf(questions[qIdx].correct);
-    setAnswers(prev => { const next = [...prev]; next[qIdx] = optIndex; return next; });
+    setAnswers(prev => {
+      if (prev[qIdx] !== -1) return prev; // no permitir cambiar respuesta
+      const next = [...prev];
+      next[qIdx] = optIndex;
+      return next;
+    });
   };
+
+  const correct = answers.reduce((acc, cur, i) => {
+    const okIndex = (['Hiragana', 'Katakana', 'Kanji'] as ScriptKind[]).indexOf(questions[i].correct);
+    return acc + (cur === okIndex ? 1 : 0);
+  }, 0);
+
+  // Dispara onComplete UNA sola vez cuando todas estén respondidas
+  useEffect(() => {
+    if (!finished && answers.every(a => a !== -1)) {
+      setFinished(true);
+      onComplete?.(correct, questions.length);
+    }
+  }, [answers, finished, correct, questions.length, onComplete]);
 
   return (
     <View>
@@ -619,4 +683,27 @@ const s = StyleSheet.create({
   },
   tooltipTitle: { color: '#fff', fontWeight: '800', marginBottom: 4, fontSize: 14 },
   tooltipText: { color: '#fff', fontSize: 13, lineHeight: 19 },
+
+  // Modal de logro final (estilo neutro, no interfiere)
+  congratsOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2000,
+  },
+  congratsCard: {
+    width: 300,
+    padding: 18,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#A7F3D0', // verde suave para esta pantalla
+    alignItems: 'center',
+  },
+  congratsTitle: { fontWeight: '900', color: '#1f2937', fontSize: 16, marginBottom: 6 },
+  congratsName: { fontWeight: '900', color: '#065f46', fontSize: 18 },
+  congratsXP: { fontWeight: '900', color: '#059669', marginTop: 2 },
+  congratsScore: { color: '#374151', marginTop: 4 },
+  congratsHint: { color: '#6b7280', fontSize: 12, marginTop: 10 },
 });

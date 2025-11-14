@@ -1,6 +1,7 @@
+// src/screens/EntradaActividadesN5Screen.tsx
 import { Audio } from 'expo-av';
 import { Image as ExpoImage } from 'expo-image';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -12,16 +13,14 @@ import {
   Text,
   View,
 } from 'react-native';
-import { awardAchievement } from '../services/achievements';
-
-// Firestore (idempotencia)
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebaseConfig';
 
 // 👇 Navegación
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types';
+
+// Premios / XP
+import { awardAchievement } from '../services/achievements';
 
 // ASSETS
 const BG = require('../../assets/images/fondonegro.webp');
@@ -48,7 +47,6 @@ export default function EntradaActividadesN5Screen() {
           staysActiveInBackground: false,
           shouldDuckAndroid: true,
         });
-
         sound = new Audio.Sound();
         await sound.loadAsync(SOUND);
         await sound.playAsync();
@@ -94,16 +92,10 @@ export default function EntradaActividadesN5Screen() {
         }, 2400);
       });
 
-      // 🏆 Otorgar logro UNA sola vez (+10 XP la primera)
+      // 🏆 Otorgar logro UNA sola vez (+10 XP la primera) y sumar puntos al perfil
       try {
-        const u = auth.currentUser;
-        if (u) {
-          const ref = doc(db, 'Usuarios', u.uid, 'logros', 'forja_destino');
-          const snap = await getDoc(ref);
-          if (!snap.exists()) {
-            await awardAchievement('forja_destino', { sub: 'N5', xp: 10 });
-          }
-        }
+        // awardAchievement maneja: idempotencia, suma de puntos, weeklyProgress y evento
+        await awardAchievement('forja_destino', { sub: 'N5', xp: 10 });
       } catch (e) {
         console.warn('No se pudo otorgar el logro:', e);
       }

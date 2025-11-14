@@ -1,7 +1,9 @@
 // src/screens/N5/EjemplosGrupoA.tsx
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   FlatList,
   Pressable,
   StyleSheet,
@@ -10,6 +12,13 @@ import {
   View,
 } from "react-native";
 import { useFeedbackSounds } from "../../hooks/useFeedbackSounds";
+
+// 🎯 XP / Logros
+import {
+  AchievementPayload,
+  awardAchievement, // idempotente
+  getAchievement,
+} from "../../services/achievements";
 
 type Kana = "a" | "i" | "u" | "e" | "o";
 type ExampleItem = {
@@ -56,6 +65,36 @@ const RED   = "#B32133";
 const INK   = "#111827";
 const PAPER = "#faf7f0";
 
+/* ====== Toast de logro ====== */
+function AchievementToast({ visible, subtitle }: { visible: boolean; subtitle: string }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (visible) {
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 240, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        Animated.delay(2200),
+        Animated.timing(opacity, { toValue: 0, duration: 280, easing: Easing.in(Easing.ease), useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible, opacity]);
+  if (!visible) return null;
+  return (
+    <Animated.View style={{
+      position: "absolute", top: 18, left: 16, right: 16,
+      padding: 12, borderRadius: 12, backgroundColor: "#111827",
+      borderWidth: 1, borderColor: "#374151", opacity,
+    }}>
+      <Text style={{ color: "#fff", fontWeight: "800", textAlign: "center" }}>🏅 ¡Logro desbloqueado!</Text>
+      <Text style={{ color: "#e5e7eb", textAlign: "center", marginTop: 2 }}>{subtitle}</Text>
+    </Animated.View>
+  );
+}
+
+/* ====== IDs y XP ====== */
+const ACH_ID = "n5_primeras_palabras";
+const ACH_TITLE = "PrimerasPalabras";
+const SUCCESS_XP = 20;
+
 export default function EjemplosGrupoA() {
   const { playCorrect, playWrong, ready: sndReady } = useFeedbackSounds();
 
@@ -66,8 +105,26 @@ export default function EjemplosGrupoA() {
   const [selected, setSelected] = useState<string | null>(null);
   const [isFinished, setIsFinished] = useState(false);
 
+  // 🏆 Estado de logro
+  const [alreadyAwarded, setAlreadyAwarded] = useState<boolean | null>(null);
+  const [showToast, setShowToast] = useState(false);
+
   // 🔒 bloqueo de tap para evitar dobles (especialmente en primer toque)
   const tapLockRef = useRef(false);
+
+  // Carga estado remoto del logro
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const a = await getAchievement(ACH_ID);
+        if (mounted) setAlreadyAwarded(!!a);
+      } catch {
+        if (mounted) setAlreadyAwarded(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const pool = useMemo(
     () => (filter === "all" ? ALL_EXAMPLES : ALL_EXAMPLES.filter(x => x.kana === filter)),
@@ -153,6 +210,40 @@ export default function EjemplosGrupoA() {
     );
   };
 
+  // 🏆 Entrega de logro al terminar (idempotente)
+  useEffect(() => {
+    (async () => {
+      if (!isFinished) return;
+      if (alreadyAwarded) return; // no acumular
+      try {
+        const exists = await getAchievement(ACH_ID);
+        if (exists) return;
+
+        const payload: AchievementPayload = {
+          title: ACH_TITLE,                 // "PrimerasPalabras"
+          description: "Completaste el quiz de ejemplos del Grupo A.",
+          icon: "primeras_palabras",
+          badgeColor: "#F1C27B",
+          points: SUCCESS_XP,
+          xp: SUCCESS_XP,
+          score,
+          total: order.length,
+          type: "quiz",
+          quizKey: "EjemplosGrupoA",
+          sub: "grupo_a",
+          version: 1,
+          createdAt: Date.now(),
+        };
+        await awardAchievement(ACH_ID, payload);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2800);
+        setAlreadyAwarded(true);
+      } catch {
+        // silencioso: si falla, no bloquea el flujo del juego
+      }
+    })();
+  }, [isFinished, score, order.length, alreadyAwarded]);
+
   if (!current) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
@@ -201,6 +292,11 @@ export default function EjemplosGrupoA() {
           <Pressable onPressIn={restart} style={[styles.primaryBtn, { marginTop: 14 }]}>
             <Text style={styles.primaryBtnText}>Reintentar</Text>
           </Pressable>
+          {alreadyAwarded ? (
+            <Text style={{ textAlign: "center", marginTop: 8, color: "#065f46" }}>
+              Logro “{ACH_TITLE}” ya obtenido (+{SUCCESS_XP} XP)
+            </Text>
+          ) : null}
         </View>
       ) : (
         <View style={styles.card}>
@@ -253,6 +349,8 @@ export default function EjemplosGrupoA() {
           </Pressable>
         </View>
       )}
+
+      <AchievementToast visible={showToast} subtitle={`${ACH_TITLE} (+${SUCCESS_XP} XP)`} />
     </View>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Dimensions,
   Easing,
@@ -75,20 +76,36 @@ function useShineSweep(seed = 0) {
   return sweep;
 }
 
-function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, style }: NichiBtnProps) {
+function NichiBtn({
+  title,
+  desc,
+  onPress,
+  palette,
+  centerText,
+  rightAdornment,
+  style,
+}: NichiBtnProps) {
   const press = useRef(new Animated.Value(0)).current;
   const breathe = useRef(new Animated.Value(0)).current;
   const tiltX = useRef(new Animated.Value(0)).current;
   const tiltY = useRef(new Animated.Value(0)).current;
 
   const [box, setBox] = useState({ w: 0, h: 0 });
-  const [ripples, setRipples] = useState<{ key: number; x: number; y: number; a: Animated.Value; scale: number }[]>([]);
+  const [ripples, setRipples] = useState<
+    { key: number; x: number; y: number; a: Animated.Value; scale: number }[]
+  >([]);
   const rippleKey = useRef(0);
   const seed = useMemo(() => hashStr(title), [title]);
 
   const scale = press.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] });
-  const rotateX = tiltX.interpolate({ inputRange: [-1, 1], outputRange: ["6deg", "-6deg"] });
-  const rotateY = tiltY.interpolate({ inputRange: [-1, 1], outputRange: ["-6deg", "6deg"] });
+  const rotateX = tiltX.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ["6deg", "-6deg"],
+  });
+  const rotateY = tiltY.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ["-6deg", "6deg"],
+  });
   const liftY = breathe.interpolate({ inputRange: [0, 1], outputRange: [0, -2.2] });
   const accentOpacity = breathe.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
 
@@ -96,8 +113,18 @@ function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, s
     const d = 2200 + Math.round(seed * 900);
     Animated.loop(
       Animated.sequence([
-        Animated.timing(breathe, { toValue: 1, duration: d, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(breathe, { toValue: 0, duration: d, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(breathe, {
+          toValue: 1,
+          duration: d,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(breathe, {
+          toValue: 0,
+          duration: d,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
       ])
     ).start();
   }, [breathe, seed]);
@@ -118,7 +145,12 @@ function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, s
     const key = rippleKey.current++;
     const a = new Animated.Value(0);
     setRipples((rs) => [...rs, { key, x: x - base / 2, y: y - base / 2, a, scale }]);
-    Animated.timing(a, { toValue: 1, duration: 560, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(() => {
+    Animated.timing(a, {
+      toValue: 1,
+      duration: 560,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start(() => {
       setRipples((rs) => rs.filter((r) => r.key !== key));
     });
   };
@@ -128,17 +160,47 @@ function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, s
     spawnRipple(locationX, locationY);
     Vibration.vibrate(8);
     Animated.parallel([
-      Animated.spring(press, { toValue: 1, useNativeDriver: true, stiffness: 240, damping: 20, mass: 0.9 }),
-      Animated.timing(tiltX, { toValue: (locationY / Math.max(box.h, 1)) * 2 - 1, duration: 140, useNativeDriver: true }),
-      Animated.timing(tiltY, { toValue: (locationX / Math.max(box.w, 1)) * 2 - 1, duration: 140, useNativeDriver: true }),
+      Animated.spring(press, {
+        toValue: 1,
+        useNativeDriver: true,
+        stiffness: 240,
+        damping: 20,
+        mass: 0.9,
+      }),
+      Animated.timing(tiltX, {
+        toValue: (locationY / Math.max(box.h, 1)) * 2 - 1,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+      Animated.timing(tiltY, {
+        toValue: (locationX / Math.max(box.w, 1)) * 2 - 1,
+        duration: 140,
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
   const pressOut = () => {
     Animated.parallel([
-      Animated.spring(press, { toValue: 0, useNativeDriver: true, stiffness: 220, damping: 18, mass: 0.9 }),
-      Animated.timing(tiltX, { toValue: 0, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.timing(tiltY, { toValue: 0, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.spring(press, {
+        toValue: 0,
+        useNativeDriver: true,
+        stiffness: 220,
+        damping: 18,
+        mass: 0.9,
+      }),
+      Animated.timing(tiltX, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(tiltY, {
+        toValue: 0,
+        duration: 180,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
     ]).start();
   };
 
@@ -149,16 +211,28 @@ function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, s
     <Animated.View
       style={[
         styles.btnBase,
-        { backgroundColor: palette.bg, borderColor: palette.border, transform: [{ translateY: liftY }] },
+        {
+          backgroundColor: palette.bg,
+          borderColor: palette.border,
+          transform: [{ translateY: liftY }],
+        },
         style,
       ]}
       onLayout={onLayout}
     >
-      <Animated.View pointerEvents="none" style={[styles.decor, { opacity: blobOp, transform: [{ rotate: blobRot }] }]} />
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.decor, { opacity: blobOp, transform: [{ rotate: blobRot }] }]}
+      />
 
       <Animated.View
         style={{
-          transform: [{ perspective: 800 }, { rotateX }, { rotateY }, { scale }],
+          transform: [
+            { perspective: 800 },
+            { rotateX },
+            { rotateY },
+            { scale },
+          ],
           shadowColor: "#000",
           shadowOpacity: 0.22,
           shadowRadius: 10,
@@ -174,12 +248,24 @@ function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, s
         >
           <Animated.View
             pointerEvents="none"
-            style={[styles.shine, { backgroundColor: palette.shine, transform: [{ translateX: sweep }, { rotateZ: "-12deg" }] }]}
+            style={[
+              styles.shine,
+              {
+                backgroundColor: palette.shine,
+                transform: [{ translateX: sweep }, { rotateZ: "-12deg" }],
+              },
+            ]}
           />
 
           <Animated.View
             pointerEvents="none"
-            style={[styles.accentBar, { backgroundColor: (palette.accent ?? palette.text) + "22", opacity: accentOpacity }]}
+            style={[
+              styles.accentBar,
+              {
+                backgroundColor: (palette.accent ?? palette.text) + "22",
+                opacity: accentOpacity,
+              },
+            ]}
           />
 
           <View style={[styles.btnContent, centerText && { alignItems: "center" }]}>
@@ -188,7 +274,13 @@ function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, s
                 {title}
               </Text>
               {!!desc && (
-                <Text style={[styles.btnDesc, { color: palette.subText ?? palette.text }]} numberOfLines={2}>
+                <Text
+                  style={[
+                    styles.btnDesc,
+                    { color: palette.subText ?? palette.text },
+                  ]}
+                  numberOfLines={2}
+                >
                   {desc}
                 </Text>
               )}
@@ -205,8 +297,18 @@ function NichiBtn({ title, desc, onPress, palette, centerText, rightAdornment, s
                 {
                   left: r.x,
                   top: r.y,
-                  transform: [{ scale: r.a.interpolate({ inputRange: [0, 1], outputRange: [0.01, r.scale] }) }],
-                  opacity: r.a.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] }),
+                  transform: [
+                    {
+                      scale: r.a.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.01, r.scale],
+                      }),
+                    },
+                  ],
+                  opacity: r.a.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.35, 0],
+                  }),
                 },
               ]}
             />
@@ -285,8 +387,18 @@ function DayNightFujiBackground({ cycleMs = 24000 }: { cycleMs?: number }) {
   useEffect(() => {
     const loop = () => {
       Animated.sequence([
-        Animated.timing(t, { toValue: 1, duration: cycleMs / 2, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(t, { toValue: 0, duration: cycleMs / 2, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(t, {
+          toValue: 1,
+          duration: cycleMs / 2,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(t, {
+          toValue: 0,
+          duration: cycleMs / 2,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
       ]).start(() => loop());
     };
     loop();
@@ -302,43 +414,155 @@ function DayNightFujiBackground({ cycleMs = 24000 }: { cycleMs?: number }) {
       {/* NOCHE */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: nightOp }]}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0C1A2A" }]} />
-        <GlowDisc x={W * 0.30} y={H * 0.22} r={W * 0.75} color="#E11D48" op={0.18} />
-        <GlowDisc x={W * 0.70} y={H * 0.16} r={W * 0.55} color="#F59E0B" op={0.10} />
+        <GlowDisc
+          x={W * 0.3}
+          y={H * 0.22}
+          r={W * 0.75}
+          color="#E11D48"
+          op={0.18}
+        />
+        <GlowDisc
+          x={W * 0.7}
+          y={H * 0.16}
+          r={W * 0.55}
+          color="#F59E0B"
+          op={0.1}
+        />
         <PaperGrain />
         <StarField count={70} />
         <MoonArc p={Animated.subtract(1, t)} />
         <Fuji y={H * 0.38} palette="night" />
         <Torii x={W * 0.72} y={H * 0.46} />
         <FireworksOverlay />
-        <Seigaiha y={SEA_Y} rowH={42} color="#0A334F" stroke="#E6EEF7" speed={18000} amp={6} />
-        <Seigaiha y={SEA_Y + 0.07 * H} rowH={46} color="#082C44" stroke="#E6EEF7" speed={14000} amp={8} />
-        <Seigaiha y={SEA_Y + 0.14 * H} rowH={50} color="#062437" stroke="#E6EEF7" speed={11000} amp={10} />
+        <Seigaiha
+          y={SEA_Y}
+          rowH={42}
+          color="#0A334F"
+          stroke="#E6EEF7"
+          speed={18000}
+          amp={6}
+        />
+        <Seigaiha
+          y={SEA_Y + 0.07 * H}
+          rowH={46}
+          color="#082C44"
+          stroke="#E6EEF7"
+          speed={14000}
+          amp={8}
+        />
+        <Seigaiha
+          y={SEA_Y + 0.14 * H}
+          rowH={50}
+          color="#062437"
+          stroke="#E6EEF7"
+          speed={11000}
+          amp={10}
+        />
       </Animated.View>
 
       {/* DÍA */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: dayOp }]}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: "#BFE3FF" }]} />
-        <GlowDisc x={W * 0.65} y={H * 0.20} r={W * 0.70} color="#FCD34D" op={0.25} />
-        <GlowDisc x={W * 0.25} y={H * 0.10} r={W * 0.55} color="#93C5FD" op={0.18} />
+        <GlowDisc
+          x={W * 0.65}
+          y={H * 0.2}
+          r={W * 0.7}
+          color="#FCD34D"
+          op={0.25}
+        />
+        <GlowDisc
+          x={W * 0.25}
+          y={H * 0.1}
+          r={W * 0.55}
+          color="#93C5FD"
+          op={0.18}
+        />
         <PaperGrain light />
         <SunArc p={t} />
         <Fuji y={H * 0.38} palette="day" />
         <Torii x={W * 0.72} y={H * 0.46} />
-        <Cloud xStart={W * 1.1} y={H * 0.14} size={44} speed={15000} delay={0} opacity={0.95} />
-        <Cloud xStart={W} y={H * 0.20} size={40} speed={17000} delay={900} opacity={0.90} />
-        <Cloud xStart={W * 0.9} y={H * 0.26} size={36} speed={16000} delay={1600} opacity={0.85} />
+        <Cloud
+          xStart={W * 1.1}
+          y={H * 0.14}
+          size={44}
+          speed={15000}
+          delay={0}
+          opacity={0.95}
+        />
+        <Cloud
+          xStart={W}
+          y={H * 0.2}
+          size={40}
+          speed={17000}
+          delay={900}
+          opacity={0.9}
+        />
+        <Cloud
+          xStart={W * 0.9}
+          y={H * 0.26}
+          size={36}
+          speed={16000}
+          delay={1600}
+          opacity={0.85}
+        />
         <TsuruFlight />
-        <Seigaiha y={SEA_Y} rowH={42} color="#4AA3D3" stroke="#E8F5FE" speed={18000} amp={6} />
-        <Seigaiha y={SEA_Y + 0.07 * H} rowH={46} color="#338CBD" stroke="#E8F5FE" speed={14000} amp={8} />
-        <Seigaiha y={SEA_Y + 0.14 * H} rowH={50} color="#237AA9" stroke="#E8F5FE" speed={11000} amp={10} />
+        <Seigaiha
+          y={SEA_Y}
+          rowH={42}
+          color="#4AA3D3"
+          stroke="#E8F5FE"
+          speed={18000}
+          amp={6}
+        />
+        <Seigaiha
+          y={SEA_Y + 0.07 * H}
+          rowH={46}
+          color="#338CBD"
+          stroke="#E8F5FE"
+          speed={14000}
+          amp={8}
+        />
+        <Seigaiha
+          y={SEA_Y + 0.14 * H}
+          rowH={50}
+          color="#237AA9"
+          stroke="#E8F5FE"
+          speed={11000}
+          amp={10}
+        />
       </Animated.View>
     </View>
   );
 }
 
 /* ----- Elementos del fondo ----- */
-function GlowDisc({ x, y, r, color, op = 0.18 }: { x: number; y: number; r: number; color: string; op?: number }) {
-  return <View style={{ position: "absolute", left: x - r, top: y - r, width: r * 2, height: r * 2, borderRadius: r * 2, backgroundColor: color, opacity: op }} />;
+function GlowDisc({
+  x,
+  y,
+  r,
+  color,
+  op = 0.18,
+}: {
+  x: number;
+  y: number;
+  r: number;
+  color: string;
+  op?: number;
+}) {
+  return (
+    <View
+      style={{
+        position: "absolute",
+        left: x - r,
+        top: y - r,
+        width: r * 2,
+        height: r * 2,
+        borderRadius: r * 2,
+        backgroundColor: color,
+        opacity: op,
+      }}
+    />
+  );
 }
 
 function PaperGrain({ light = false }: { light?: boolean }) {
@@ -415,21 +639,79 @@ function Torii({ x, y }: { x: number; y: number }) {
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(t, { toValue: 1, duration: 2200, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(t, { toValue: 0, duration: 2200, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(t, {
+          toValue: 1,
+          duration: 2200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(t, {
+          toValue: 0,
+          duration: 2200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
       ])
     );
     loop.start();
     return () => loop.stop();
   }, [t]);
-  const ty = t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [-2, 2, -2] });
+  const ty = t.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [-2, 2, -2],
+  });
   return (
-    <Animated.View style={{ position: "absolute", left: x, top: y, transform: [{ translateY: ty }] }}>
-      <View style={{ width: 86, height: 8, backgroundColor: "#C81E1E", borderRadius: 2 }} />
-      <View style={{ width: 72, height: 6, backgroundColor: "#991B1B", marginTop: 2, alignSelf: "center", borderRadius: 2 }} />
-      <View style={{ flexDirection: "row", justifyContent: "space-between", width: 68, marginTop: 4, alignSelf: "center" }}>
-        <View style={{ width: 8, height: 36, backgroundColor: "#7F1D1D", borderRadius: 2 }} />
-        <View style={{ width: 8, height: 36, backgroundColor: "#7F1D1D", borderRadius: 2 }} />
+    <Animated.View
+      style={{
+        position: "absolute",
+        left: x,
+        top: y,
+        transform: [{ translateY: ty }],
+      }}
+    >
+      <View
+        style={{
+          width: 86,
+          height: 8,
+          backgroundColor: "#C81E1E",
+          borderRadius: 2,
+        }}
+      />
+      <View
+        style={{
+          width: 72,
+          height: 6,
+          backgroundColor: "#991B1B",
+          marginTop: 2,
+          alignSelf: "center",
+          borderRadius: 2,
+        }}
+      />
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          width: 68,
+          marginTop: 4,
+          alignSelf: "center",
+        }}
+      >
+        <View
+          style={{
+            width: 8,
+            height: 36,
+            backgroundColor: "#7F1D1D",
+            borderRadius: 2,
+          }}
+        />
+        <View
+          style={{
+            width: 8,
+            height: 36,
+            backgroundColor: "#7F1D1D",
+            borderRadius: 2,
+          }}
+        />
       </View>
     </Animated.View>
   );
@@ -456,7 +738,12 @@ function Cloud({
     const fly = () => {
       if (!alive) return;
       t.setValue(0);
-      Animated.timing(t, { toValue: 1, duration: speed, easing: Easing.linear, useNativeDriver: true }).start(() => {
+      Animated.timing(t, {
+        toValue: 1,
+        duration: speed,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start(() => {
         setTimeout(fly, 300);
       });
     };
@@ -467,9 +754,19 @@ function Cloud({
       t.stopAnimation();
     };
   }, [delay, speed, t]);
-  const tx = t.interpolate({ inputRange: [0, 1], outputRange: [xStart, -120] });
+  const tx = t.interpolate({
+    inputRange: [0, 1],
+    outputRange: [xStart, -120],
+  });
   return (
-    <Animated.View style={{ position: "absolute", top: y, transform: [{ translateX: tx }], opacity }}>
+    <Animated.View
+      style={{
+        position: "absolute",
+        top: y,
+        transform: [{ translateX: tx }],
+        opacity,
+      }}
+    >
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <Pill w={size * 1.2} h={size * 0.55} />
         <Pill w={size * 0.8} h={size * 0.45} />
@@ -479,12 +776,29 @@ function Cloud({
   );
 }
 function Pill({ w, h }: { w: number; h: number }) {
-  return <View style={{ width: w, height: h, borderRadius: h, backgroundColor: "#E6EEF7", marginRight: 6, opacity: 0.95 }} />;
+  return (
+    <View
+      style={{
+        width: w,
+        height: h,
+        borderRadius: h,
+        backgroundColor: "#E6EEF7",
+        marginRight: 6,
+        opacity: 0.95,
+      }}
+    />
+  );
 }
 
 function StarField({ count = 50 }: { count?: number }) {
   const stars = useMemo(
-    () => Array.from({ length: count }).map((_, i) => ({ id: i, x: Math.random() * W, y: Math.random() * H * 0.45, s: 1 + Math.random() * 2.2 })),
+    () =>
+      Array.from({ length: count }).map((_, i) => ({
+        id: i,
+        x: Math.random() * W,
+        y: Math.random() * H * 0.45,
+        s: 1 + Math.random() * 2.2,
+      })),
     [count]
   );
   return (
@@ -501,63 +815,195 @@ function Twinkle({ x, y, size }: { x: number; y: number; size: number }) {
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(t, { toValue: 1, duration: 1200 + Math.random() * 900, useNativeDriver: true }),
-        Animated.timing(t, { toValue: 0.2, duration: 1000 + Math.random() * 900, useNativeDriver: true }),
+        Animated.timing(t, {
+          toValue: 1,
+          duration: 1200 + Math.random() * 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(t, {
+          toValue: 0.2,
+          duration: 1000 + Math.random() * 900,
+          useNativeDriver: true,
+        }),
       ])
     );
     loop.start();
     return () => loop.stop();
   }, [t]);
-  return <Animated.View style={{ position: "absolute", left: x, top: y, width: size, height: size, borderRadius: size, backgroundColor: "#F8FAFC", opacity: t }} />;
+  return (
+    <Animated.View
+      style={{
+        position: "absolute",
+        left: x,
+        top: y,
+        width: size,
+        height: size,
+        borderRadius: size,
+        backgroundColor: "#F8FAFC",
+        opacity: t,
+      }}
+    />
+  );
 }
 
 function SunArc({ p }: { p: any }) {
-  const tx = p.interpolate({ inputRange: [0, 1], outputRange: [W * 0.1, W * 0.8] });
-  const ty = p.interpolate({ inputRange: [0, 0.5, 1], outputRange: [H * 0.26, H * 0.14, H * 0.26] });
+  const tx = p.interpolate({
+    inputRange: [0, 1],
+    outputRange: [W * 0.1, W * 0.8],
+  });
+  const ty = p.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [H * 0.26, H * 0.14, H * 0.26],
+  });
   return (
-    <Animated.View style={{ position: "absolute", transform: [{ translateX: tx }, { translateY: ty }] }}>
-      <View style={{ width: 84, height: 84, borderRadius: 84, backgroundColor: "#FCD34D", shadowColor: "#F59E0B", shadowOpacity: 0.6, shadowRadius: 16 }} />
+    <Animated.View
+      style={{
+        position: "absolute",
+        transform: [{ translateX: tx }, { translateY: ty }],
+      }}
+    >
+      <View
+        style={{
+          width: 84,
+          height: 84,
+          borderRadius: 84,
+          backgroundColor: "#FCD34D",
+          shadowColor: "#F59E0B",
+          shadowOpacity: 0.6,
+          shadowRadius: 16,
+        }}
+      />
     </Animated.View>
   );
 }
 function MoonArc({ p }: { p: any }) {
-  const tx = p.interpolate({ inputRange: [0, 1], outputRange: [W * 0.85, W * 0.15] });
-  const ty = p.interpolate({ inputRange: [0, 0.5, 1], outputRange: [H * 0.22, H * 0.12, H * 0.22] });
+  const tx = p.interpolate({
+    inputRange: [0, 1],
+    outputRange: [W * 0.85, W * 0.15],
+  });
+  const ty = p.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [H * 0.22, H * 0.12, H * 0.22],
+  });
   return (
-    <Animated.View style={{ position: "absolute", transform: [{ translateX: tx }, { translateY: ty }] }}>
-      <View style={{ width: 64, height: 64, borderRadius: 64, backgroundColor: "#E5E7EB" }} />
-      <View style={{ position: "absolute", left: 18, top: 0, width: 64, height: 64, borderRadius: 64, backgroundColor: "#0C1A2A" }} />
+    <Animated.View
+      style={{
+        position: "absolute",
+        transform: [{ translateX: tx }, { translateY: ty }],
+      }}
+    >
+      <View
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 64,
+          backgroundColor: "#E5E7EB",
+        }}
+      />
+      <View
+        style={{
+          position: "absolute",
+          left: 18,
+          top: 0,
+          width: 64,
+          height: 64,
+          borderRadius: 64,
+          backgroundColor: "#0C1A2A",
+        }}
+      />
     </Animated.View>
   );
 }
 
-function Seigaiha({ y, rowH, color, stroke, speed = 16000, amp = 8 }: { y: number; rowH: number; color: string; stroke: string; speed?: number; amp?: number }) {
+function Seigaiha({
+  y,
+  rowH,
+  color,
+  stroke,
+  speed = 16000,
+  amp = 8,
+}: {
+  y: number;
+  rowH: number;
+  color: string;
+  stroke: string;
+  speed?: number;
+  amp?: number;
+}) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = () => {
       t.setValue(0);
-      Animated.timing(t, { toValue: 1, duration: speed, easing: Easing.linear, useNativeDriver: true }).start(loop);
+      Animated.timing(t, {
+        toValue: 1,
+        duration: speed,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start(loop);
     };
     loop();
     return () => t.stopAnimation();
   }, [speed, t]);
-  const offset = t.interpolate({ inputRange: [0, 1], outputRange: [0, -W] });
-  const bob = t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [-amp, amp, -amp] });
+  const offset = t.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -W],
+  });
+  const bob = t.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [-amp, amp, -amp],
+  });
   const rows = 3;
   const r = rowH;
   const step = r;
   return (
-    <Animated.View style={{ position: "absolute", left: 0, right: 0, top: y, transform: [{ translateY: bob }] }}>
+    <Animated.View
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: y,
+        transform: [{ translateY: bob }],
+      }}
+    >
       <View style={{ backgroundColor: color, height: rowH * rows + 22 }} />
-      <Animated.View style={{ position: "absolute", left: 0, top: 0, width: W * 2, height: rowH * rows + 22, transform: [{ translateX: offset }] }}>
+      <Animated.View
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: W * 2,
+          height: rowH * rows + 22,
+          transform: [{ translateX: offset }],
+        }}
+      >
         {[0, 1].map((k) => (
-          <View key={k} style={{ position: "absolute", left: k * W, width: W, height: rowH * rows + 22 }}>
+          <View
+            key={k}
+            style={{
+              position: "absolute",
+              left: k * W,
+              width: W,
+              height: rowH * rows + 22,
+            }}
+          >
             {Array.from({ length: rows }).map((_, ry) => {
               const top = ry * rowH + 6;
               const yOffset = ry % 2 === 0 ? 0 : step / 2;
               return (
-                <View key={ry} style={{ position: "absolute", top, left: -step, right: 0, height: rowH, overflow: "hidden" }}>
-                  {Array.from({ length: Math.ceil(W / step) + 3 }).map((__, cx) => {
+                <View
+                  key={ry}
+                  style={{
+                    position: "absolute",
+                    top,
+                    left: -step,
+                    right: 0,
+                    height: rowH,
+                    overflow: "hidden",
+                  }}
+                >
+                  {Array.from({
+                    length: Math.ceil(W / step) + 3,
+                  }).map((__, cx) => {
                     const left = cx * step + yOffset;
                     return (
                       <View
@@ -594,7 +1040,10 @@ function FireworksOverlay() {
         id: i,
         x: W * (0.15 + Math.random() * 0.7),
         y: H * (0.12 + Math.random() * 0.2),
-        colors: i % 2 ? ["#F472B6", "#FCD34D", "#60A5FA"] : ["#F87171", "#34D399", "#A78BFA"],
+        colors:
+          i % 2
+            ? ["#F472B6", "#FCD34D", "#60A5FA"]
+            : ["#F87171", "#34D399", "#A78BFA"],
         delay: 600 * i,
       })),
     []
@@ -602,7 +1051,13 @@ function FireworksOverlay() {
   return (
     <View style={StyleSheet.absoluteFill}>
       {bursts.map((b) => (
-        <FireworkBurst key={b.id} x={b.x} y={b.y} colors={b.colors} delay={b.delay} />
+        <FireworkBurst
+          key={b.id}
+          x={b.x}
+          y={b.y}
+          colors={b.colors}
+          delay={b.delay}
+        />
       ))}
     </View>
   );
@@ -629,7 +1084,12 @@ function FireworkBurst({
     const loop = () => {
       if (!alive) return;
       p.setValue(0);
-      Animated.timing(p, { toValue: 1, duration, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(() => {
+      Animated.timing(p, {
+        toValue: 1,
+        duration,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start(() => {
         setTimeout(loop, 600 + Math.random() * 800);
       });
     };
@@ -659,18 +1119,43 @@ function FireworkBurst({
     []
   );
 
-  const coreScale = p.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0.2, 1, 0.5] });
-  const coreOp = p.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 1, 0] });
+  const coreScale = p.interpolate({
+    inputRange: [0, 0.2, 1],
+    outputRange: [0.2, 1, 0.5],
+  });
+  const coreOp = p.interpolate({
+    inputRange: [0, 0.6, 1],
+    outputRange: [0, 1, 0],
+  });
 
   return (
     <View style={{ position: "absolute", left: x, top: y }}>
       <Animated.View
-        style={{ position: "absolute", left: -6, top: -6, width: 12, height: 12, borderRadius: 12, backgroundColor: colors[0], transform: [{ scale: coreScale }], opacity: coreOp }}
+        style={{
+          position: "absolute",
+          left: -6,
+          top: -6,
+          width: 12,
+          height: 12,
+          borderRadius: 12,
+          backgroundColor: colors[0],
+          transform: [{ scale: coreScale }],
+          opacity: coreOp,
+        }}
       />
       {dirs.map(([dx, dy], i) => {
-        const px = p.interpolate({ inputRange: [0, 1], outputRange: [0, dx * radius] });
-        const py = p.interpolate({ inputRange: [0, 1], outputRange: [0, dy * radius] });
-        const fade = p.interpolate({ inputRange: [0, 0.7, 1], outputRange: [0.9, 0.9, 0] });
+        const px = p.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, dx * radius],
+        });
+        const py = p.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, dy * radius],
+        });
+        const fade = p.interpolate({
+          inputRange: [0, 0.7, 1],
+          outputRange: [0.9, 0.9, 0],
+        });
         const col = colors[i % colors.length];
         return (
           <Animated.View
@@ -697,18 +1182,66 @@ function FireworkBurst({
 function TsuruFlight() {
   const flock = useMemo(
     () => [
-      { id: 1, dir: "ltr" as const, delay: 200, size: 28, yBase: H * 0.22, arc: H * 0.08, speed: 9000 },
-      { id: 2, dir: "rtl" as const, delay: 1400, size: 32, yBase: H * 0.18, arc: H * 0.06, speed: 10000 },
-      { id: 3, dir: "ltr" as const, delay: 2400, size: 26, yBase: H * 0.26, arc: H * 0.07, speed: 9500 },
-      { id: 4, dir: "rtl" as const, delay: 3200, size: 30, yBase: H * 0.2, arc: H * 0.09, speed: 11000 },
-      { id: 5, dir: "ltr" as const, delay: 4200, size: 24, yBase: H * 0.24, arc: H * 0.07, speed: 10500 },
+      {
+        id: 1,
+        dir: "ltr" as const,
+        delay: 200,
+        size: 28,
+        yBase: H * 0.22,
+        arc: H * 0.08,
+        speed: 9000,
+      },
+      {
+        id: 2,
+        dir: "rtl" as const,
+        delay: 1400,
+        size: 32,
+        yBase: H * 0.18,
+        arc: H * 0.06,
+        speed: 10000,
+      },
+      {
+        id: 3,
+        dir: "ltr" as const,
+        delay: 2400,
+        size: 26,
+        yBase: H * 0.26,
+        arc: H * 0.07,
+        speed: 9500,
+      },
+      {
+        id: 4,
+        dir: "rtl" as const,
+        delay: 3200,
+        size: 30,
+        yBase: H * 0.2,
+        arc: H * 0.09,
+        speed: 11000,
+      },
+      {
+        id: 5,
+        dir: "ltr" as const,
+        delay: 4200,
+        size: 24,
+        yBase: H * 0.24,
+        arc: H * 0.07,
+        speed: 10500,
+      },
     ],
     []
   );
   return (
     <View style={StyleSheet.absoluteFill}>
       {flock.map((c) => (
-        <Tsuru key={c.id} dir={c.dir} delay={c.delay} size={c.size} yBase={c.yBase} arc={c.arc} speed={c.speed} />
+        <Tsuru
+          key={c.id}
+          dir={c.dir}
+          delay={c.delay}
+          size={c.size}
+          yBase={c.yBase}
+          arc={c.arc}
+          speed={c.speed}
+        />
       ))}
     </View>
   );
@@ -735,7 +1268,12 @@ function Tsuru({
     const loop = () => {
       if (!alive) return;
       p.setValue(0);
-      Animated.timing(p, { toValue: 1, duration: speed, easing: Easing.linear, useNativeDriver: true }).start(() => {
+      Animated.timing(p, {
+        toValue: 1,
+        duration: speed,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start(() => {
         setTimeout(loop, 600 + Math.random() * 1600);
       });
     };
@@ -748,11 +1286,33 @@ function Tsuru({
   }, [p, delay, speed]);
   const from = dir === "ltr" ? -80 : W + 80;
   const to = dir === "ltr" ? W + 80 : -80;
-  const tx = p.interpolate({ inputRange: [0, 1], outputRange: [from, to] });
-  const ty = p.interpolate({ inputRange: [0, 0.5, 1], outputRange: [yBase + arc, yBase - arc, yBase + arc] });
-  const tilt = p.interpolate({ inputRange: [0, 0.5, 1], outputRange: dir === "ltr" ? ["-6deg", "-14deg", "8deg"] : ["6deg", "14deg", "-8deg"] });
+  const tx = p.interpolate({
+    inputRange: [0, 1],
+    outputRange: [from, to],
+  });
+  const ty = p.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [yBase + arc, yBase - arc, yBase + arc],
+  });
+  const tilt = p.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange:
+      dir === "ltr"
+        ? ["-6deg", "-14deg", "8deg"]
+        : ["6deg", "14deg", "-8deg"],
+  });
   return (
-    <Animated.View style={{ position: "absolute", transform: [{ translateX: tx }, { translateY: ty }, { rotate: tilt }, { scaleX: dir === "rtl" ? -1 : 1 }] }}>
+    <Animated.View
+      style={{
+        position: "absolute",
+        transform: [
+          { translateX: tx },
+          { translateY: ty },
+          { rotate: tilt },
+          { scaleX: dir === "rtl" ? -1 : 1 },
+        ],
+      }}
+    >
       <Text style={{ fontSize: size }}>🕊️</Text>
     </Animated.View>
   );
@@ -763,19 +1323,31 @@ function Tsuru({
    ========================================================= */
 export default function HiraganaWNMenu() {
   const navigation = useNavigation<Nav>();
+
+  const handlePremiumLockedPress = () => {
+    Alert.alert(
+      "Contenido Premium",
+      "Los bloques 4 al 8 se desbloquearán cuando actives NICHI·BOKU Premium.\nMuy pronto podrás hacerlo desde esta app. 💛"
+    );
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#0C1A2A" }}>
       <DayNightFujiBackground />
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Text style={styles.kicker}>Hiragana — Grupo W–N</Text>
           <Text style={styles.title}>わ・を・ん / contracciones</Text>
           <Text style={styles.subtitle}>
-            Noche con fuegos artificiales, día con grullas sobre olas ukiyo-e. El ciclo inicia en la noche.
+            Noche con fuegos artificiales, día con grullas sobre olas ukiyo-e. El
+            ciclo inicia en la noche.
           </Text>
         </View>
 
-        {/* 1) Contenido base */}
+        {/* 1) Contenido base (libre) */}
         <NichiBtn
           title="📖 Lectura de frases cortas"
           desc="Lee y entiende con soporte visual."
@@ -808,52 +1380,55 @@ export default function HiraganaWNMenu() {
         {/* Separador visual */}
         <View style={styles.sep} />
 
-        {/* 3) CTA Premium (queda debajo de los dos NAV) */}
-        <NichiBtn
-          title="✨ Desbloquear NICHI·BOKU Premium"
-          palette={PALETTES.gold}
-          onPress={() => navigation.navigate("B3VocabularioMenu")}
-          style={styles.ctaBorder}
-        />
-
-        <Text style={styles.sectionTitle}>Incluido en Premium</Text>
-
-        {/* 4) Bloques Premium (bajados para que no se desacomoden) */}
+        {/* Bloque 3: Vocabulario esencial — NO bloqueado (subido arriba) */}
         <NichiBtn
           title="Bloque 3: Vocabulario esencial (10 temas)"
-          palette={PALETTES.premium}
-          rightAdornment={<PremiumTag />}
+          desc="Vocabulario base de uso diario con audio y mini juegos."
+          palette={PALETTES.light}
           onPress={() => navigation.navigate("B3VocabularioMenu")}
         />
+
+        {/* CTA Premium dorado: “Incluido en Premium” */}
+        <NichiBtn
+          title="Incluido en Premium"
+          desc="Desbloquea los bloques 4 a 8 para seguir aprendiendo con más temas."
+          palette={PALETTES.gold}
+          centerText
+          style={styles.ctaBorder}
+          rightAdornment={<PremiumTag />}
+          onPress={handlePremiumLockedPress}
+        />
+
+        {/* 4) Bloques Premium (4–8) bloqueados hasta pago */}
         <NichiBtn
           title="Bloque 4: Gramática I"
           palette={PALETTES.premium}
           rightAdornment={<PremiumTag />}
-          onPress={() => navigation.navigate("B4GramaticaIMenu")}
+          onPress={handlePremiumLockedPress}
         />
         <NichiBtn
           title="Bloque 5: Gramática II"
           palette={PALETTES.premium}
           rightAdornment={<PremiumTag />}
-          onPress={() => navigation.navigate("B5GramaticaIIMenu")}
+          onPress={handlePremiumLockedPress}
         />
         <NichiBtn
           title="Bloque 6: Vida cotidiana"
           palette={PALETTES.premium}
           rightAdornment={<PremiumTag />}
-          onPress={() => navigation.navigate("B6VidaCotidianaMenu")}
+          onPress={handlePremiumLockedPress}
         />
         <NichiBtn
           title="Bloque 7: Lectura y práctica"
           palette={PALETTES.premium}
           rightAdornment={<PremiumTag />}
-          onPress={() => navigation.navigate("B7LecturaPracticaMenu")}
+          onPress={handlePremiumLockedPress}
         />
         <NichiBtn
           title="Bloque 8: Evaluaciones y logros"
           palette={PALETTES.premium}
           rightAdornment={<PremiumTag />}
-          onPress={() => navigation.navigate("B8EvaluacionesLogrosMenu")}
+          onPress={handlePremiumLockedPress}
         />
 
         <View style={{ height: 40 }} />
@@ -874,22 +1449,51 @@ const styles = StyleSheet.create({
   },
   kicker: { color: "#93C5FD", fontWeight: "900", letterSpacing: 1 },
   title: { color: "#E6EDF7", fontWeight: "900", fontSize: 18, marginTop: 2 },
-  subtitle: { color: "rgba(230,237,247,0.92)", marginTop: 2, fontWeight: "700" },
+  subtitle: {
+    color: "rgba(230,237,247,0.92)",
+    marginTop: 2,
+    fontWeight: "700",
+  },
 
   /* Botón base reutilizable */
-  btnBase: { borderRadius: 16, borderWidth: 1.5, overflow: "hidden", marginBottom: 12 },
+  btnBase: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    overflow: "hidden",
+    marginBottom: 12,
+  },
   btnPressable: { paddingVertical: 14, paddingHorizontal: 14 },
   btnContent: { flexDirection: "row", alignItems: "center" },
   btnTitle: { fontSize: 16, fontWeight: "900", letterSpacing: 0.3 },
   btnDesc: { fontSize: 13, fontWeight: "700", marginTop: 4 },
 
   /* Ink-swipe overlay */
-  shine: { position: "absolute", width: 170, height: "220%", top: -40, left: -170 },
+  shine: {
+    position: "absolute",
+    width: 170,
+    height: "220%",
+    top: -40,
+    left: -170,
+  },
 
   /* barra acento */
-  accentBar: { position: "absolute", left: 0, top: 0, bottom: 0, width: 8, borderTopRightRadius: 12, borderBottomRightRadius: 12 },
+  accentBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 8,
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+  },
 
-  sectionTitle: { marginTop: 16, marginBottom: 2, fontSize: 16, fontWeight: "900", color: "#DCE1F0" },
+  sectionTitle: {
+    marginTop: 16,
+    marginBottom: 2,
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#DCE1F0",
+  },
 
   /* Premium tag */
   lockTag: {
@@ -909,12 +1513,26 @@ const styles = StyleSheet.create({
   ctaBorder: { borderWidth: 2, borderColor: "#6B4E00", borderRadius: 18 },
 
   /* decor */
-  decor: { position: "absolute", right: -26, bottom: -26, width: 150, height: 150, borderRadius: 28, backgroundColor: "#FFFFFF" },
+  decor: {
+    position: "absolute",
+    right: -26,
+    bottom: -26,
+    width: 150,
+    height: 150,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+  },
 
   /* NAV block y separador */
   navBlock: { marginTop: 4, gap: 8 },
   sep: { height: 8 },
-  
+
   /* ripple circle */
-  ripple: { position: "absolute", width: 140, height: 140, borderRadius: 999, backgroundColor: "#ffffff" },
+  ripple: {
+    position: "absolute",
+    width: 140,
+    height: 140,
+    borderRadius: 999,
+    backgroundColor: "#ffffff",
+  },
 });

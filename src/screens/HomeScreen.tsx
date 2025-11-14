@@ -27,7 +27,11 @@ import { getAvatarUri } from "../services/uploadAvatar";
 import { openDrawerDeep } from "../utils/nav";
 
 import IntroVideoModal from "../components/IntroVideoModal";
-import { getIntroVideoUrl, markIntroVideoSeen, wasIntroVideoSeen } from "../services/introVideo";
+import {
+  getIntroVideoUrl,
+  markIntroVideoSeen,
+  wasIntroVideoSeen,
+} from "../services/introVideo";
 
 const { width } = Dimensions.get("window");
 
@@ -83,21 +87,52 @@ export default function HomeScreen(): React.JSX.Element {
   const fadeUpStyle = useCallback(
     (val: Animated.Value, fromY = 18) => ({
       opacity: val,
-      transform: [{ translateY: val.interpolate({ inputRange: [0, 1], outputRange: [fromY, 0] }) }],
+      transform: [
+        {
+          translateY: val.interpolate({
+            inputRange: [0, 1],
+            outputRange: [fromY, 0],
+          }),
+        },
+      ],
     }),
     []
   );
 
   const runAppear = useCallback(() => {
     Animated.sequence([
-      Animated.timing(aProgress, { toValue: 1, duration: 280, useNativeDriver: true }),
-      Animated.timing(aPanel, { toValue: 1, duration: 280, useNativeDriver: true }),
+      Animated.timing(aProgress, {
+        toValue: 1,
+        duration: 280,
+        useNativeDriver: true,
+      }),
+      Animated.timing(aPanel, {
+        toValue: 1,
+        duration: 280,
+        useNativeDriver: true,
+      }),
       Animated.stagger(120, [
-        Animated.timing(aCard1, { toValue: 1, duration: 260, useNativeDriver: true }),
-        Animated.timing(aCard2, { toValue: 1, duration: 260, useNativeDriver: true }),
-        Animated.timing(aCard3, { toValue: 1, duration: 260, useNativeDriver: true }),
+        Animated.timing(aCard1, {
+          toValue: 1,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+        Animated.timing(aCard2, {
+          toValue: 1,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+        Animated.timing(aCard3, {
+          toValue: 1,
+          duration: 260,
+          useNativeDriver: true,
+        }),
       ]),
-      Animated.timing(aMore, { toValue: 1, duration: 260, useNativeDriver: true }),
+      Animated.timing(aMore, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, [aProgress, aPanel, aCard1, aCard2, aCard3, aMore]);
 
@@ -167,14 +202,22 @@ export default function HomeScreen(): React.JSX.Element {
 
   const openDrawer = () => {
     const ok = openDrawerDeep(navigation as any);
-    if (__DEV__ && !ok) console.warn("No se pudo abrir el Drawer (verifica id='AppDrawer').");
+    if (__DEV__ && !ok) {
+      console.warn("No se pudo abrir el Drawer (verifica id='AppDrawer').");
+    }
   };
 
   const handlePressIn = () => {
-    Animated.spring(hamburgerAnim, { toValue: 0.85, useNativeDriver: true }).start();
+    Animated.spring(hamburgerAnim, {
+      toValue: 0.85,
+      useNativeDriver: true,
+    }).start();
   };
   const handlePressOut = () => {
-    Animated.spring(hamburgerAnim, { toValue: 1, useNativeDriver: true }).start();
+    Animated.spring(hamburgerAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
   };
 
   const navigateToHomeStack = (
@@ -216,13 +259,14 @@ export default function HomeScreen(): React.JSX.Element {
   }
 
   const avatarUri = getAvatarUri(userDoc);
-  const displayName = userDoc?.displayName || auth.currentUser?.displayName || "Mapache";
+  const displayName =
+    userDoc?.displayName || auth.currentUser?.displayName || "Mapache";
   const firstName = (displayName || "Mapache").split(" ")[0];
 
   // ==== Rojos (más intensos) ====
   const RED_START = "#9D0012"; // profundo
-  const RED_MID   = "#C7081F"; // medio saturado
-  const RED_END   = "#FF2B3B"; // vivo
+  const RED_MID = "#C7081F"; // medio saturado
+  const RED_END = "#FF2B3B"; // vivo
 
   return (
     <View style={{ flex: 1 }}>
@@ -233,7 +277,10 @@ export default function HomeScreen(): React.JSX.Element {
       />
 
       <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Header */}
           <View style={styles.header}>
             <Pressable
@@ -246,14 +293,19 @@ export default function HomeScreen(): React.JSX.Element {
               accessibilityLabel="Abrir menú de navegación"
             >
               <Animated.View style={{ transform: [{ scale: hamburgerAnim }] }}>
-                <Image source={require("../../assets/icons/hamburger.webp")} style={styles.hamburgerIcon} />
+                <Image
+                  source={require("../../assets/icons/hamburger.webp")}
+                  style={styles.hamburgerIcon}
+                />
               </Animated.View>
             </Pressable>
 
             <Text style={styles.headerTitle}>Hola, {firstName}</Text>
 
             <TouchableOpacity
-              onPress={() => (navigation as any).getParent?.()?.navigate("Perfil" as never)}
+              onPress={() =>
+                (navigation as any).getParent?.()?.navigate("Perfil" as never)
+              }
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               accessibilityRole="button"
               accessibilityLabel="Ir a mi perfil"
@@ -262,26 +314,35 @@ export default function HomeScreen(): React.JSX.Element {
             </TouchableOpacity>
           </View>
 
-          {/* Progreso */}
+          {/* Progreso / Dojo de pruebas */}
           <Animated.View style={[styles.progressCard, fadeUpStyle(aProgress)]}>
-            <Image source={require("../../assets/images/cloud_swirl.webp")} style={styles.cloudDecor} resizeMode="contain" />
+            <Image
+              source={require("../../assets/images/cloud_swirl.webp")}
+              style={styles.cloudDecor}
+              resizeMode="contain"
+            />
             <View style={styles.progressRow}>
               <View style={styles.levelCircle}>
-                <ExpoImage source={require("../../assets/images/cursos/rueda2.webp")} style={styles.levelIcon} contentFit="contain" />
+                <ExpoImage
+                  source={require("../../assets/images/cursos/rueda2.webp")}
+                  style={styles.levelIcon}
+                  contentFit="contain"
+                />
               </View>
               <View style={styles.progressTextCol}>
-                <Text style={styles.progressTitle}>Consulta tu avance{"\n"}en el nivel N5</Text>
-                <View style={styles.dotsRow}>
-                  <View style={[styles.dot, styles.dotActive]} />
-                  <View style={styles.dot} />
-                  <View style={styles.dot} />
-                  <View style={styles.dot} />
-                  <View style={styles.dot} />
-                </View>
+                <Text style={styles.progressTitle}>
+                  Dojo de pruebas:{"\n"}ponte a prueba de N5 a N1
+                </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.progressBtn} onPress={() => go("ProgresoN5")} activeOpacity={0.9}>
-              <Text style={styles.progressBtnText}>Ver progreso N5</Text>
+            <TouchableOpacity
+              style={styles.progressBtn}
+              onPress={() => go("ProgresoN5")}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.progressBtnText}>
+                Entrar al dojo de nivel 🏯
+              </Text>
             </TouchableOpacity>
           </Animated.View>
 
@@ -293,13 +354,27 @@ export default function HomeScreen(): React.JSX.Element {
               imageStyle={styles.panelBgImage}
             >
               <View style={styles.actionRow}>
-                <TouchableOpacity onPress={() => go("Notas")} style={styles.actionBtn} activeOpacity={0.9}>
-                  <Image source={require("../../assets/images/Notas.webp")} style={styles.actionIcon} />
+                <TouchableOpacity
+                  onPress={() => go("Notas")}
+                  style={styles.actionBtn}
+                  activeOpacity={0.9}
+                >
+                  <Image
+                    source={require("../../assets/images/Notas.webp")}
+                    style={styles.actionIcon}
+                  />
                   <Text style={styles.actionText}>Notas</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => go("Calendario")} style={styles.actionBtn} activeOpacity={0.9}>
-                  <Image source={require("../../assets/images/Calendario.webp")} style={styles.actionIcon} />
+                <TouchableOpacity
+                  onPress={() => go("Calendario")}
+                  style={styles.actionBtn}
+                  activeOpacity={0.9}
+                >
+                  <Image
+                    source={require("../../assets/images/Calendario.webp")}
+                    style={styles.actionIcon}
+                  />
                   <Text style={styles.actionText}>Calendario</Text>
                 </TouchableOpacity>
               </View>
@@ -309,7 +384,12 @@ export default function HomeScreen(): React.JSX.Element {
           {/* Tarjetas de cursos */}
           <View style={styles.cardsGrid}>
             {/* N5 */}
-            <Animated.View style={[fadeUpStyle(aCard1, 24), { width: (width - 16 * 2 - 12) / 2 }]}>
+            <Animated.View
+              style={[
+                fadeUpStyle(aCard1, 24),
+                { width: (width - 16 * 2 - 12) / 2 },
+              ]}
+            >
               <CourseCard
                 title="Tanuki: Nivel N5"
                 image={require("../../assets/images/cursos/n5_mapache.webp")}
@@ -321,7 +401,12 @@ export default function HomeScreen(): React.JSX.Element {
             </Animated.View>
 
             {/* N4 */}
-            <Animated.View style={[fadeUpStyle(aCard2, 24), { width: (width - 16 * 2 - 12) / 2 }]}>
+            <Animated.View
+              style={[
+                fadeUpStyle(aCard2, 24),
+                { width: (width - 16 * 2 - 12) / 2 },
+              ]}
+            >
               <CourseCard
                 title="Kitsune: Nivel N4"
                 image={require("../../assets/images/cursos/n4_zorro.webp")}
@@ -369,14 +454,35 @@ export default function HomeScreen(): React.JSX.Element {
         {/* Barra inferior fija */}
         <View pointerEvents="box-none" style={styles.bottomBarFixed}>
           <View style={styles.bottomBg}>
-            <TouchableOpacity onPress={() => go("Notificaciones")} style={styles.bottomItem} activeOpacity={0.8}>
-              <Image source={require("../../assets/icons/bell.webp")} style={styles.bottomIcon} />
+            <TouchableOpacity
+              onPress={() => go("Notificaciones")}
+              style={styles.bottomItem}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={require("../../assets/icons/bell.webp")}
+                style={styles.bottomIcon}
+              />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => go("Notas")} style={styles.bottomItem} activeOpacity={0.8}>
-              <Image source={require("../../assets/icons/heart.webp")} style={styles.bottomIcon} />
+            <TouchableOpacity
+              onPress={() => go("Notas")}
+              style={styles.bottomItem}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={require("../../assets/icons/heart.webp")}
+                style={styles.bottomIcon}
+              />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => go("Chat")} style={styles.bottomItem} activeOpacity={0.8}>
-              <Image source={require("../../assets/icons/ia.webp")} style={styles.bottomIcon} />
+            <TouchableOpacity
+              onPress={() => go("Chat")}
+              style={styles.bottomItem}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={require("../../assets/icons/ia.webp")}
+                style={styles.bottomIcon}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -416,7 +522,11 @@ function CourseCard({
     <TouchableOpacity
       style={[
         styles.card,
-        { width: (width - 16 * 2 - 12) / 2, borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" },
+        {
+          width: (width - 16 * 2 - 12) / 2,
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.18)",
+        },
       ]}
       onPress={onPress}
       activeOpacity={0.9}
@@ -428,7 +538,10 @@ function CourseCard({
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.cardArt}>
-        <Image source={image} style={{ width: iconW, height: iconH, resizeMode: "contain" }} />
+        <Image
+          source={image}
+          style={{ width: iconW, height: iconH, resizeMode: "contain" }}
+        />
       </View>
       <Text style={styles.cardTitle}>{title}</Text>
     </TouchableOpacity>
@@ -474,11 +587,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  hamburger: { width: 120, height: 120, alignItems: "center", justifyContent: "center" },
-  hamburgerIcon: { width: 112, height: 112, resizeMode: "contain" },
-  headerTitle: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800", color: "#5C0A14" },
+  // Hamburguesa más pequeña
+  hamburger: {
+    width: 64,
+    height: 64,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hamburgerIcon: {
+    width: 56,
+    height: 56,
+    resizeMode: "contain",
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 26, // más pequeño
+    fontWeight: "800",
+    color: "#5C0A14",
+  },
 
-  // Progreso
+  // Progreso / Dojo
   progressCard: {
     backgroundColor: "#7E0D18",
     marginHorizontal: 16,
@@ -488,23 +617,54 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
-  cloudDecor: { position: "absolute", right: 14, top: 10, width: 90, height: 60, opacity: 0.9 },
+  cloudDecor: {
+    position: "absolute",
+    right: 14,
+    top: 10,
+    width: 90,
+    height: 60,
+    opacity: 0.9,
+  },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  levelCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: "transparent", alignItems: "center", justifyContent: "center" },
+  levelCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   levelIcon: { width: 64, height: 64 },
   progressTextCol: { flex: 1, paddingRight: 60 },
-  progressTitle: { color: "#fff", fontSize: 16, fontWeight: "800", lineHeight: 24 },
-  dotsRow: { flexDirection: "row", gap: 6, marginTop: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.55)" },
-  dotActive: { backgroundColor: "#fff" },
-  progressBtn: { backgroundColor: "#FFF3F3", alignSelf: "center", marginTop: 12, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20 },
-  progressBtnText: { fontWeight: "800", color: "#7E0D18" },
+  progressTitle: {
+    color: "#fff",
+    fontSize: 14, // más pequeño
+    fontWeight: "800",
+    lineHeight: 20,
+  },
+  progressBtn: {
+    backgroundColor: "#FFF3F3",
+    alignSelf: "center",
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  progressBtnText: {
+    fontWeight: "800",
+    color: "#7E0D18",
+  },
 
   // Notas / Calendario
   panelWrap: { marginTop: 12, paddingHorizontal: 16 },
   panelBg: { height: 118, justifyContent: "center", paddingHorizontal: 18 },
   panelBgImage: { resizeMode: "stretch", borderRadius: 14 },
-  actionRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 14 },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    columnGap: 14,
+  },
   actionBtn: {
     width: "42%",
     height: 44,
@@ -539,13 +699,23 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 12,
   },
-  card: { borderRadius: 18, padding: 12, overflow: "hidden" },
-  cardArt: { borderRadius: 14, marginBottom: 10, alignItems: "center", justifyContent: "center", paddingVertical: 12 },
+  card: {
+    borderRadius: 18,
+    padding: 12,
+    overflow: "hidden",
+  },
+  cardArt: {
+    borderRadius: 14,
+    marginBottom: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+  },
   cardTitle: {
     color: "#fff",
     fontWeight: "800",
     marginBottom: 2,
-    textShadowColor: "rgba(0,0,0,0.30)",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowRadius: 6,
   },
 
@@ -558,16 +728,16 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 16,
     marginBottom: 2,
-    textShadowColor: "rgba(0,0,0,0.30)",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowRadius: 6,
   },
 
-  // Barra inferior
+  // Barra inferior (subida 25 px)
   bottomBarFixed: {
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 12,
+    bottom: 37, // antes 12 → subido ~25px
     alignItems: "center",
     pointerEvents: "box-none",
   },
@@ -586,7 +756,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
   },
-  bottomItem: { width: 52, height: 52, alignItems: "center", justifyContent: "center" },
+  bottomItem: {
+    width: 52,
+    height: 52,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   bottomIcon: { width: 32, height: 32, resizeMode: "contain" },
 });
-                               

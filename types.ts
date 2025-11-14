@@ -54,7 +54,7 @@ export type RootStackParamList = {
 
   // Familias S/T
   FamiliaS: undefined;
-
+ OnboardingN5: undefined;
   // Grupo S
   SEscrituraGrupoS: undefined;
   SEjemplosGrupoS: undefined;

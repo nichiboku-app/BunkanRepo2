@@ -1,9 +1,16 @@
 // src/screens/N5/HiraganaWN/WN_PracticaNFinal.tsx
 import { Asset } from "expo-asset";
 import { createAudioPlayer, type AudioPlayer } from "expo-audio";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
+
+// Gamificación (servicio real que compartiste)
+import {
+  awardAchievement,
+  awardOnSuccess,
+  useAwardOnEnter,
+} from "src/services/achievements";
 
 /* ===================== KANA hasta ん (sin っ ni ゃゅょ) ===================== */
 const KANA_BASE = [
@@ -272,21 +279,82 @@ function DictationBuilder({
 /* ===================== Principal ===================== */
 export default function WN_PracticaNFinal() {
   const { ready: audioReady, hasAudio, play } = useBankAudio(AUDIO);
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 28 }}>
-      <Text style={styles.title}>Examen final — Hiragana (hasta ん)</Text>
-      <Text style={styles.subtitle}>
-        Construye las palabras en <Text style={{ fontWeight: "900" }}>hiragana</Text> usando la bandeja de letras (2 columnas).
-      </Text>
 
-      <DictationBuilder
-        words={EXAM_WORDS}
-        audioReady={audioReady}
-        hasAudio={hasAudio}
-        play={play}
-        onFinished={() => {}}
-      />
-    </ScrollView>
+  // Configuración de gamificación solicitada
+  const LEVEL = "N5";
+  const SCREEN_KEY = "N5_IntroJapones";
+
+  // Estado para Modal de logro
+  const [rewardModalVisible, setRewardModalVisible] = useState(false);
+  const [modalPoints, setModalPoints] = useState<number>(0);
+
+  // Al entrar: +10 XP primera vez; repeticiones: +5 XP
+  useAwardOnEnter(SCREEN_KEY, {
+    xpOnEnter: 10,
+    repeatXp: 5,
+    meta: { level: LEVEL },
+  });
+
+  // Éxito: al terminar el examen
+  const handleFinish = useCallback(async (finalScore: number) => {
+    // 1) Marca éxito + XP de éxito (solo primera vez)
+    await awardOnSuccess(SCREEN_KEY, {
+      xpOnSuccess: 20,
+      meta: { level: LEVEL, finalScore },
+    });
+
+    // 2) Otorga logro idempotente con 30 XP solo la primera vez
+    const res = await awardAchievement("final_hiragana", {
+      xp: 30,
+      sub: "Final Hiragana",
+      meta: { screenKey: SCREEN_KEY, level: LEVEL, finalScore },
+    });
+
+    // Puntos a mostrar en el modal:
+    // - Si fue primera vez del logro: 30 XP (del logro)
+    // - Si ya estaba otorgado: mostramos 5 XP (repetición de la actividad)
+    const pointsThisFinish = res.firstTime ? 30 : 5;
+    setModalPoints(pointsThisFinish);
+    setRewardModalVisible(true);
+  }, []);
+
+  return (
+    <>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 28 }}>
+        <Text style={styles.title}>Examen final — Hiragana (hasta ん)</Text>
+        <Text style={styles.subtitle}>
+          Construye las palabras en <Text style={{ fontWeight: "900" }}>hiragana</Text> usando la bandeja de letras (2 columnas).
+        </Text>
+
+        <DictationBuilder
+          words={EXAM_WORDS}
+          audioReady={audioReady}
+          hasAudio={hasAudio}
+          play={play}
+          onFinished={(score) => { void handleFinish(score); }}
+        />
+      </ScrollView>
+
+      {/* Modal de recompensa */}
+      <Modal
+        animationType="fade"
+        transparent
+        visible={rewardModalVisible}
+        onRequestClose={() => setRewardModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>¡Logro desbloqueado!</Text>
+            <Text style={styles.modalAchievementName}>Final Hiragana</Text>
+            <Text style={styles.modalPoints}>+{modalPoints} XP</Text>
+
+            <Pressable style={styles.modalButton} onPress={() => setRewardModalVisible(false)}>
+              <Text style={styles.modalButtonText}>Continuar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -367,4 +435,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   kanaOptionTxt: { fontSize: 22, fontWeight: "900", color: "#111" },
+
+  /* ===== Modal estilos ===== */
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderWidth: 2,
+    borderColor: INK,
+    alignItems: "center",
+  },
+  modalTitle: { fontSize: 16, fontWeight: "900", color: "#065f46", marginBottom: 6 },
+  modalAchievementName: { fontSize: 22, fontWeight: "900", color: INK, textAlign: "center" },
+  modalPoints: { fontSize: 26, fontWeight: "900", color: INK, marginTop: 8, marginBottom: 14 },
+  modalButton: {
+    backgroundColor: INK,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    minWidth: 140,
+    alignItems: "center",
+  },
+  modalButtonText: { color: "#fff", fontWeight: "800" },
 });

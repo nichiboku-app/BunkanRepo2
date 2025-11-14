@@ -1,7 +1,8 @@
 // src/screens/N5/CulturaScreen.tsx
-import React, { useMemo, useState } from 'react';
+import * as Speech from 'expo-speech';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Image, // 👈 IMPORTANTE
+  Image,
   Pressable,
   ScrollView,
   StatusBar,
@@ -10,6 +11,9 @@ import {
   View
 } from 'react-native';
 import { useFeedbackSounds } from '../../hooks/useFeedbackSounds';
+
+/* ★★★ XP/Logros ★★★ */
+import { awardOnSuccess } from '../../services/achievements';
 
 const IMG_CULTURA = require('../../../assets/images/odori.webp');
 const HAS_IMAGE = true;
@@ -21,7 +25,6 @@ const GLOSSARY: Record<string, string> = {
   いただきます: '“Itadakimasu” se dice antes de comer: “con gratitud, recibo”.',
   ごちそうさまでした: 'Expresión al terminar de comer: “gracias por la comida”.',
   すみません: 'Sumimasen = “disculpa”/“perdón”/“gracias (por la molestia)”. Muy útil.',
-  // ⚠️ clave ASCII para evitar \u30fb
   senpai_kohai: 'Senpai/kōhai = relación mayor-menor experiencia (escuela, trabajo).',
   敬語: 'Keigo = lenguaje honorífico/formal. Se usa para mostrar respeto (clientes, jefes, mayores).',
   お土産: 'Omiyage = regalo/recuerdo del viaje para compañeros/familia. Suele ser comestible, empaques individuales.',
@@ -30,18 +33,18 @@ const GLOSSARY: Record<string, string> = {
   コンビニ: 'Konbini = tienda de conveniencia 24/7 (pagos, impresiones, comida, envíos).',
 };
 
-/* ============ TOOLTIP ROJO ============ */
+/* ============ TOOLTIP CENTRADO ============ */
 function useTooltip() {
-  const [tip, setTip] = useState<{visible:boolean; title:string; text:string; x:number; y:number}>({
-    visible:false, title:'', text:'', x:0, y:0,
+  const [tip, setTip] = useState<{visible:boolean; title:string; text:string}>({
+    visible:false, title:'', text:'',
   });
-  const show = (title:string, text:string, x:number, y:number) =>
-    setTip({ visible:true, title, text, x, y });
+  const show = (title:string, text:string) =>
+    setTip({ visible:true, title, text });
   const hide = () => setTip(t => ({ ...t, visible:false }));
   return { tip, show, hide };
 }
 
-/* ============ FRASES RÁPIDAS (para tooltip con romaji) ============ */
+/* ============ FRASES RÁPIDAS (con audio) ============ */
 const PHRASES: {jp:string; ro:string; es:string}[] = [
   { jp:'おはようございます', ro:'ohayō gozaimasu', es:'buenos días (formal)' },
   { jp:'こんにちは', ro:'konnichiwa', es:'hola / buenas tardes' },
@@ -58,15 +61,16 @@ export default function CulturaScreen() {
   const { playCorrect, playWrong } = useFeedbackSounds();
   const { tip, show, hide } = useTooltip();
 
+  // Palabra tocable clara (color + subrayado + padding mayor)
   const Term = ({ k, children }: { k: keyof typeof GLOSSARY; children: React.ReactNode }) => (
     <Text
-      onPressIn={(e) => {
-        const { pageX, pageY } = e.nativeEvent;
-        show(String(children), GLOSSARY[k], pageX, pageY);
-      }}
+      onPress={() => show(String(children), GLOSSARY[k])}
+      suppressHighlighting
+      selectable={false}
+      accessibilityRole="button"
       style={s.term}
     >
-      <Text style={s.bold}>{children}</Text>
+      <Text style={s.termInner}>{children}</Text>
     </Text>
   );
 
@@ -115,6 +119,32 @@ export default function CulturaScreen() {
   const [answers, setAnswers] = useState<number[]>(Array(6).fill(-1));
   const score = answers.reduce((acc, cur, i) => (cur === quiz[i].a ? acc + 1 : acc), 0);
 
+  // ★ Estado para otorgar logro al finalizar (una sola vez)
+  const [granted, setGranted] = useState(false);
+  const [showCongrats, setShowCongrats] = useState(false);
+
+  // Otorgar logro +15 XP al terminar todas las preguntas (idempotente en backend)
+  useEffect(() => {
+    if (granted) return;
+    const allAnswered = answers.every(a => a !== -1);
+    if (allAnswered) {
+      (async () => {
+        try {
+          await awardOnSuccess('N5_Cultura', {
+            xpOnSuccess: 15,
+            achievementId: 'estudiante_cultura_bunkan',
+            achievementSub: 'N5',
+            meta: { score, total: quiz.length },
+          });
+          setGranted(true);
+          setShowCongrats(true);
+        } catch (e) {
+          // silencioso
+        }
+      })();
+    }
+  }, [answers, granted, score, quiz.length]);
+
   const press = (idx: number, choice: number) => {
     setAnswers(prev => {
       const next = [...prev];
@@ -123,11 +153,16 @@ export default function CulturaScreen() {
     });
 
     try {
-      if (choice === quiz[idx].a) {
-        void playCorrect();
-      } else {
-        void playWrong();
-      }
+      if (choice === quiz[idx].a) playCorrect();
+      else playWrong();
+    } catch {}
+  };
+
+  // 🔊 Reproducir audio japonés (frases rápidas)
+  const speakJP = (text: string) => {
+    try {
+      Speech.stop();
+      Speech.speak(text, { language: 'ja-JP', pitch: 1.0, rate: 0.92 });
     } catch {}
   };
 
@@ -143,7 +178,7 @@ export default function CulturaScreen() {
         <View style={s.notice}>
           <Text style={s.noticeTitle}>💡 Tip interactivo</Text>
           <Text style={s.noticeText}>
-            Toca las <Text style={s.boldWhite}>palabras en negro</Text> o cualquier <Text style={s.boldWhite}>frase</Text> para ver un globo rojo con definiciones o pronunciación.
+            Toca las <Text style={s.boldWhite}>palabras en negro resaltadas</Text> o cualquier <Text style={s.boldWhite}>frase</Text> para ver un globo con definiciones o pronunciación.
           </Text>
         </View>
 
@@ -152,12 +187,7 @@ export default function CulturaScreen() {
           {HAS_IMAGE ? (
             <Image source={IMG_CULTURA} style={s.hero} />
           ) : (
-            <View
-              style={[
-                s.hero,
-                { backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center' },
-              ]}
-            >
+            <View style={[s.hero, { backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center' }]}>
               <Text style={{ color: '#111827', fontWeight: '800' }}>CULTURA BÁSICA (hero)</Text>
             </View>
           )}
@@ -209,18 +239,14 @@ export default function CulturaScreen() {
           </Text>
         </View>
 
-        {/* FRASES RÁPIDAS */}
+        {/* FRASES RÁPIDAS (tap = tooltip + audio) */}
         <View style={s.card}>
           <Text style={s.h2}>Frases rápidas</Text>
           <View style={s.phraseWrap}>
             {PHRASES.map((p, i) => (
               <Pressable
                 key={i}
-                onPressIn={(e) => {
-                  const { pageX, pageY } = e.nativeEvent;
-                  const text = `${p.ro}\n${p.es}`;
-                  show(p.jp, text, pageX, pageY);
-                }}
+                onPress={() => { show(p.jp, `${p.ro}\n${p.es}`); speakJP(p.jp); }}
                 android_ripple={{ color: '#e5e7eb' }}
                 style={s.phraseChip}
               >
@@ -249,7 +275,7 @@ export default function CulturaScreen() {
                     return (
                       <Pressable
                         key={i}
-                        onPressIn={() => press(idx, i)}
+                        onPress={() => press(idx, i)}
                         android_ripple={{ color: '#e5e7eb' }}
                         style={[s.opt, chosen && (i === q.a ? s.optOk : s.optNo)]}
                       >
@@ -269,12 +295,25 @@ export default function CulturaScreen() {
         </View>
       </ScrollView>
 
-      {/* OVERLAY TOOLTIP ROJO */}
+      {/* MODAL CENTRADO (tooltip) */}
       {tip.visible && (
-        <Pressable style={s.overlay} onPress={() => hide()}>
-          <View style={[s.tooltip, { top: Math.max(tip.y - 120, 90), left: 16, right: 16 }]}>
+        <Pressable style={s.overlayCenter} onPress={hide}>
+          <View style={s.tooltipModal}>
             <Text style={s.tooltipTitle}>{tip.title}</Text>
             <Text style={s.tooltipText}>{tip.text}</Text>
+            <Text style={s.tooltipClose}>Toca para cerrar</Text>
+          </View>
+        </Pressable>
+      )}
+
+      {/* POPUP DE FELICITACIÓN (logro + 15XP) */}
+      {showCongrats && (
+        <Pressable style={s.overlayCenter} onPress={() => setShowCongrats(false)}>
+          <View style={s.congratsCard}>
+            <Text style={s.congratsTitle}>🎉 ¡Logro conseguido!</Text>
+            <Text style={s.congratsName}>Estudiante de cultura Bunkan</Text>
+            <Text style={s.congratsXP}>+15 XP</Text>
+            <Text style={s.congratsHint}>Toca para cerrar</Text>
           </View>
         </Pressable>
       )}
@@ -282,7 +321,7 @@ export default function CulturaScreen() {
   );
 }
 
-/* ============ ESTILOS (tema claro con tooltip rojo) ============ */
+/* ============ ESTILOS ============ */
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff', position: 'relative' },
   content: { padding: 20, paddingBottom: 40, gap: 12 },
@@ -345,26 +384,55 @@ const s = StyleSheet.create({
   optNo: { backgroundColor: '#fde2e2', borderColor: '#f5b5b5' },
   optTxt: { color: '#111827', fontSize: 14 },
 
-  // Término tocable y tooltip
+  // Termino tocable (más visible y fácil de tocar)
   term: { paddingHorizontal: 2 },
+  termInner: {
+    color: '#0ea5a3',
+    fontWeight: '900',
+    textDecorationLine: 'underline',
+    textDecorationColor: '#0ea5a3',
+    backgroundColor: '#E8FFFB',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
   bold: { fontWeight: '800', color: '#111827' },
 
-  overlay: {
+  // Overlay centrado para modal
+  overlayCenter: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(17,24,39,0.25)',
-    justifyContent: 'flex-start',
+    backgroundColor: 'rgba(17,24,39,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 9999,
     elevation: 50,
   },
-  tooltip: {
-    position: 'absolute',
-    marginHorizontal: 16,
-    padding: 14,
-    borderRadius: 12,
+  tooltipModal: {
+    width: '88%',
+    maxWidth: 420,
+    padding: 16,
+    borderRadius: 14,
     backgroundColor: '#ef4444',
     borderWidth: 1,
     borderColor: '#b91c1c',
   },
-  tooltipTitle: { color: '#fff', fontWeight: '800', marginBottom: 4, fontSize: 14 },
-  tooltipText: { color: '#fff', fontSize: 13, lineHeight: 19 },
+  tooltipTitle: { color: '#fff', fontWeight: '900', marginBottom: 6, fontSize: 16 },
+  tooltipText: { color: '#fff', fontSize: 13, lineHeight: 20 },
+  tooltipClose: { color: '#fee2e2', fontSize: 12, marginTop: 10, textAlign: 'right' },
+
+  // Popup logro
+  congratsCard: {
+    width: '88%',
+    maxWidth: 420,
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: '#111827',
+    borderWidth: 2,
+    borderColor: '#10b981',
+    alignItems: 'center',
+  },
+  congratsTitle: { color: '#ecfeff', fontWeight: '900', fontSize: 18, marginBottom: 6 },
+  congratsName: { color: '#a7f3d0', fontWeight: '800', fontSize: 16 },
+  congratsXP: { color: '#d1fae5', fontWeight: '900', marginTop: 4 },
+  congratsHint: { color: '#9ca3af', fontSize: 12, marginTop: 10 },
 });

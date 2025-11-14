@@ -3,17 +3,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image as ExpoImage } from "expo-image";
 import { useMemo, useState } from "react";
 import {
-    Dimensions,
-    StatusBar,
-    StyleSheet,
-    Text,
-    View,
+  Dimensions,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import SakuraLayer from "../../components/exam/SakuraLayer";
 import ScrollPergamino from "../../components/exam/ScrollPergamino";
 import ChoicePill from "../../components/ui/ChoicePill";
 import { useFeedbackSounds } from "../../hooks/useFeedbackSounds";
+
+/* ★★★ XP/Logros ★★★ */
+import { awardOnSuccess, useAwardOnEnter } from "../../services/achievements";
 
 /* -------- ASSETS -------- */
 const BG_WAVES = require("../../../assets/images/diagnostic/bg_waves.webp");
@@ -230,8 +233,18 @@ export default function N5_DiagnosticoScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [fbH, setFbH] = useState(0);
+  const [finished, setFinished] = useState(false); // evita doble premio
 
   const { playCorrect, playWrong } = useFeedbackSounds();
+
+  /* ★ onEnter: +10 XP primera vez, +5 en repetición, logro de primera visita */
+  useAwardOnEnter("N5_Diagnostico", {
+    xpOnEnter: 10,
+    repeatXp: 5,
+    achievementId: "intro_primera_visita",
+    achievementSub: "N5",
+    meta: { label: "Diagnóstico N5" },
+  });
 
   const q = QUESTIONS[idx];
   const { width: W, height: H } = Dimensions.get("window");
@@ -252,8 +265,35 @@ export default function N5_DiagnosticoScreen() {
       playWrong();
     }
   }
-  function next() { if (idx < QUESTIONS.length - 1) { setIdx(idx + 1); setSelected(null); } }
-  function prev() { if (idx > 0) { setIdx(idx - 1); setSelected(null); } }
+
+  async function handleFinishOnce() {
+    if (finished) return;
+    setFinished(true);
+    // ★ onSuccess: +20 XP y logro de completado
+    await awardOnSuccess("N5_Diagnostico", {
+      xpOnSuccess: 20,
+      achievementId: "n5_diagnostico_completado",
+      achievementSub: "N5",
+      meta: { score, total: QUESTIONS.length },
+    });
+  }
+
+  function next() {
+    if (idx < QUESTIONS.length - 1) {
+      setIdx(idx + 1);
+      setSelected(null);
+    } else if (selected !== null) {
+      // última pregunta respondida → éxito
+      handleFinishOnce();
+    }
+  }
+
+  function prev() {
+    if (idx > 0) {
+      setIdx(idx - 1);
+      setSelected(null);
+    }
+  }
 
   const headerColors = ["#85C8FF","#7FD8FF","#FFC14D"];
 

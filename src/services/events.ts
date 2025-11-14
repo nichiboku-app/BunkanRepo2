@@ -1,6 +1,6 @@
 // src/services/events.ts
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "../config/firebaseConfig"; // ajusta la ruta
+import { db } from "../config/firebaseConfig";
 
 export type UserEventType =
   | "lesson_completed"
@@ -8,23 +8,28 @@ export type UserEventType =
   | "daily_checkin"
   | "video_watched"
   | "level_cleared"
+  | "achievement_unlocked"
   | string;
 
+export interface PushEventOptions {
+  meta?: Record<string, any>;
+}
+
+/** Crea un evento en Usuarios/{uid}/events/{id} */
 export async function pushUserEvent(
   uid: string,
   type: UserEventType,
   amount: number,
-  meta?: Record<string, any>
+  opts: PushEventOptions = {}
 ) {
   if (!uid) throw new Error("Missing uid");
+  const id = doc(db, "_").id; // genera id
 
-  // Genera un id y escribe el evento en la subcolección
-  const id = doc(db, "_").id; // solo para crear un id
   const path = `Usuarios/${uid}/events/${id}`;
   await setDoc(doc(db, path), {
     type,
     amount,
-    ...(meta ? { meta } : {}),
+    ...(opts.meta ? { meta: opts.meta } : {}),
     createdAt: serverTimestamp(),
   });
 

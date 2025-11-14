@@ -17,6 +17,7 @@ import React, { useCallback, useRef, useState } from "react";
 import {
   Dimensions,
   LayoutChangeEvent,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,6 +28,8 @@ import type { RootStackParamList } from "../../../../types";
 
 /** 🔊 Sonidos (tu hook) */
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
+/** 🏅 Logros/XP */
+import { awardAchievement } from "../../../services/achievements";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 const { width: W } = Dimensions.get("window");
@@ -209,6 +212,13 @@ export default function TemasBasicosScreen() {
   const [score, setScore] = useState(0);
   const [fbQuiz, setFbQuiz] = useState<{ ok: boolean; why: string; es: string } | null>(null);
 
+  // 🏅 Logro “Entiendo” (+15 XP) al completar los 10 ítems
+  const ACH_ID = "temas_basicos_quiz10_entiendo";
+  const ACH_SUB = "Entiendo";
+  const ACH_XP = 15;
+  const achGivenRef = useRef(false);
+  const [showAchModal, setShowAchModal] = useState(false);
+
   /* ---------- Handlers ---------- */
   const nextFC = () => { setShowNat(false); setIdxFC((i) => (i + 1) % COUNTRIES.length); };
 
@@ -259,11 +269,31 @@ export default function TemasBasicosScreen() {
   const answerQ = async (i: number) => {
     const cur = QUIZ[qi];
     const ok = i === cur.a;
-    ok ? setScore(s => s + 1) : null;
+    if (ok) setScore(s => s + 1);
     ok ? await playCorrect() : await playWrong();
     setFbQuiz({ ok, why: cur.why, es: cur.es });
-    // avanzar a la siguiente tras un breve momento visual (sin setTimeout para mantenerlo simple)
-    setQi(n => (n + 1) % QUIZ.length);
+
+    const isLast = qi >= QUIZ.length - 1;
+    if (isLast) {
+      // 🏁 Completado: otorgar logro (idempotente) y mostrar modal
+      if (!achGivenRef.current) {
+        try {
+          await awardAchievement(ACH_ID, {
+            xp: ACH_XP,
+            sub: ACH_SUB,
+            meta: { screenKey: "N5_TemasBasicos", finalScore: ok ? score + 1 : score, total: QUIZ.length },
+          });
+        } catch {}
+        achGivenRef.current = true;
+      }
+      setShowAchModal(true);
+      // reset suave para poder repetir
+      setQi(0);
+      setScore(0);
+    } else {
+      // Avanza inmediatamente al siguiente ítem
+      setQi(n => n + 1);
+    }
   };
 
   return (
@@ -535,6 +565,24 @@ export default function TemasBasicosScreen() {
 
         <View style={{ height: 28 }} />
       </ScrollView>
+
+      {/* 🏅 Modal de logro “Entiendo” */}
+      <Modal transparent visible={showAchModal} animationType="fade" onRequestClose={() => setShowAchModal(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>🏅 ¡Logro desbloqueado!</Text>
+            <Text style={styles.modalSubtitle}>Entiendo</Text>
+            <Text style={styles.modalText}>+{ACH_XP} XP por completar el Quick Quiz de 10 ítems.</Text>
+
+            <Pressable
+              onPress={() => setShowAchModal(false)}
+              style={({ pressed }) => [styles.modalBtn, pressed && { opacity: 0.85 }]}
+            >
+              <Text style={styles.modalBtnText}>Aceptar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -674,4 +722,25 @@ const styles = StyleSheet.create({
   },
   fbWhy: { color: "#0b2e59", lineHeight: 20 },
   fbEs: { color: "#0b2e59", opacity: 0.95, marginTop: 4 },
+
+  /* Modal logro */
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCard: {
+    width: "82%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "rgba(42,166,255,0.4)",
+  },
+  modalTitle: { fontSize: 18, fontWeight: "900", textAlign: "center", marginBottom: 4, color: "#0b2e59" },
+  modalSubtitle: { fontSize: 16, fontWeight: "900", textAlign: "center", marginBottom: 6 },
+  modalText: { fontSize: 14, textAlign: "center", marginBottom: 12 },
+  modalBtn: { alignSelf: "center", backgroundColor: "#0b2e59", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
+  modalBtnText: { color: "#fff", fontWeight: "800" },
 });

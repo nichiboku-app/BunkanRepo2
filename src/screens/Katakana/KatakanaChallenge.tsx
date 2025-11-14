@@ -1,10 +1,17 @@
 // src/screens/Katakana/KatakanaChallenge.tsx
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 // Si ya tienes este hook: activa sonido correcto/incorrecto
 // Ajusta la ruta si difiere en tu proyecto
 import { useFeedbackSounds } from "../../hooks/useFeedbackSounds";
+
+// Gamificación (servicio real compartido)
+import {
+  awardAchievement,
+  awardOnSuccess,
+  useAwardOnEnter,
+} from "src/services/achievements";
 
 type Pair = { kana: string; romaji: string };
 
@@ -42,6 +49,19 @@ export default function KatakanaChallenge() {
 
   const { playCorrect, playIncorrect } = useFeedbackSounds?.() ?? { playCorrect: () => {}, playIncorrect: () => {} };
 
+  // Gamificación: constantes
+  const LEVEL = "N5";
+  const SCREEN_KEY = "KatakanaChallenge";
+  const ACHIEVEMENT_ID = "sensei_katakana";
+  const ACHIEVEMENT_TITLE = "Sensei Katakana";
+
+  // Al entrar: +10 XP primera vez; repeticiones: +5 XP
+  useAwardOnEnter(SCREEN_KEY, {
+    xpOnEnter: 10,
+    repeatXp: 5,
+    meta: { level: LEVEL },
+  });
+
   const questions = useMemo(() => {
     // mezcla pares y arma 20 preguntas alternando modo
     const base = pickRandom(KATAKANA_A_TO_N, Math.min(TOTAL_Q, KATAKANA_A_TO_N.length));
@@ -62,6 +82,10 @@ export default function KatakanaChallenge() {
   const [mistakes, setMistakes] = useState<Pair[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [flash, setFlash] = useState<"ok" | "bad" | null>(null);
+
+  // Modal de recompensa (logro/puntos)
+  const [rewardModalVisible, setRewardModalVisible] = useState(false);
+  const [modalPoints, setModalPoints] = useState<number>(0);
 
   const current = questions[qIndex];
 
@@ -97,6 +121,27 @@ export default function KatakanaChallenge() {
     setFlash(null);
   };
 
+  // Manejo de éxito (fin de actividad)
+  const handleFinish = useCallback(async (finalScore: number) => {
+    // 1) Marca éxito + XP de éxito (solo primera vez)
+    await awardOnSuccess(SCREEN_KEY, {
+      xpOnSuccess: 20,
+      meta: { level: LEVEL, finalScore },
+    });
+
+    // 2) Otorga logro idempotente con 30 XP solo la primera vez
+    const res = await awardAchievement(ACHIEVEMENT_ID, {
+      xp: 30,
+      sub: ACHIEVEMENT_TITLE,
+      meta: { screenKey: SCREEN_KEY, level: LEVEL, finalScore },
+    });
+
+    // 3) Modal con puntos del cierre
+    const pointsThisFinish = res.firstTime ? 30 : 5; // primera vez: 30xp; repeticiones: 5xp
+    setModalPoints(pointsThisFinish);
+    setRewardModalVisible(true);
+  }, []);
+
   const onAnswer = (value: string | null) => {
     if (!current) return;
     // evitar doble tap
@@ -123,6 +168,9 @@ export default function KatakanaChallenge() {
 
     // breve pausa para mostrar feedback y pasar a la siguiente
     setTimeout(() => {
+      const bonus = Math.max(0, seconds) * 5;
+      const finalScore = isCorrect ? score + 100 + bonus : score;
+
       setSelected(null);
       setFlash(null);
       if (qIndex + 1 < questions.length) {
@@ -131,131 +179,155 @@ export default function KatakanaChallenge() {
         // fin del juego
         resetTimers();
         setStarted(false);
+        // Dispara éxito + modal
+        void handleFinish(finalScore);
       }
     }, 700);
   };
 
   // ---------- UI ----------
   return (
-    <ScrollView contentContainerStyle={s.container}>
-      {/* Cintillo decorativo */}
-      <View style={s.ribbon}>
-        <Text style={s.ribbonTxt}>⛩️ Katakana Challenge</Text>
-      </View>
+    <>
+      <ScrollView contentContainerStyle={s.container}>
+        {/* Cintillo decorativo */}
+        <View style={s.ribbon}>
+          <Text style={s.ribbonTxt}>⛩️ Katakana Challenge</Text>
+        </View>
 
-      {!started && qIndex === 0 && score === 0 ? (
-        <>
-          <Text style={s.title}>⚡ Desafío cronometrado</Text>
-          <Text style={s.subtitle}>
-            Identifica rápidamente sílabas y palabras en katakana (familias ア〜ノ).
-          </Text>
+        {!started && qIndex === 0 && score === 0 ? (
+          <>
+            <Text style={s.title}>⚡ Desafío cronometrado</Text>
+            <Text style={s.subtitle}>
+              Identifica rápidamente sílabas y palabras en katakana (familias ア〜ノ).
+            </Text>
 
+            <View style={s.card}>
+              <View style={s.cardHeader}>
+                <Ionicons name="flash" size={18} />
+                <Text style={s.h}>Cómo funciona</Text>
+              </View>
+              <Text style={s.li}>• 20 preguntas aleatorias.</Text>
+              <Text style={s.li}>• {SECS_PER_Q} s por pregunta.</Text>
+              <Text style={s.li}>• Puntos por velocidad y acierto.</Text>
+              <Text style={s.li}>• Al final verás tu resumen y letras a reforzar.</Text>
+
+              <Pressable style={s.btn} onPress={start}>
+                <Text style={s.btnTxt}>Comenzar</Text>
+              </Pressable>
+            </View>
+
+            <View style={s.hintBox}>
+              <Text style={s.hintTitle}>Ámbito del reto</Text>
+              <Text style={s.hintBody}>Incluye: ア〜オ, カ〜コ, サ〜ソ, タ〜ト, ナ〜ノ</Text>
+            </View>
+          </>
+        ) : null}
+
+        {started && current && (
+          <View style={[s.card, s.gameCard, flash === "ok" ? s.okFlash : flash === "bad" ? s.badFlash : null]}>
+            {/* Header de estado */}
+            <View style={s.rowBetween}>
+              <Chip icon="time" label={`${seconds}s`} />
+              <Chip icon="star" label={`${score} pts`} />
+              <Chip icon="flame" label={`x${streak}`} />
+            </View>
+
+            {/* Progreso */}
+            <View style={s.progressWrap}>
+              <View style={[s.progressBar, { width: `${((qIndex + 1) / questions.length) * 100}%` }]} />
+            </View>
+            <Text style={s.progressText}>
+              Pregunta {qIndex + 1}/{questions.length}
+            </Text>
+
+            {/* Enunciado */}
+            <View style={s.promptWrap}>
+              <Text style={s.promptHelp}>
+                {current.mode === "kana->roma" ? "¿Qué significa este katakana?" : "Selecciona el katakana correcto:"}
+              </Text>
+              <Text style={s.prompt}>
+                {current.prompt}
+              </Text>
+            </View>
+
+            {/* Opciones */}
+            <View style={s.optionsGrid}>
+              {current.options.map((opt, idx) => {
+                const chosen = selected !== null && (selected === opt.value);
+                const correctValue = current.mode === "kana->roma" ? current.pair.romaji : current.pair.kana;
+                const isRight = selected !== null && opt.value === correctValue;
+                return (
+                  <Pressable
+                    key={idx}
+                    onPress={() => onAnswer(opt.value)}
+                    style={({ pressed }) => [
+                      s.option,
+                      pressed && s.optionPressed,
+                      chosen && s.optionChosen,
+                      isRight && s.optionRight,
+                      selected && !isRight && chosen && s.optionWrong,
+                    ]}
+                  >
+                    <Text style={s.optionTxt}>{opt.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {!started && (qIndex > 0 || score > 0) && (
           <View style={s.card}>
             <View style={s.cardHeader}>
-              <Ionicons name="flash" size={18} />
-              <Text style={s.h}>Cómo funciona</Text>
+              <Ionicons name="ribbon" size={18} />
+              <Text style={s.h}>Resumen</Text>
             </View>
-            <Text style={s.li}>• 20 preguntas aleatorias.</Text>
-            <Text style={s.li}>• {SECS_PER_Q} s por pregunta.</Text>
-            <Text style={s.li}>• Puntos por velocidad y acierto.</Text>
-            <Text style={s.li}>• Al final verás tu resumen y letras a reforzar.</Text>
+            <View style={s.summaryRow}>
+              <Chip icon="star" label={`Puntaje: ${score}`} big />
+              <Chip icon="flame" label={`Racha máx: ${streak}`} big />
+            </View>
 
-            <Pressable style={s.btn} onPress={start}>
-              <Text style={s.btnTxt}>Comenzar</Text>
+            <Text style={[s.h, { marginTop: 12 }]}>Letras a reforzar</Text>
+            {mistakes.length === 0 ? (
+              <Text style={s.li}>¡Excelente! No hay errores para repasar. 🎉</Text>
+            ) : (
+              <View style={s.badges}>
+                {mistakes.map((m, i) => (
+                  <View key={`${m.kana}-${i}`} style={s.badge}>
+                    <Text style={s.badgeKana}>{m.kana}</Text>
+                    <Text style={s.badgeRoma}>{m.romaji}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <Pressable style={[s.btn, { marginTop: 16 }]} onPress={start}>
+              <Text style={s.btnTxt}>Jugar otra vez</Text>
             </Pressable>
           </View>
+        )}
+      </ScrollView>
 
-          <View style={s.hintBox}>
-            <Text style={s.hintTitle}>Ámbito del reto</Text>
-            <Text style={s.hintBody}>Incluye: ア〜オ, カ〜コ, サ〜ソ, タ〜ト, ナ〜ノ</Text>
-          </View>
-        </>
-      ) : null}
+      {/* Modal de recompensa */}
+      <Modal
+        animationType="fade"
+        transparent
+        visible={rewardModalVisible}
+        onRequestClose={() => setRewardModalVisible(false)}
+      >
+        <View style={s.modalBackdrop}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>¡Logro desbloqueado!</Text>
+            <Text style={s.modalAchievementName}>{ACHIEVEMENT_TITLE}</Text>
+            <Text style={s.modalPoints}>+{modalPoints} XP</Text>
 
-      {started && current && (
-        <View style={[s.card, s.gameCard, flash === "ok" ? s.okFlash : flash === "bad" ? s.badFlash : null]}>
-          {/* Header de estado */}
-          <View style={s.rowBetween}>
-            <Chip icon="time" label={`${seconds}s`} />
-            <Chip icon="star" label={`${score} pts`} />
-            <Chip icon="flame" label={`x${streak}`} />
-          </View>
-
-          {/* Progreso */}
-          <View style={s.progressWrap}>
-            <View style={[s.progressBar, { width: `${((qIndex + 1) / questions.length) * 100}%` }]} />
-          </View>
-          <Text style={s.progressText}>
-            Pregunta {qIndex + 1}/{questions.length}
-          </Text>
-
-          {/* Enunciado */}
-          <View style={s.promptWrap}>
-            <Text style={s.promptHelp}>
-              {current.mode === "kana->roma" ? "¿Qué significa este katakana?" : "Selecciona el katakana correcto:"}
-            </Text>
-            <Text style={s.prompt}>
-              {current.prompt}
-            </Text>
-          </View>
-
-          {/* Opciones */}
-          <View style={s.optionsGrid}>
-            {current.options.map((opt, idx) => {
-              const chosen = selected !== null && (selected === opt.value);
-              const correctValue = current.mode === "kana->roma" ? current.pair.romaji : current.pair.kana;
-              const isRight = selected !== null && opt.value === correctValue;
-              return (
-                <Pressable
-                  key={idx}
-                  onPress={() => onAnswer(opt.value)}
-                  style={({ pressed }) => [
-                    s.option,
-                    pressed && s.optionPressed,
-                    chosen && s.optionChosen,
-                    isRight && s.optionRight,
-                    selected && !isRight && chosen && s.optionWrong,
-                  ]}
-                >
-                  <Text style={s.optionTxt}>{opt.label}</Text>
-                </Pressable>
-              );
-            })}
+            <Pressable style={s.modalButton} onPress={() => setRewardModalVisible(false)}>
+              <Text style={s.modalButtonText}>Continuar</Text>
+            </Pressable>
           </View>
         </View>
-      )}
-
-      {!started && (qIndex > 0 || score > 0) && (
-        <View style={s.card}>
-          <View style={s.cardHeader}>
-            <Ionicons name="ribbon" size={18} />
-            <Text style={s.h}>Resumen</Text>
-          </View>
-          <View style={s.summaryRow}>
-            <Chip icon="star" label={`Puntaje: ${score}`} big />
-            <Chip icon="flame" label={`Racha máx: ${streak}`} big />
-          </View>
-
-          <Text style={[s.h, { marginTop: 12 }]}>Letras a reforzar</Text>
-          {mistakes.length === 0 ? (
-            <Text style={s.li}>¡Excelente! No hay errores para repasar. 🎉</Text>
-          ) : (
-            <View style={s.badges}>
-              {mistakes.map((m, i) => (
-                <View key={`${m.kana}-${i}`} style={s.badge}>
-                  <Text style={s.badgeKana}>{m.kana}</Text>
-                  <Text style={s.badgeRoma}>{m.romaji}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          <Pressable style={[s.btn, { marginTop: 16 }]} onPress={start}>
-            <Text style={s.btnTxt}>Jugar otra vez</Text>
-          </Pressable>
-        </View>
-      )}
-    </ScrollView>
+      </Modal>
+    </>
   );
 }
 
@@ -397,6 +469,38 @@ const s = StyleSheet.create({
   },
   badgeKana: { fontSize: 20, fontWeight: "900", color: INK, lineHeight: 24 },
   badgeRoma: { fontSize: 12, color: "#6B7280" },
+
+  /* ===== Modal estilos ===== */
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: INK,
+    alignItems: "center",
+  },
+  modalTitle: { fontSize: 16, fontWeight: "900", color: "#065f46", marginBottom: 6 },
+  modalAchievementName: { fontSize: 22, fontWeight: "900", color: INK, textAlign: "center" },
+  modalPoints: { fontSize: 26, fontWeight: "900", color: INK, marginTop: 8, marginBottom: 14 },
+  modalButton: {
+    backgroundColor: INK,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    minWidth: 140,
+    alignItems: "center",
+  },
+  modalButtonText: { color: "#fff", fontWeight: "800" },
 });
 
 const stylesChip = StyleSheet.create({

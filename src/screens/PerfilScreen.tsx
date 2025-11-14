@@ -34,7 +34,6 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
 
-import { pushUserEvent } from '../services/events';
 import {
   getRanks,
   ProfileLive,
@@ -43,6 +42,7 @@ import {
   updateDisplayName,
 } from '../services/profile';
 import { pickAndSaveAvatar } from '../services/uploadAvatar';
+import { awardXpCurrentUser } from '../services/xp';
 
 // 👇 selector de país
 import type { CountryCode } from 'react-native-country-picker-modal';
@@ -68,11 +68,7 @@ function bust(u?: string, v?: number | string) {
 /** Normaliza el código a uno válido. Evita 'XX', vacío o strings raros. */
 function normalizeCCA2(code?: string | null): CountryCode {
   const c = (code ?? '').toString().trim().toUpperCase();
-  // Rechaza placeholders comunes
   if (!c || c === 'XX' || c.length !== 2) return 'MX';
-  // Lista breve de fallback si quieres ser aún más estricto:
-  // const COMMON = new Set(['MX','US','AR','CO','CL','PE','ES','BR','UY','PY','BO','EC','VE','GT','SV','HN','NI','CR','PA','DO','CU','PR','CA','JP','KR','CN','DE','FR','IT','GB']);
-  // if (!COMMON.has(c)) return 'MX';
   return c as CountryCode;
 }
 
@@ -139,70 +135,39 @@ export default function PerfilScreen() {
     }
   };
 
-  // Foto de perfil desde Firestore/auth (seguro al usar bust)
+  // 🔥 Suscripción ÚNICA al perfil (incluye stats y avatar)
   useEffect(() => {
-    const u = auth.currentUser;
-    if (!u) return;
+    if (!uid) return;
+    const unsub = streamProfile(uid, (piece) => {
+      setProfile((prev) => ({ ...(prev ?? { displayName: '' , stats: null}), ...piece }));
+      if (piece.stats !== undefined) setStats(piece.stats ?? null);
 
-    const unsub = onSnapshot(doc(db, 'Usuarios', u.uid), (snap) => {
-      const url = snap.get('photoURL') as string | undefined;
-      const v = snap.get('avatarUpdatedAt') as number | string | undefined;
-      const b64 = snap.get('photoBase64') as string | undefined;
+      // avatar (preferencia: photoURL > photoBase64 > auth.photoURL)
+      const url = (piece as any)?.photoURL ?? auth.currentUser?.photoURL ?? null;
+      const b64 = (piece as any)?.photoBase64;
+      const v = (piece as any)?.avatarUpdatedAt;
+      if (url) setAvatarSrc(bust(url, v));
+      else if (b64) setAvatarSrc(`data:image/jpeg;base64,${b64}`);
+      else setAvatarSrc(null);
 
-      if (url) {
-        setAvatarSrc(bust(url, v));
-      } else if (b64) {
-        setAvatarSrc(`data:image/jpeg;base64,${b64}`);
-      } else if (u.photoURL) {
-        setAvatarSrc(u.photoURL);
-      } else {
-        setAvatarSrc(null);
+      // país visible
+      if ((piece as any)?.countryCode) {
+        setCountryCode(normalizeCCA2((piece as any).countryCode));
       }
     });
-
-    return () => unsub();
-  }, []);
-
-  // 🔥 Suscripción a logros del usuario (Usuarios/{uid}/userAchievements)
-  useEffect(() => {
-    if (!uid) return;
-    const colRef = collection(db, 'Usuarios', uid, 'userAchievements');
-    const q = query(colRef, orderBy('unlockedAt', 'desc'));
-
-    const unsub = onSnapshot(q, (snap) => {
-      const rows = snap.docs.map((d) => ({
-        id: d.id,
-        sub: d.id,
-      }));
-      setAchievements(rows);
-    });
-
-    return () => unsub();
+    return unsub;
   }, [uid]);
 
-  // 🔄 stream user + stats en tiempo real
+  // 🔥 Logros en tiempo real
   useEffect(() => {
     if (!uid) return;
-
-    let draft: ProfileLive = {
-      displayName: '',
-      email: user?.email ?? '',
-      countryCode: 'XX',
-      lastActiveAt: undefined,
-      stats: null,
-    };
-
-    const unsub = streamProfile(uid, (piece) => {
-      draft = { ...draft, ...piece, stats: piece.stats ?? draft.stats };
-      setProfile(draft);
-      setStats(draft.stats);
-
-      // sincroniza selector de país al valor del perfil (normalizado)
-      const next = normalizeCCA2(piece.countryCode as string | undefined);
-      setCountryCode(next);
+    const colRef = collection(db, 'Usuarios', uid, 'logros');
+    const q = query(colRef, orderBy('unlockedAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, sub: d.id }));
+      setAchievements(rows);
     });
-
-    return unsub;
+    return () => unsub();
   }, [uid]);
 
   // 🏅 ranks
@@ -213,7 +178,7 @@ export default function PerfilScreen() {
         const r = await getRanks(uid);
         setRanks(r);
       } catch {
-        // si falla, dejamos los ranks en null
+        // noop
       }
     })();
   }, [uid, stats?.points, profile?.countryCode]);
@@ -231,7 +196,6 @@ export default function PerfilScreen() {
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
-
       (async () => {
         try {
           await Audio.setAudioModeAsync({
@@ -239,12 +203,10 @@ export default function PerfilScreen() {
             staysActiveInBackground: false,
             shouldDuckAndroid: true,
           });
-
           const { sound } = await Audio.Sound.createAsync(
             require('../../assets/sounds/enter_profile.mp3'),
             { shouldPlay: true, volume: 0.6, isLooping: false },
           );
-
           if (!mounted) {
             await sound.unloadAsync();
             return;
@@ -265,11 +227,14 @@ export default function PerfilScreen() {
     }, []),
   );
 
-  // Botón temporal para probar suma de puntos
+  // Botón dorado: suma +50 XP (refleja en tiempo real)
   const add50 = async () => {
-    if (!uid) return;
-    await pushUserEvent(uid, 'lesson_completed', 50);
-    Alert.alert('OK', 'Se agregaron +50 puntos (prueba).');
+    try {
+      await awardXpCurrentUser(50, { source: 'premium_button' });
+      Alert.alert('OK', 'Se agregaron +50 puntos.');
+    } catch (e: any) {
+      Alert.alert('Ups', e?.message ?? 'No se pudo sumar XP.');
+    }
   };
 
   // Guardar país seleccionado (siempre válido)
@@ -279,8 +244,7 @@ export default function PerfilScreen() {
       const safe = normalizeCCA2(cca2);
       setCountryCode(safe);
       await updateDoc(doc(db, 'Usuarios', uid), { countryCode: safe });
-      setShowCountryPicker(false);
-      const r = await getRanks(uid); // Recalcular ranks (local depende del país)
+      const r = await getRanks(uid);
       setRanks(r);
     } catch (e: any) {
       Alert.alert('Ups', e?.message ?? 'No se pudo actualizar tu país.');
@@ -374,7 +338,7 @@ export default function PerfilScreen() {
             <Text style={styles.countryTxt}>País: {safeCCA2} (cambiar)</Text>
           </TouchableOpacity>
 
-          {/* Botón premium (temporal: suma +50 para probar) */}
+          {/* Botón premium (suma +50 XP) */}
           <TouchableOpacity style={styles.premiumBtn} activeOpacity={0.9} onPress={add50}>
             <CrownIcon width={18} height={18} />
             <Text style={styles.premiumTxt}>Obtener premium</Text>
@@ -476,7 +440,7 @@ export default function PerfilScreen() {
                 </ScrollView>
               </Card>
 
-              {/* Juegos (se implementará V2) */}
+              {/* Juegos (placeholder) */}
               <Card>
                 <Image
                   source={
@@ -552,7 +516,6 @@ export default function PerfilScreen() {
 }
 
 /* —————— Subcomponentes —————— */
-
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.stat}>

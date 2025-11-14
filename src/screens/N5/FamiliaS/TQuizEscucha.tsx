@@ -1,9 +1,10 @@
 // src/screens/N5/FamiliaT/TQuizEscucha.tsx
 import * as Speech from "expo-speech";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { useFeedbackSounds } from "../../../../src/hooks/useFeedbackSounds";
+import { awardAchievement } from "../../../services/achievements";
 
 /* ============== Datos ============== */
 type KanaKeyT = "ta" | "chi" | "tsu" | "te" | "to";
@@ -51,6 +53,13 @@ export default function TQuizEscucha() {
   const [score, setScore] = useState(0);
   const [picked, setPicked] = useState<KanaKeyT | null>(null);
 
+  // 🏅 logro
+  const [showAchModal, setShowAchModal] = useState(false);
+  const achievementGivenRef = useRef(false);
+  const ACH_ID = "tquiz_famT_buenoido";
+  const ACH_SUB = "BuenOido";
+  const ACH_XP = 20;
+
   const item = deck[round];
 
   // ✅ Sonidos de feedback
@@ -69,7 +78,7 @@ export default function TQuizEscucha() {
     return () => { try { Speech.stop(); } catch {} };
   }, []);
 
-  // Anti doble-tap
+  // Anti doble-tap TTS
   const busyRef = useRef(false);
 
   const speak = useCallback(async (it: QuizItem) => {
@@ -90,7 +99,22 @@ export default function TQuizEscucha() {
     }
   }, [jaVoiceId]);
 
-  // Opciones
+  // Otorga el logro (idempotente) y abre modal
+  const finishAndShowAchievement = useCallback(async () => {
+    if (!achievementGivenRef.current) {
+      try {
+        await awardAchievement(ACH_ID, {
+          xp: ACH_XP,
+          sub: ACH_SUB,
+          meta: { screenKey: "N5_FamiliaT_TQuizEscucha", score },
+        });
+      } catch {}
+      achievementGivenRef.current = true;
+    }
+    setShowAchModal(true);
+  }, [score]);
+
+  // Elegir opción (auto-siguiente y modal al final)
   const onPick = useCallback((k: KanaKeyT) => {
     if (!item || picked) return;
     setPicked(k);
@@ -104,20 +128,41 @@ export default function TQuizEscucha() {
       Vibration.vibrate([0, 30, 40, 30]);
       if (sndReady) { playWrong().catch(() => {}); }
     }
-  }, [item, picked, sndReady, playCorrect, playWrong]);
 
+    // ⏭️ Auto-avance tras breve retardo (para que se vea el feedback de color)
+    setTimeout(() => {
+      const isLast = round + 1 >= deck.length;
+      if (isLast) {
+        finishAndShowAchievement();
+      } else {
+        setRound((r) => r + 1);
+        setPicked(null);
+      }
+    }, 420);
+  }, [item, picked, sndReady, playCorrect, playWrong, round, deck.length, finishAndShowAchievement]);
+
+  // Botón “Siguiente” (fallback manual si lo quieres mantener)
   const next = useCallback(() => {
-    if (round + 1 >= deck.length) {
-      setRound(0);
-      setScore(0);
-      setPicked(null);
+    const isLast = round + 1 >= deck.length;
+    if (isLast) {
+      finishAndShowAchievement();
       return;
     }
     setRound((r) => r + 1);
     setPicked(null);
-  }, [round, deck.length]);
+  }, [round, deck.length, finishAndShowAchievement]);
 
   const resetDeck = useCallback(() => {
+    setRound(0);
+    setScore(0);
+    setPicked(null);
+    achievementGivenRef.current = false;
+    setShowAchModal(false);
+  }, []);
+
+  const onCloseModal = useCallback(() => {
+    // cerrar y reiniciar para poder repetir
+    setShowAchModal(false);
     setRound(0);
     setScore(0);
     setPicked(null);
@@ -202,18 +247,34 @@ export default function TQuizEscucha() {
           }}
         />
 
+        {/* Botón manual por si lo quieres conservar (ya no es necesario) */}
         <Pressable
           onPressIn={next}
           disabled={picked == null}
           style={[styles.primaryBtn, { marginTop: 12, opacity: picked == null ? 0.5 : 1 }]}
         >
           <Text style={styles.primaryBtnText}>
-            {round + 1 >= deck.length ? "Reiniciar" : "Siguiente"}
+            {round + 1 >= deck.length ? "Ver logro" : "Siguiente"}
           </Text>
         </Pressable>
       </View>
 
       <Text style={styles.footerNote}>Tip: pulsa “TTS” varias veces y compara con las opciones.</Text>
+
+      {/* 🏅 Modal de logro */}
+      <Modal transparent visible={showAchModal} animationType="fade" onRequestClose={onCloseModal}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>🏅 ¡Logro desbloqueado!</Text>
+            <Text style={styles.modalSubtitle}>BuenOido</Text>
+            <Text style={styles.modalText}>+{ACH_XP} XP por completar la ronda de escucha.</Text>
+
+            <Pressable onPressIn={onCloseModal} style={({ pressed }) => [styles.modalBtn, pressed && { opacity: 0.85 }]}>
+              <Text style={styles.modalBtnText}>Aceptar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -279,4 +340,25 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 11, color: "#3B2F2F", fontWeight: "700" },
 
   footerNote: { textAlign: "center", fontSize: 11, color: "#555", marginVertical: 10 },
+
+  /* Modal logro */
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCard: {
+    width: "82%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+  },
+  modalTitle: { fontSize: 18, fontWeight: "900", textAlign: "center", marginBottom: 4, color: "#065F46" },
+  modalSubtitle: { fontSize: 16, fontWeight: "900", textAlign: "center", marginBottom: 6 },
+  modalText: { fontSize: 14, textAlign: "center", marginBottom: 12 },
+  modalBtn: { alignSelf: "center", backgroundColor: "#111827", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
+  modalBtnText: { color: "#fff", fontWeight: "800" },
 });

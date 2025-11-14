@@ -2,22 +2,22 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Animated,
-    Easing,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Easing,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useFeedbackSounds } from '../../hooks/useFeedbackSounds';
 import {
-    AchievementPayload,
-    awardAchievement, // idempotente (transacción)
-    getAchievement,
+  AchievementPayload,
+  awardAchievement, // idempotente (transacción)
+  getAchievement,
 } from '../../services/achievements';
 
 type Question = {
@@ -182,21 +182,25 @@ export default function QuizCultural() {
 
     try {
       const pass = score >= Math.ceil(QUESTIONS.length * 0.6);
-      pass ? playCorrect() : playWrong();
+      if (pass) {
+        await playCorrect();   // 👈 corregido: sin expresión sin uso
+      } else {
+        await playWrong();     // 👈 corregido
+      }
     } catch {}
 
     const payload: AchievementPayload = {
-      title: 'Primer mapache: cuestionario completado',
-      description: 'Completaste tu primer Quiz Cultural en Nichiboku.',
+      title: '!Cultura!',
+      description: 'Completaste el Quiz Cultural en Nichiboku.',
       icon: 'mapache',
       badgeColor: '#D7B56D',
-      points: 50,
-      xp: 50,
+      points: 15,   // 👈 15 px
+      xp: 15,       // 👈 15 XP
       score,
       total: QUESTIONS.length,
       type: 'quiz',
       quizKey: 'QuizCultural',
-      sub: 'quiz_cultural',
+      sub: 'cultura',
       version: 1,
       createdAt: Date.now(),
     };
@@ -308,7 +312,7 @@ export default function QuizCultural() {
       <AchievementToast
         visible={showToast}
         title="¡Logro desbloqueado!"
-        subtitle="Primer mapache: cuestionario completado"
+        subtitle="¡Cultura! cuestionario completado"
       />
     </View>
   );

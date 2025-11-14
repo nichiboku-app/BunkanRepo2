@@ -3,11 +3,16 @@ import "react-native-gesture-handler";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useRef } from "react";
 import { Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { B3ScoreProvider } from "./src/context/B3ScoreContext";
 import type { RootStackParamList } from "./types";
+
+// 🔐 Gamificación: auto-award onEnter
+import { auth } from "./src/config/firebaseConfig";
+import { awardFromScreen, getAwardMode } from "./src/services/award";
 
 // Screens raíz
 import BienvenidaScreen from "./src/screens/BienvenidaScreen";
@@ -46,7 +51,6 @@ import ADictadoVisual from "./src/screens/N5/ADictadoVisual";
 import TemaGramaticaFamiliaScreen from "./src/screens/N5/TemaGramatica/FamiliaScreen";
 import VideoIntroModal from "./src/screens/N5/VideoIntroModal";
 
-
 // ✅ Pantallas reales (Grupo A)
 import PronunciacionGrupoA from "./src/screens/N5/PronunciacionGrupoA";
 import TrazosGrupoA from "./src/screens/N5/TrazosGrupoA";
@@ -77,11 +81,11 @@ import NLecturaGuiadaScreen from "./src/screens/N5/FamiliaN/NLecturaGuiadaScreen
 import HiraganaMMenu from "./src/screens/N5/HiraganaM/HiraganaMMenu";
 import HiraganaYRMenu from "./src/screens/N5/HiraganaYR/HiraganaYRMenu";
 // (opcional) subpantallas
+import B4_DesuNeg from "./src/screens/N5/B4_DesuNeg";
 import M_Dictado from "./src/screens/N5/HiraganaM/M_Dictado";
 import M_PracticaVoz from "./src/screens/N5/HiraganaM/M_PracticaVoz";
 import YR_AudioInteractivo from "./src/screens/N5/HiraganaYR/YR_AudioInteractivo";
 import YR_CompletarPalabras from "./src/screens/N5/HiraganaYR/YR_CompletarPalabras";
-
 // ✅ NUEVO: Grupo W–N — menú y subpantallas
 import HiraganaWNMenu from "./src/screens/N5/HiraganaWN/HiraganaWNMenu";
 import WN_LecturaFrases from "./src/screens/N5/HiraganaWN/WN_LecturaFrases";
@@ -102,6 +106,39 @@ import B8EvaluacionesLogrosMenu from "./src/screens/N5/B8Evaluaciones/B8Evaluaci
 import ExamenFinalMapacheN5 from "./src/screens/N5/ExamenFinal/ExamenFinalMapacheN5";
 import N5_DiagnosticoScreen from "./src/screens/N5/N5_DiagnosticoScreen";
 
+import B4_Desu from "./src/screens/N5/B4_Desu";
+import B4_KoreSoreAre from "./src/screens/N5/B4_KoreSoreAre";
+import B4_NoModifier from "./src/screens/N5/B4_NoModifier";
+import B4_PregKa from "./src/screens/N5/B4_PregKa";
+// App.tsx (arriba con los demás imports)
+import B4_Tiempo from "./src/screens/N5/B4_Tiempo";
+import B4_WaGa from "./src/screens/N5/B4_WaGa";
+import B4_Wo from "./src/screens/N5/B4_Wo";
+// App.tsx — imports
+import B4_Adjetivos from "./src/screens/N5/B4_Adjetivos";
+import B4_ArimasuImasu from "./src/screens/N5/B4_ArimasuImasu";
+import B4_De from "./src/screens/N5/B4_De";
+import B4_MasuIntro from "./src/screens/N5/B4_MasuIntro";
+import B4_MasuNeg from "./src/screens/N5/B4_MasuNeg";
+import B4_Mo from "./src/screens/N5/B4_Mo";
+import B4_NiHe from "./src/screens/N5/B4_NiHe";
+import B5_Contadores from "./src/screens/N5/B5_Contadores";
+// App.tsx
+import B6_EmergenciasScreen from "./src/screens/B6_Emergencias";
+import B6_HotelScreen from "./src/screens/B6_Hotel";
+import B6_TiendasScreen from "./src/screens/B6_Tiendas";
+import B6_TransporteScreen from "./src/screens/B6_Transporte";
+import B5_AdverbiosFrecuencia from "./src/screens/N5/B5_AdverbiosFrecuencia";
+import B5_DiasMeses from "./src/screens/N5/B5_DiasMeses";
+import B5_Frecuencia from "./src/screens/N5/B5_Frecuencia";
+import B5_HorariosRutina from "./src/screens/N5/B5_HorariosRutina";
+import B5_ParticulasTiempo from "./src/screens/N5/B5_ParticulasTiempo";
+import B5_TiempoDuracion from "./src/screens/N5/B5_TiempoDuracion";
+import B5_TiempoPuntos from "./src/screens/N5/B5_TiempoPuntos";
+
+import B6_DineroScreen from "./src/screens/B6_Dinero";
+import B6_DireccionesScreen from "./src/screens/B6_Direcciones";
+import B5_VecesContador from "./src/screens/N5/B5_VecesContador";
 // ✅ Bloque 3 — Números y Edad (tres actividades)
 // ✅ rutas correctas (carpeta B3_Familia)
 import B3_Familia from "./src/screens/N5/B3_Familia/B3_Familia";
@@ -167,13 +204,13 @@ import N3_B5_U3_PracticeScreen from "./src/screens/N3/B5/N3_B5_U3_PracticeScreen
 import N3_B5_U4_PracticeScreen from "./src/screens/N3/B5/N3_B5_U4_PracticeScreen";
 import N3_B5_U5_PracticeScreen from "./src/screens/N3/B5/N3_B5_U5_PracticeScreen";
 
+import B6_RestauranteScreen from "./src/screens/B6_Restaurante";
 import N3_B6_U2_PracticeScreen from "./src/screens/N3/B6/N3_B6_U2_PracticeScreen";
 import N3_B6_U3_PracticeScreen from "./src/screens/N3/B6/N3_B6_U3_PracticeScreen";
 import N3_B6_U4_PracticeScreen from "./src/screens/N3/B6/N3_B6_U4_PracticeScreen";
 import N3_B6_U5_PracticeScreen from "./src/screens/N3/B6/N3_B6_U5_PracticeScreen";
 import N3_B6_U6_PracticeScreen from "./src/screens/N3/B6/N3_B6_U6_PracticeScreen";
 import N3_FinalExamScreen from "./src/screens/N3/N3_FinalExamScreen";
-
 // === N2 ===
 import CursoN2Screen from "./src/screens/N2/N2BrowseScreen";
 import N2IntroScreen from "./src/screens/N2IntroScreen";
@@ -196,20 +233,7 @@ import N2_B5_U3 from "./src/screens/N2/N2_B5_U3";
 import N2BrowseScreen from "./src/screens/N2/N2BrowseScreen";
 
 // === N1 ===
-import CursoN1Screen from "./src/screens/N1/CursoN1"; // ✅ IMPORTA EL COMPONENTE REAL
-import N1ExamScreen from "./src/screens/N1/N1ExamScreen";
-import N1HomeScreen from "./src/screens/N1/N1HomeScreen";
-import N1KanjiHubScreen from "./src/screens/N1/N1KanjiHubScreen"; // placeholder abajo
-import N1KanjiLessonScreen from "./src/screens/N1/N1KanjiLessonScreen";
-import N1LessonScreen from "./src/screens/N1/N1LessonScreen"; // placeholder abajo
-import N1IntroScreen from "./src/screens/N1IntroScreen";
-
-import N1GameScreen from "./src/screens/N1/N1GameScreen";
-import N1KanjiMockScreen from "./src/screens/N1/N1KanjiMockScreen";
-import N1QuickExamScreen from "./src/screens/N1/N1QuickExamScreen";
-import N1QuizScreen from "./src/screens/N1/N1QuizScreen";
-
-// App.tsx (imports)
+import CursoN1Screen from "./src/screens/N1/CursoN1";
 import N1_CultureScreen from "./src/screens/N1/lessons/N1_CultureScreen";
 import N1_EnvironmentScreen from "./src/screens/N1/lessons/N1_EnvironmentScreen";
 import N1_HealthScreen from "./src/screens/N1/lessons/N1_HealthScreen";
@@ -219,10 +243,21 @@ import N1_OpinionScreen from "./src/screens/N1/lessons/N1_OpinionScreen";
 import N1_TechScreen from "./src/screens/N1/lessons/N1_TechScreen";
 import N1_WorkScreen from "./src/screens/N1/lessons/N1_WorkScreen";
 import N1_EconomyScreen from "./src/screens/N1/N1_EconomyScreen";
+import N1ExamScreen from "./src/screens/N1/N1ExamScreen";
+import N1GameScreen from "./src/screens/N1/N1GameScreen";
+import N1HomeScreen from "./src/screens/N1/N1HomeScreen";
+import N1KanjiHubScreen from "./src/screens/N1/N1KanjiHubScreen";
+import N1KanjiLessonScreen from "./src/screens/N1/N1KanjiLessonScreen";
+import N1KanjiMockScreen from "./src/screens/N1/N1KanjiMockScreen";
+import N1LessonScreen from "./src/screens/N1/N1LessonScreen";
+import N1QuickExamScreen from "./src/screens/N1/N1QuickExamScreen";
+import N1QuizScreen from "./src/screens/N1/N1QuizScreen";
 import PoliticsScreen from "./src/screens/N1/PoliticsScreen";
+import N1IntroScreen from "./src/screens/N1IntroScreen";
 
 
-// import
+import B6_ComprasScreen from "./src/screens/B6_Compras";
+
 // Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -237,13 +272,46 @@ function Placeholder({ title }: { title: string }) {
   );
 }
 
+/** Helper para obtener el nombre de la ruta activa (soporta anidados) */
+function getActiveRouteName(state: any): string | undefined {
+  if (!state) return undefined;
+  const route = state.routes[state.index ?? 0];
+  if (route?.state) return getActiveRouteName(route.state);
+  return route?.name as string | undefined;
+}
+
 export default function App() {
   const newLocal = "N3_B3_U1_Practice";
+  const routeNameRef = useRef<string | undefined>();
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <B3ScoreProvider>
-          <NavigationContainer>
+          <NavigationContainer
+            onReady={() => {
+              routeNameRef.current = undefined;
+            }}
+            onStateChange={async (state) => {
+              const currentRouteName = getActiveRouteName(state);
+              if (!currentRouteName || routeNameRef.current === currentRouteName) return;
+
+              routeNameRef.current = currentRouteName;
+
+              // 🎯 Auto-award en pantallas configuradas como "onEnter"
+              const mode = getAwardMode(currentRouteName);
+              if (mode === "onEnter") {
+                const uid = auth.currentUser?.uid;
+                if (uid) {
+                  try {
+                    await awardFromScreen(uid, currentRouteName);
+                  } catch (e) {
+                    console.warn("[auto-award onEnter] error", e);
+                  }
+                }
+              }
+            }}
+          >
             <Stack.Navigator
               initialRouteName="Splash"
               screenOptions={{
@@ -273,10 +341,10 @@ export default function App() {
                 options={{ headerShown: true, title: "Orígenes del idioma" }}
               />
               <Stack.Screen
-  name="N5_Diagnostico"
-  component={N5_DiagnosticoScreen}
-  options={{ headerShown: true, title: "Examen diagnóstico N5" }}
-/>
+                name="N5_Diagnostico"
+                component={N5_DiagnosticoScreen}
+                options={{ headerShown: true, title: "Examen diagnóstico N5" }}
+              />
 
               <Stack.Screen
                 name="EscrituraN5"
@@ -289,10 +357,10 @@ export default function App() {
                 options={{ headerShown: true, title: "Cultura básica" }}
               />
               <Stack.Screen
-  name="TemasBasicos"
-  component={TemasBasicosScreen}
-  options={{ headerShown: true, title: "Temas básicos (N5)" }}
-/>
+                name="TemasBasicos"
+                component={TemasBasicosScreen}
+                options={{ headerShown: true, title: "Temas básicos (N5)" }}
+              />
 
               <Stack.Screen name="Subtema" component={SubtemaScreen} options={{ headerShown: false }} />
               <Stack.Screen
@@ -379,10 +447,10 @@ export default function App() {
                 children={() => <Placeholder title="TrazoAnimadoGrupoA" />}
               />
               <Stack.Screen
-  name="TemaGramaticaFamiliaN5"
-  component={TemaGramaticaFamiliaScreen} // tu componente
-  options={{ title: "Tema y gramática: Familia (N5)" }}
-/>
+                name="TemaGramaticaFamiliaN5"
+                component={TemaGramaticaFamiliaScreen}
+                options={{ title: "Tema y gramática: Familia (N5)" }}
+              />
 
               {/* === Grupo K === */}
               <Stack.Screen
@@ -478,6 +546,189 @@ export default function App() {
               <Stack.Screen name="B7LecturaPracticaMenu" component={B7LecturaPracticaMenu} options={{ title: "Bloque 7" }} />
               <Stack.Screen name="B8EvaluacionesLogrosMenu" component={B8EvaluacionesLogrosMenu} options={{ title: "Bloque 8" }} />
               <Stack.Screen name="ExamenFinalMapacheN5" component={ExamenFinalMapacheN5} options={{ title: "Examen final N5" }} />
+<Stack.Screen
+  name="B4_Desu"
+  component={B4_Desu}
+  options={{ headerShown: true, title: "A は B です — Verbo DESU" }}
+/>
+<Stack.Screen
+  name="B4_MasuIntro"
+  component={B4_MasuIntro}
+  options={{ title: "B4 — Verbos ます (presente)" }}
+/>
+
+
+<Stack.Screen
+  name="B4_DesuNeg"
+  component={B4_DesuNeg}
+  options={{ headerShown: true, title: "A は B じゃありません — DESU negativo" }}
+/>
+
+
+<Stack.Screen
+  name="B4_PregKa"
+  component={B4_PregKa}
+  options={{ headerShown: true, title: "A は B ですか？ — DESU + か" }}
+/>
+
+
+<Stack.Screen
+  name="B4_KoreSoreAre"
+  component={B4_KoreSoreAre}
+  options={{ headerShown: true, title: "Demostrativos — これ・それ・あれ" }}
+/>
+<Stack.Screen
+  name="B4_NoModifier"
+  component={B4_NoModifier}
+  options={{ headerShown: true, title: "N1 の N2 — posesión / tipo" }}
+/>
+
+<Stack.Screen
+  name="B4_WaGa"
+  component={B4_WaGa}
+  options={{ headerShown: true, title: "は vs が — tópico/sujeto" }}
+/>
+<Stack.Screen
+  name="B4_Wo"
+  component={B4_Wo}
+  options={{ headerShown: true, title: "Partícula を — objeto directo" }}
+/>
+<Stack.Screen
+  name="B4_NiHe"
+  component={B4_NiHe}
+  options={{ headerShown: true, title: "Partículas に・へ — destino/tiempo" }}
+/>
+<Stack.Screen
+  name="B4_De"
+  component={B4_De}
+  options={{ headerShown: true, title: "Partícula で — lugar de acción / medio" }}
+/>
+<Stack.Screen
+  name="B4_ArimasuImasu"
+  component={B4_ArimasuImasu}
+  options={{ headerShown: true, title: "Hay / Está — あります・います" }}
+/>
+<Stack.Screen
+  name="B4_Adjetivos"
+  component={B4_Adjetivos}
+  options={{ headerShown: true, title: "Adjetivos i・na — presente" }}
+/>
+<Stack.Screen
+  name="B4_Mo"
+  component={B4_Mo}
+  options={{ headerShown: true, title: "Partícula も — también" }}
+/>
+
+<Stack.Screen
+  name="B4_Tiempo"
+  component={B4_Tiempo}
+  options={{ headerShown: true, title: "Tiempo y に — horas・minutos・días" }}
+/>
+<Stack.Screen
+  name="B4_MasuNeg"
+  component={B4_MasuNeg}
+  options={{ title: "B4 — Verbos ません (presente negativo)" }}
+/>
+<Stack.Screen
+  name="B5_Contadores"
+  component={B5_Contadores}
+  options={{ title: "B5 — Contadores (N5)" }}
+/>
+
+<Stack.Screen
+  name="B5_TiempoPuntos"
+  component={B5_TiempoPuntos}
+  options={{ headerShown: true, title: "Tiempo: horas y fechas" }}
+/>
+<Stack.Screen
+  name="B5_TiempoDuracion"
+  component={B5_TiempoDuracion}
+  options={{ headerShown: true, title: "Tiempo: duración y tramo" }}
+/>
+
+<Stack.Screen
+  name="B5_Frecuencia"
+  component={B5_Frecuencia}
+  options={{ headerShown: true, title: "B5 — Frecuencia" }}
+/>
+<Stack.Screen
+  name="B5_AdverbiosFrecuencia"
+  component={B5_AdverbiosFrecuencia}
+  options={{ headerShown: true, title: "B5 — Adverbios de frecuencia" }}
+/>
+
+<Stack.Screen
+  name="B5_DiasMeses"
+  component={B5_DiasMeses}
+  options={{ headerShown: true, title: "B5 — Días, meses y fechas" }}
+/>
+
+<Stack.Screen
+  name="B5_HorariosRutina"
+  component={B5_HorariosRutina}
+  options={{ headerShown: true, title: "B5 — Horarios y rutina" }}
+/>
+<Stack.Screen
+  name="B5_VecesContador"
+  component={B5_VecesContador}
+  options={{ headerShown: true, title: "B5 — Veces（回）" }}
+/>
+
+<Stack.Screen
+  name="B5_ParticulasTiempo"
+  component={B5_ParticulasTiempo}
+  options={{ headerShown: true, title: "B5 — Partículas de tiempo" }}
+/>
+
+
+<Stack.Screen
+  name="B6_Compras"
+  component={B6_ComprasScreen}
+  options={{ headerShown: true, title: "Compras (N5)" }}
+/>
+
+<Stack.Screen
+  name="B6_Restaurante"
+  component={B6_RestauranteScreen}
+  options={{ headerShown: true, title: "Restaurante (N5)" }}
+/>
+
+<Stack.Screen
+  name="B6_Transporte"
+  component={B6_TransporteScreen}
+  options={{ headerShown: true, title: "Transporte (N5)" }}
+/>
+
+
+<Stack.Screen
+  name="B6_Dinero"
+  component={B6_DineroScreen}
+  options={{ headerShown: true, title: "Dinero" }}
+/>
+
+<Stack.Screen
+  name="B6_Direcciones"
+  component={B6_DireccionesScreen}
+  options={{ headerShown: true, title: "Direcciones" }}
+/>
+
+<Stack.Screen
+  name="B6_Tiendas"
+  component={B6_TiendasScreen}
+  options={{ headerShown: true, title: "Tiendas" }}
+/>
+<Stack.Screen
+  name="B6_Hotel"
+  component={B6_HotelScreen}
+  options={{ headerShown: true, title: "Hotel" }}
+/>
+
+<Stack.Screen
+  name="B6_Emergencias"
+  component={B6_EmergenciasScreen}
+  options={{ headerShown: true, title: "Emergencias" }}
+/>
+
 
               {/* ✅ Bloque 3: pantallas reales */}
               <Stack.Screen name="B3_NumerosEdad" component={B3_NumerosEdad} options={{ headerShown: true, title: "B3 — Números y edad" }} />
@@ -579,30 +830,28 @@ export default function App() {
               <Stack.Screen name="N2_B5_U2" component={N2_B5_U2} options={{ headerShown:false }} />
               <Stack.Screen name="N2_B5_U3" component={N2_B5_U3} options={{ headerShown:false }} />
 
-             <Stack.Screen name="N1Intro" component={N1IntroScreen} options={{ headerShown: false }} />
-<Stack.Screen name="CursoN1" component={CursoN1Screen} options={{ headerShown: false }} />
-<Stack.Screen name="N1Home" component={N1HomeScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1Lesson" component={N1LessonScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1KanjiHub" component={N1KanjiHubScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1Exam" component={N1ExamScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1KanjiLesson" component={N1KanjiLessonScreen} options={{ headerShown: false }} />
-
-<Stack.Screen name="N1Quiz" component={N1QuizScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1Game" component={N1GameScreen} options={{ headerShown: false }} />
-
-<Stack.Screen name="N1KanjiMock" component={N1KanjiMockScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1QuickExam" component={N1QuickExamScreen} options={{ headerShown: false }} />
-
-<Stack.Screen name="Politics" component={PoliticsScreen} options={{ headerShown: false }} />
-<Stack.Screen name="Economy"  component={N1_EconomyScreen}  options={{ headerShown: false }} />
-<Stack.Screen name="N1_Tech" component={N1_TechScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1_Culture" component={N1_CultureScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1_Law" component={N1_LawScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1_Environment" component={N1_EnvironmentScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1_Health" component={N1_HealthScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1_Work" component={N1_WorkScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1_Opinion" component={N1_OpinionScreen} options={{ headerShown: false }} />
-<Stack.Screen name="N1_International" component={N1_InternationalScreen} options={{ headerShown: false }} />
+              {/* === N1 === */}
+              <Stack.Screen name="N1Intro" component={N1IntroScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="CursoN1" component={CursoN1Screen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1Home" component={N1HomeScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1Lesson" component={N1LessonScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1KanjiHub" component={N1KanjiHubScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1Exam" component={N1ExamScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1KanjiLesson" component={N1KanjiLessonScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1Quiz" component={N1QuizScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1Game" component={N1GameScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1KanjiMock" component={N1KanjiMockScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1QuickExam" component={N1QuickExamScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="Politics" component={PoliticsScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="Economy"  component={N1_EconomyScreen}  options={{ headerShown: false }} />
+              <Stack.Screen name="N1_Tech" component={N1_TechScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1_Culture" component={N1_CultureScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1_Law" component={N1_LawScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1_Environment" component={N1_EnvironmentScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1_Health" component={N1_HealthScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1_Work" component={N1_WorkScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1_Opinion" component={N1_OpinionScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="N1_International" component={N1_InternationalScreen} options={{ headerShown: false }} />
             </Stack.Navigator>
           </NavigationContainer>
         </B3ScoreProvider>

@@ -276,7 +276,7 @@ function AchievementToast({
    Pantalla principal
 ================================ */
 const ACH_ID = 'gif_saludo_01';
-const XP_POINTS = 20;
+const XP_POINTS = 10; // 👈 10 px / 10 XP
 
 type IntervalId = ReturnType<typeof globalThis.setInterval>;
 type TimeoutId  = ReturnType<typeof globalThis.setTimeout>;
@@ -357,12 +357,12 @@ export default function GifSaludo() {
     if (awarded || isMarking) return;
     setIsMarking(true);
     const payload: AchievementPayload = {
-      title: 'Saludín inicial',
+      title: 'Saludando', // 👈 nombre del logro
       description: 'Revisaste los saludos básicos con video y teoría.',
       icon: 'saludo_mapache',
       badgeColor: '#8FBF8F',
-      points: XP_POINTS,
-      xp: XP_POINTS,
+      points: XP_POINTS,  // 10 px
+      xp: XP_POINTS,      // 10 XP
       score: ITEMS.length,
       total: ITEMS.length,
       type: 'practice',
@@ -372,7 +372,7 @@ export default function GifSaludo() {
       createdAt: Date.now(),
     };
     try {
-      await awardAchievement(ACH_ID, payload);
+      await awardAchievement(ACH_ID, payload); // idempotente en servicio
       setAwarded(true);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
@@ -397,7 +397,7 @@ export default function GifSaludo() {
       {awarded && (
         <View style={s.banner}>
           <Text style={s.bannerTitle}>🔒 Mini-logro obtenido</Text>
-          <Text style={s.bannerText}>Ya desbloqueaste “Saludín inicial”. ¡+{XP_POINTS} XP!</Text>
+          <Text style={s.bannerText}>Ya desbloqueaste “Saludando”. ¡+{XP_POINTS} XP!</Text>
         </View>
       )}
 
@@ -480,7 +480,7 @@ export default function GifSaludo() {
           hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
         >
           <Text style={s.btnTxt}>
-            {awarded ? 'ya marcado como aprendido' : (isMarking ? 'guardando…' : 'marcar como aprendido (+20 xp)')}
+            {awarded ? 'ya marcado como aprendido' : (isMarking ? 'guardando…' : 'marcar como aprendido (+10 xp)')}
           </Text>
         </Pressable>
 
@@ -505,7 +505,7 @@ export default function GifSaludo() {
       <AchievementToast
         visible={showToast}
         title="¡Logro desbloqueado!"
-        subtitle={`Saludín inicial (+${XP_POINTS} XP)`}
+        subtitle={`Saludando (+${XP_POINTS} XP)`}
       />
     </View>
   );

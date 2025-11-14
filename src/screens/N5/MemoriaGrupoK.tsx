@@ -3,22 +3,24 @@ import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Modal,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    Vibration,
-    View,
+  Modal,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  Vibration,
+  View,
 } from "react-native";
 import type { RootStackParamList } from "../../../types";
 
 // 🔊 Sonidos de acierto/error (tu hook)
 import { useFeedbackSounds } from "../../hooks/useFeedbackSounds";
+// 🏅 Logros / XP
+import { awardAchievement } from "../../services/achievements";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Card = {
@@ -66,6 +68,12 @@ export default function MemoriaGrupoK() {
   // 🔊 Sonidos
   const { playCorrect, playWrong } = useFeedbackSounds?.() ?? {};
 
+  // 🏅 bandera para no otorgar el logro dos veces
+  const [achievementGiven, setAchievementGiven] = useState(false);
+  const ACH_ID = "memoria_k_fortuna";
+  const ACH_SUB = "Fortuna";
+  const ACH_XP = 100;
+
   // Más columnas para cartas pequeñas
   const columns = useMemo(() => {
     if (width >= 1000) return 8;
@@ -95,6 +103,7 @@ export default function MemoriaGrupoK() {
     setWon(false);
     setGameOver(false);
     setLives(5);
+    setAchievementGiven(false);
   }, []);
 
   const allMatched = useMemo(() => deck.every((c) => c.matched), [deck]);
@@ -110,6 +119,25 @@ export default function MemoriaGrupoK() {
       })();
     }
   }, [allMatched, deck, best, moves]);
+
+  // 🏅 Otorgar logro al ganar (idempotente en backend)
+  useEffect(() => {
+    if (won && !achievementGiven) {
+      (async () => {
+        try {
+          await awardAchievement(ACH_ID, {
+            xp: ACH_XP,
+            sub: ACH_SUB,
+            meta: { screenKey: "N5_MemoriaGrupoK", moves },
+          });
+        } catch {
+          // no bloquear la UX si falla
+        } finally {
+          setAchievementGiven(true);
+        }
+      })();
+    }
+  }, [won, achievementGiven, moves]);
 
   const onCardPress = useCallback(
     (id: string) => {
@@ -283,6 +311,9 @@ export default function MemoriaGrupoK() {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>¡Muy bien! 🎉</Text>
             <Text style={styles.modalText}>Completaste el juego en {moves} movimientos.</Text>
+            <Text style={[styles.modalText, { fontWeight: "900", marginBottom: 8 }]}>
+              🏅 Logro desbloqueado: <Text style={{ color: "#a57a00" }}>Fortuna</Text> (+{ACH_XP} XP)
+            </Text>
             <Pressable
               onPress={reset}
               style={({ pressed }) => [styles.modalBtn, pressed && styles.modalBtnPressed]}
@@ -312,14 +343,15 @@ export default function MemoriaGrupoK() {
   );
 }
 
-// src/screens/N5/MemoriaGrupoK.tsx
-// ...todo tu código igual...
+const PADDING_H = 12;
+const GUTTER = 6;
 
+/** ===== Estilos ===== */
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: "#FAF6EE",
-    paddingTop: 90,   // 🔥 nuevo padding arriba de toda la pantalla
+    paddingTop: 90,   // 🔥 padding arriba para bajar toda la pantalla
   },
   header: {
     paddingHorizontal: 12,
@@ -389,7 +421,7 @@ const styles = StyleSheet.create({
     borderColor: "#E3C77A",
   },
   modalTitle: { fontSize: 20, fontWeight: "800", marginBottom: 6 },
-  modalText: { fontSize: 14, marginBottom: 12 },
+  modalText: { fontSize: 14, marginBottom: 8 },
   modalBtn: {
     alignSelf: "center",
     backgroundColor: "#E6D5A7",

@@ -1,7 +1,8 @@
 // src/screens/N5/HiraganaYR/YR_CompletarPalabras.tsx
 import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
 import { Asset } from "expo-asset";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createAudioPlayer, type AudioPlayer } from "expo-audio";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -12,6 +13,9 @@ import {
 } from "react-native";
 import Svg, { Circle, G, Line, Rect, Text as SvgText } from "react-native-svg";
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
+
+// 🏅 Logros / XP (Firebase)
+import { awardOnSuccess } from "../../../services/achievements";
 
 /* =========================================================
    Audios locales (si faltan, el botón “Escuchar” se desactiva)
@@ -136,8 +140,6 @@ function shuffle<T>(arr: T[]): T[] {
 /* =========================================================
    Audio helpers con expo-audio (player único)
 ========================================================= */
-import { createAudioPlayer, type AudioPlayer } from "expo-audio";
-
 function useWordAudio() {
   const playerRef = useRef<AudioPlayer | null>(null);
   const sourcesRef = useRef<Record<string, { uri: string } | number>>({});
@@ -147,7 +149,6 @@ function useWordAudio() {
     let cancelled = false;
     (async () => {
       try {
-        // Prepara fuentes (asegura localUri en web)
         const ids = Object.keys(AUDIO_BANK);
         for (const id of ids) {
           const asset = Asset.fromModule(AUDIO_BANK[id]);
@@ -234,7 +235,7 @@ function TraceFrame({
             stroke="#111827"
             strokeWidth={1.5}
           >
-            {char}
+            {String(char)}
           </SvgText>
         )}
         {showGuide && hints.map((h, i) => (
@@ -249,7 +250,7 @@ function TraceFrame({
               textAnchor="middle"
               alignmentBaseline="middle"
             >
-              {i + 1}
+              {String(i + 1)}
             </SvgText>
           </G>
         ))}
@@ -262,19 +263,32 @@ function TraceFrame({
 }
 
 /* =========================================================
+   Constantes de logro “Ya casi”
+========================================================= */
+const SCREEN_KEY = "N5_HiraganaYR_YR_CompletarPalabras";
+const ACH_ID = "YaCasi";
+const ACH_XP = 20;
+const TARGET_CORRECT_WORDS = 5;
+
+/* =========================================================
    Pantalla principal
 ========================================================= */
 export default function YR_CompletarPalabras() {
   const [fontsLoaded] = useFonts({ NotoSansJP_700Bold });
   const { ready, hasAudio, play } = useWordAudio();
 
-  // ✅ Usa el hook global de SFX
+  // ✅ SFX globales
   const { playCorrect, playWrong } = useFeedbackSounds();
 
-  // puntos + logro (solo una vez)
+  // Puntos locales + primer logro local (si quieres mantenerlo)
   const [points, setPoints] = useState(0);
   const [firstWin, setFirstWin] = useState(false);
   const [showAchievement, setShowAchievement] = useState(false);
+
+  // 👇 Contador de palabras correctas para “Ya casi”
+  const [correctWords, setCorrectWords] = useState(0);
+  const [yaCasiGiven, setYaCasiGiven] = useState(false);
+  const [showYaCasiModal, setShowYaCasiModal] = useState(false);
 
   const [step, setStep] = useState(0);
   const word = FILL_DATA[step];
@@ -285,6 +299,9 @@ export default function YR_CompletarPalabras() {
   const [selectedBlank, setSelectedBlank] = useState<number | null>(word.missingIdx[0] ?? null);
   const [wrongSet, setWrongSet] = useState<Set<number>>(new Set());
   const [openTrace, setOpenTrace] = useState<string | null>(null);
+
+  // Para evitar contar dos veces la misma palabra
+  const [wordCounted, setWordCounted] = useState(false);
 
   // Opciones: garantiza necesarias + rellena con distractores
   const options = useMemo(() => {
@@ -306,12 +323,13 @@ export default function YR_CompletarPalabras() {
     setAnswers({});
     setSelectedBlank(word.missingIdx[0] ?? null);
     setWrongSet(new Set());
+    setWordCounted(false);
   }, [word]);
 
   const isComplete = word.missingIdx.every((i) => !!answers[i]);
   const isAllCorrect = isComplete && word.missingIdx.every((i) => answers[i] === chars[i]);
 
-  // ✅ Logro automático al completar BIEN el primer ejercicio
+  // ✅ Logro local del primer ejercicio correcto (puntos locales)
   useEffect(() => {
     if (!firstWin) {
       const complete = word.missingIdx.every((i) => !!answers[i]);
@@ -324,6 +342,46 @@ export default function YR_CompletarPalabras() {
       }
     }
   }, [answers, chars, word, firstWin, playCorrect]);
+
+  // ⏱️ Comprobar y acumular correctas
+  const check = async () => {
+    if (!isComplete) {
+      const empties = word.missingIdx.filter((i) => !answers[i]);
+      setWrongSet(new Set(empties));
+      await playWrong();
+      return;
+    }
+    const wrong = word.missingIdx.filter((i) => answers[i] !== chars[i]);
+    if (wrong.length === 0) {
+      await playCorrect();
+      if (!wordCounted) {
+        setCorrectWords((c) => c + 1);
+        setWordCounted(true);
+      }
+    } else {
+      setWrongSet(new Set(wrong));
+      await playWrong();
+    }
+  };
+
+  // 🏅 “Ya casi”: al tener 5 palabras correctas (idempotente)
+  useEffect(() => {
+    (async () => {
+      if (correctWords >= TARGET_CORRECT_WORDS && !yaCasiGiven) {
+        setYaCasiGiven(true);
+        try {
+          await awardOnSuccess(SCREEN_KEY, {
+            xpOnSuccess: ACH_XP,
+            achievementId: ACH_ID,       // "YaCasi"
+            achievementSub: "yr_fill",   // etiqueta opcional
+            meta: { correctWords },
+          });
+        } finally {
+          setShowYaCasiModal(true);
+        }
+      }
+    })();
+  }, [correctWords, yaCasiGiven]);
 
   const fillBlank = (kana: string) => {
     const target =
@@ -353,22 +411,6 @@ export default function YR_CompletarPalabras() {
     setSelectedBlank(i);
   };
 
-  const check = async () => {
-    if (!isComplete) {
-      const empties = word.missingIdx.filter((i) => !answers[i]);
-      setWrongSet(new Set(empties));
-      await playWrong();
-      return;
-    }
-    const wrong = word.missingIdx.filter((i) => answers[i] !== chars[i]);
-    if (wrong.length === 0) {
-      await playCorrect();
-    } else {
-      setWrongSet(new Set(wrong));
-      await playWrong();
-    }
-  };
-
   const next = () => {
     const nxt = (step + 1) % FILL_DATA.length;
     setStep(nxt);
@@ -382,9 +424,10 @@ export default function YR_CompletarPalabras() {
         una opción para ver sus <Text style={{ fontWeight: "800" }}>Trazos</Text>.
       </Text>
 
-      {/* Puntos */}
-      <View style={styles.pointsPill}>
+      {/* Puntos + progreso para YaCasi */}
+      <View style={[styles.pointsPill, { flexDirection: "row", gap: 10 }]}>
         <Text style={styles.pointsTxt}>⭐ Puntos: {points}</Text>
+        <Text style={styles.pointsTxt}>✔️ Correctas: {correctWords}/{TARGET_CORRECT_WORDS}</Text>
       </View>
 
       {/* ===== Tarjeta de ejercicio ===== */}
@@ -487,7 +530,7 @@ export default function YR_CompletarPalabras() {
         </View>
       </Modal>
 
-      {/* ===== Logro (primer acierto) ===== */}
+      {/* ===== Logro (primer acierto local) ===== */}
       <Modal visible={showAchievement} transparent animationType="fade" onRequestClose={() => setShowAchievement(false)}>
         <View style={styles.achvBackdrop}>
           <View style={styles.achvCard}>
@@ -496,6 +539,25 @@ export default function YR_CompletarPalabras() {
             <Text style={styles.achvPts}>+10 puntos</Text>
             <Pressable onPress={() => setShowAchievement(false)} style={styles.modalBtn}>
               <Text style={styles.modalBtnText}>Continuar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ===== Logro “Ya casi” (Firebase, +20 XP) ===== */}
+      <Modal
+        visible={showYaCasiModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowYaCasiModal(false)}
+      >
+        <View style={styles.achvBackdrop}>
+          <View style={styles.achvCard}>
+            <Text style={styles.achvBig}>🏅 ¡Logro desbloqueado!</Text>
+            <Text style={[styles.achvMsg, { fontWeight: "900" }]}>Ya casi</Text>
+            <Text style={styles.achvPts}>{`+${ACH_XP} XP por ${TARGET_CORRECT_WORDS} palabras correctas`}</Text>
+            <Pressable onPress={() => setShowYaCasiModal(false)} style={styles.modalBtn}>
+              <Text style={styles.modalBtnText}>Aceptar</Text>
             </Pressable>
           </View>
         </View>

@@ -1,7 +1,7 @@
 // src/screens/N5/HiraganaM/M_Dictado.tsx
 import { NotoSansJP_700Bold, useFonts } from "@expo-google-fonts/noto-sans-jp";
 import { Asset } from "expo-asset";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -16,7 +16,11 @@ import Svg, { Circle, G, Line, Rect, Text as SvgText } from "react-native-svg";
 // ✅ Nueva API de audio
 import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
 
+// 🔊 Sonidos
 import { useFeedbackSounds } from "../../../hooks/useFeedbackSounds";
+
+// 🏅 Logros / XP
+import { awardOnSuccess } from "../../../services/achievements";
 
 /* =================== Tipos =================== */
 type KanaKey = "ma" | "mi" | "mu" | "me" | "mo";
@@ -86,8 +90,7 @@ function useOneShotPlayer() {
             player.seekTo(0);
             player.play();
           } catch {}
-          // No tenemos callback nativo “ended” aquí; usamos un temporizador corto
-          // (estos clips son breves; ajusta si tus audios duran más).
+          // Clips cortos: callback de fin simulado
           if (onEnd) setTimeout(onEnd, 1000);
         }, 10);
       } catch (e) {
@@ -166,7 +169,7 @@ function TraceFrame({
             stroke="#111827"
             strokeWidth={1.5}
           >
-            {char}
+            {String(char)}
           </SvgText>
         )}
 
@@ -186,7 +189,7 @@ function TraceFrame({
                 textAnchor="middle"
                 alignmentBaseline="middle"
               >
-                {i + 1}
+                {String(i + 1)}
               </SvgText>
             </G>
           );
@@ -200,6 +203,12 @@ function TraceFrame({
   );
 }
 
+/* =================== Constantes de pantalla =================== */
+const SCREEN_KEY = "N5_HiraganaM_M_Dictado";
+const ACH_ID = "Dictado";
+const ACH_XP = 15;
+const TARGET_OK = 5;
+
 /* =================== Pantalla principal =================== */
 export default function M_Dictado() {
   const [currentPrompt, setCurrentPrompt] = useState<KanaItem | null>(null);
@@ -207,6 +216,12 @@ export default function M_Dictado() {
   const [result, setResult] = useState<"idle" | "ok" | "bad">("idle");
   const [isChecking, setIsChecking] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // ⚡ contador de aciertos de la sesión para disparar logro
+  const [okCount, setOkCount] = useState(0);
+  const [achShown, setAchShown] = useState(false);
+  const [showAchModal, setShowAchModal] = useState(false);
+
   const [modalKana, setModalKana] = useState<KanaItem | null>(null);
 
   const { play: playOne, unload } = useOneShotPlayer();
@@ -228,6 +243,7 @@ export default function M_Dictado() {
     await playOne(currentPrompt.audio, { onEnd: () => setIsPlaying(false) });
   }, [currentPrompt, playOne]);
 
+  // ✅ Comprobar respuesta y avanzar estado
   const checkAnswer = useCallback(async () => {
     if (!currentPrompt || isChecking) return;
     setIsChecking(true);
@@ -236,14 +252,38 @@ export default function M_Dictado() {
     const ok = normalized === currentPrompt.romaji || normalized === currentPrompt.char;
 
     setResult(ok ? "ok" : "bad");
-    if (ok) await playCorrect();
-    else await playWrong();
+    if (ok) {
+      await playCorrect();
+      setOkCount((c) => c + 1);
+    } else {
+      await playWrong();
+    }
 
+    // Limpia el input y permite siguiente prompt
     setTimeout(() => {
       setAnswer("");
       setIsChecking(false);
     }, 600);
   }, [answer, currentPrompt, isChecking, playCorrect, playWrong]);
+
+  // 🏅 Cuando alcanzamos 5 aciertos en la sesión, otorgamos logro + XP (idempotente)
+  useEffect(() => {
+    (async () => {
+      if (okCount >= TARGET_OK && !achShown) {
+        setAchShown(true);
+        try {
+          await awardOnSuccess(SCREEN_KEY, {
+            xpOnSuccess: ACH_XP,
+            achievementId: ACH_ID,         // "Dictado"
+            achievementSub: "hiragana_m",  // etiqueta opcional
+            meta: { family: "M", okCount },
+          });
+        } finally {
+          setShowAchModal(true);
+        }
+      }
+    })();
+  }, [okCount, achShown]);
 
   const headerStatus = useMemo(() => {
     if (result === "ok") return "✅ ¡Correcto!";
@@ -256,7 +296,9 @@ export default function M_Dictado() {
       playsInSilentMode: true,
       allowsRecording: false,
     }).catch(() => {});
-    return () => { unload(); };
+    return () => {
+      unload();
+    };
   }, [unload]);
 
   return (
@@ -273,6 +315,7 @@ export default function M_Dictado() {
         <Text style={s.stateSmall}>
           Actual: {currentPrompt ? `${currentPrompt.char} (${currentPrompt.romaji})` : "—"}
         </Text>
+        <Text style={s.stateSmall}>Aciertos de sesión: {okCount}/{TARGET_OK}</Text>
         {isPlaying && <Text style={s.stateSmall}>🔊 Reproduciendo…</Text>}
       </View>
 
@@ -322,7 +365,9 @@ export default function M_Dictado() {
       <Modal visible={!!modalKana} animationType="slide" transparent>
         <View style={sf.modalWrap}>
           <View style={sf.modalCard}>
-            <Text style={sf.modalTitle}>Trazos — {modalKana?.char} ({modalKana?.romaji})</Text>
+            <Text style={sf.modalTitle}>
+              Trazos — {modalKana ? `${modalKana.char} (${modalKana.romaji})` : ""}
+            </Text>
             {modalKana && (
               <TraceFrame
                 char={modalKana.char}
@@ -334,6 +379,28 @@ export default function M_Dictado() {
             <View style={{ height: 8 }} />
             <Pressable style={[s.btn, s.btnBlack]} onPress={() => setModalKana(null)}>
               <Text style={s.btnTxt}>Cerrar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 🏅 Modal — Logro “Dictado” */}
+      <Modal
+        transparent
+        visible={showAchModal}
+        animationType="fade"
+        onRequestClose={() => setShowAchModal(false)}
+      >
+        <View style={sf.modalWrap}>
+          <View style={sf.modalCard}>
+            <Text style={sf.modalTitle}>🏅 ¡Logro desbloqueado!</Text>
+            <Text style={[s.title, { fontSize: 18, marginTop: 4 }]}>Dictado</Text>
+            <Text style={{ textAlign: "center", marginVertical: 8 }}>
+              {`+${ACH_XP} XP por 5 respuestas correctas.`}
+            </Text>
+
+            <Pressable onPress={() => setShowAchModal(false)} style={[s.btn, s.btnBlack]}>
+              <Text style={s.btnTxt}>Aceptar</Text>
             </Pressable>
           </View>
         </View>

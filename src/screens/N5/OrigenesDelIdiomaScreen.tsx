@@ -1,7 +1,7 @@
 // src/screens/N5/OrigenesSerie.tsx
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -17,6 +17,9 @@ import {
 } from 'react-native';
 import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
 import { useFeedbackSounds } from '../../hooks/useFeedbackSounds';
+
+/* ★★★ XP/Logros ★★★ */
+import { awardOnSuccess, useAwardOnEnter } from '../../services/achievements';
 
 /* ====== Layout y assets ====== */
 const CONTENT_PAD = 18;
@@ -215,6 +218,33 @@ export default function OrigenesSerie() {
     []
   );
 
+  /* ▼▼▼ XP en la entrada (first open + repetición) ▼▼▼ */
+  useAwardOnEnter('N5_OrigenesSerie', {
+    xpOnEnter: 10,
+    repeatXp: 5,
+    achievementId: 'intro_primera_visita',
+    achievementSub: 'N5',
+    meta: { label: 'Orígenes del idioma' },
+  });
+
+  // Modal de logro al terminar el quiz
+  const [showCongrats, setShowCongrats] = useState(false);
+  const [finalScore, setFinalScore] = useState<{ok: number; total: number}>({ ok: 0, total: 0 });
+
+  const handleQuizComplete = useCallback(async (ok: number, total: number) => {
+    setFinalScore({ ok, total });
+    setShowCongrats(true);
+    // +20 XP y logro "Ciestionario1" (idempotente)
+    try {
+      await awardOnSuccess('N5_OrigenesSerie', {
+        xpOnSuccess: 20,
+        achievementId: 'Ciestionario1',
+        achievementSub: 'N5',
+        meta: { score: ok, total },
+      });
+    } catch {}
+  }, []);
+
   return (
     <View style={s.root}>
       <StatusBar backgroundColor="#5f4b32" barStyle="light-content" />
@@ -387,7 +417,7 @@ export default function OrigenesSerie() {
         </View>
 
         {/* Quiz */}
-        <QuizBlock questions={quiz} />
+        <QuizBlock questions={quiz} onComplete={handleQuizComplete} />
       </ScrollView>
 
       {/* Tooltip rojo */}
@@ -399,6 +429,19 @@ export default function OrigenesSerie() {
           </View>
         </Pressable>
       )}
+
+      {/* Modal logro final */}
+      {showCongrats && (
+        <Pressable style={s.congratsOverlay} onPress={() => setShowCongrats(false)}>
+          <View style={s.congratsCard}>
+            <Text style={s.congratsTitle}>🎉 ¡Logro desbloqueado!</Text>
+            <Text style={s.congratsName}>Ciestionario1</Text>
+            <Text style={s.congratsXP}>+20 XP</Text>
+            <Text style={s.congratsScore}>Puntuación: {finalScore.ok}/{finalScore.total}</Text>
+            <Text style={s.congratsHint}>Toca para cerrar</Text>
+          </View>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -406,15 +449,21 @@ export default function OrigenesSerie() {
 /* ===== Quiz con sonidos ===== */
 function QuizBlock({
   questions,
+  onComplete,
 }: {
   questions: { q: string; options: string[]; a: number; why: string }[];
+  onComplete?: (ok: number, total: number) => void;
 }) {
   const { playCorrect, playWrong } = useFeedbackSounds();
   const [answers, setAnswers] = useState<number[]>(Array(questions.length).fill(-1));
+  const [finished, setFinished] = useState(false);
+
   const correct = answers.reduce((acc, cur, i) => (cur === questions[i].a ? acc + 1 : acc), 0);
+  const total = questions.length;
 
   const handlePress = (qIndex: number, optIndex: number, isRight: boolean) => {
     setAnswers(prev => {
+      if (prev[qIndex] !== -1) return prev; // evitar cambiar respuesta
       const next = [...prev];
       next[qIndex] = optIndex;
       return next;
@@ -425,11 +474,19 @@ function QuizBlock({
     } catch {}
   };
 
+  // Cuando todas están respondidas y aún no se ha marcado como finalizado → disparar onComplete una sola vez
+  useEffect(() => {
+    if (!finished && answers.every(a => a !== -1)) {
+      setFinished(true);
+      onComplete?.(correct, total);
+    }
+  }, [answers, finished, correct, total, onComplete]);
+
   return (
     <View style={s.textCard}>
       <Text style={s.h2}>Mini-quiz (6)</Text>
       <Text style={[s.caption, { marginBottom: 8 }]}>
-        Toca una opción y revisa la explicación. Puntuación: {correct}/{questions.length}
+        Toca una opción y revisa la explicación. Puntuación: {correct}/{total}
       </Text>
 
       {questions.map((it, idx) => {
@@ -589,4 +646,27 @@ const s = StyleSheet.create({
   },
   tooltipTitle: { color: '#fff', fontWeight: '800', marginBottom: 4, fontSize: 14 },
   tooltipText: { color: '#fff', fontSize: 13, lineHeight: 19 },
+
+  // Modal logro final
+  congratsOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2000,
+  },
+  congratsCard: {
+    width: 300,
+    padding: 18,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#F5D38A',
+    alignItems: 'center',
+  },
+  congratsTitle: { fontWeight: '900', color: '#1f2937', fontSize: 16, marginBottom: 6 },
+  congratsName: { fontWeight: '900', color: '#7a2e0e', fontSize: 18 },
+  congratsXP: { fontWeight: '900', color: '#0f766e', marginTop: 2 },
+  congratsScore: { color: '#374151', marginTop: 4 },
+  congratsHint: { color: '#6b7280', fontSize: 12, marginTop: 10 },
 });
