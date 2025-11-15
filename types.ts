@@ -18,6 +18,7 @@ export type RootStackParamList = {
   OrigenesDelIdioma: undefined;
   EscrituraN5: undefined;
   CulturaN5: undefined;
+   RetoN5: undefined;
 
   // Actividades intro
   QuizCultural: undefined;
@@ -26,6 +27,12 @@ export type RootStackParamList = {
   // Ejercicios
   VowelExercises: undefined;
     TemasBasicos: undefined;
+      
+  ActividadesN5: undefined;
+  ActividadesN4: undefined;
+  ActividadesN3: undefined;
+  ActividadesN2: undefined;
+  ActividadesN1: undefined;
 
   // Reproductor
   VideoIntroModal: { videoId?: string } | undefined;
@@ -68,6 +75,14 @@ export type RootStackParamList = {
   NLecturaGuiada: undefined;
   HRoleplaySaludo: undefined;
     CrearCuenta: undefined;
+
+  
+  MapaNiveles: undefined;
+  NivelN5: undefined;
+  NivelN4: undefined;
+  NivelN3: undefined;
+  NivelN2: undefined;
+  NivelN1: undefined;
 
   // Menús y subpantallas Hiragana
   HiraganaMMenu: undefined;

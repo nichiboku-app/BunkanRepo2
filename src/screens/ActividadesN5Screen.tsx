@@ -1,7 +1,14 @@
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Audio } from 'expo-av';
 import { useEffect, useRef, useState } from 'react';
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import AppIntroSlider from 'react-native-app-intro-slider';
 import type { RootStackParamList } from '../../types';
 import OnigiriRain from '../components/OnigiriRain';
@@ -65,14 +72,13 @@ export default function OnboardingN5({ navigation }: Props) {
   const renderItem = ({ item }: { item: Slide }) => (
     <View style={styles.slide}>
       <OnigiriRain count={12} />
-
       <Image source={item.image} style={styles.image} resizeMode="contain" />
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.text}>{item.text}</Text>
 
       {item.key === 'slide3' && (
         <TouchableOpacity
-          onPress={() => navigation.replace('ActividadesN5')}
+          onPress={() => navigation.replace('MapaNiveles')}
           style={styles.button}
         >
           <Text style={styles.buttonText}>Comenzar</Text>
@@ -98,7 +104,7 @@ export default function OnboardingN5({ navigation }: Props) {
 const styles = StyleSheet.create({
   slide: {
     flex: 1,
-    backgroundColor: '#ffeef5', // Fondo rosa tenue
+    backgroundColor: '#ffeef5',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,

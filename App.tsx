@@ -233,6 +233,7 @@ import N2_B5_U3 from "./src/screens/N2/N2_B5_U3";
 import N2BrowseScreen from "./src/screens/N2/N2BrowseScreen";
 
 // === N1 ===
+import MapaNiveles from './src/screens/MapaNiveles';
 import CursoN1Screen from "./src/screens/N1/CursoN1";
 import N1_CultureScreen from "./src/screens/N1/lessons/N1_CultureScreen";
 import N1_EnvironmentScreen from "./src/screens/N1/lessons/N1_EnvironmentScreen";
@@ -254,6 +255,7 @@ import N1QuickExamScreen from "./src/screens/N1/N1QuickExamScreen";
 import N1QuizScreen from "./src/screens/N1/N1QuizScreen";
 import PoliticsScreen from "./src/screens/N1/PoliticsScreen";
 import N1IntroScreen from "./src/screens/N1IntroScreen";
+import RetoN5 from "./src/screens/RetoN5";
 
 
 import B6_ComprasScreen from "./src/screens/B6_Compras";
@@ -372,6 +374,17 @@ export default function App() {
                 })}
               />
               <Stack.Screen name="Hiragana" component={HiraganaScreen} options={{ headerShown: false }} />
+<Stack.Screen
+  name="MapaNiveles"
+  component={MapaNiveles}
+  options={{ headerShown: true, title: "Mapa de Niveles" }}
+/>
+<Stack.Screen
+  name="RetoN5"
+  component={RetoN5}
+  options={{ headerShown: false }} // o true, si quieres mostrar el encabezado
+/>
+
 
               <Stack.Screen
                 name="EjemplosGrupoA"
