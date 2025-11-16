@@ -255,6 +255,10 @@ import N1QuickExamScreen from "./src/screens/N1/N1QuickExamScreen";
 import N1QuizScreen from "./src/screens/N1/N1QuizScreen";
 import PoliticsScreen from "./src/screens/N1/PoliticsScreen";
 import N1IntroScreen from "./src/screens/N1IntroScreen";
+import RetoN1 from './src/screens/RetoN1';
+import RetoN2 from './src/screens/RetoN2';
+import RetoN3 from './src/screens/RetoN3';
+import RetoN4 from './src/screens/RetoN4';
 import RetoN5 from "./src/screens/RetoN5";
 
 
@@ -384,7 +388,27 @@ export default function App() {
   component={RetoN5}
   options={{ headerShown: false }} // o true, si quieres mostrar el encabezado
 />
+<Stack.Screen
+  name="RetoN4"
+  component={RetoN4}
+  options={{ headerShown: false }}
+/>
+<Stack.Screen
+  name="RetoN3"
+  component={RetoN3}
+  options={{ headerShown: false }}
+/>
+<Stack.Screen
+  name="RetoN2"
+  component={RetoN2}
+  options={{ headerShown: false }}
+/>
 
+<Stack.Screen
+    name="RetoN1"
+    component={RetoN1}
+    options={{ headerShown: false }}
+  />
 
               <Stack.Screen
                 name="EjemplosGrupoA"

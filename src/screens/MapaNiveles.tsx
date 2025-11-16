@@ -27,10 +27,10 @@ const mapaHeight = 500;
 
 const zonas: Zona[] = [
   { key: 'n5', label: 'N5', topPercent: 0.13, leftPercent: 0.12, screen: 'RetoN5' },
-  { key: 'n4', label: 'N4', topPercent: 0.42, leftPercent: 0.45, screen: 'ActividadesN4' },
-  { key: 'n3', label: 'N3', topPercent: 0.52, leftPercent: 0.15, screen: 'ActividadesN3' },
-  { key: 'n2', label: 'N2', topPercent: 0.71, leftPercent: 0.52, screen: 'ActividadesN2' },
-  { key: 'n1', label: 'N1', topPercent: 0.33, leftPercent: 0.68, screen: 'ActividadesN1' },
+  { key: 'n4', label: 'N4', topPercent: 0.42, leftPercent: 0.45, screen: 'RetoN4' },
+  { key: 'n3', label: 'N3', topPercent: 0.52, leftPercent: 0.15, screen: 'RetoN3' },
+  { key: 'n2', label: 'N2', topPercent: 0.71, leftPercent: 0.52, screen: 'RetoN2' },
+  { key: 'n1', label: 'N1', topPercent: 0.33, leftPercent: 0.68, screen: 'RetoN1' },
 ];
 
 export default function MapaNiveles({ navigation }: Props) {
