@@ -20,7 +20,16 @@ import {
   View,
 } from "react-native";
 
-import { doc, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+
 import AvatarWithFrame from "../components/AvatarWithFrame";
 import { auth, db } from "../config/firebaseConfig";
 import { getAvatarUri } from "../services/uploadAvatar";
@@ -192,13 +201,14 @@ export default function HomeScreen(): React.JSX.Element {
     };
   }, []);
 
+  const uid = auth.currentUser?.uid;
+
   useEffect(() => {
-    const uid = auth.currentUser?.uid;
     if (!uid) return;
     return onSnapshot(doc(db, "Usuarios", uid), (snap) => {
       setUserDoc({ id: snap.id, ...snap.data() });
     });
-  }, []);
+  }, [uid]);
 
   const openDrawer = () => {
     const ok = openDrawerDeep(navigation as any);
@@ -221,7 +231,12 @@ export default function HomeScreen(): React.JSX.Element {
   };
 
   const navigateToHomeStack = (
-    screen: "BienvenidaCursoN5" | "Calendario" | "Notas" | "CursoN5" | "ActividadesN5",
+    screen:
+      | "BienvenidaCursoN5"
+      | "Calendario"
+      | "Notas"
+      | "CursoN5"
+      | "ActividadesN5",
     params?: Record<string, any>
   ) => {
     (navigation as any).navigate("Main" as never, { screen, params } as never);
@@ -241,12 +256,127 @@ export default function HomeScreen(): React.JSX.Element {
         break;
       case "Perfil":
       case "Notificaciones":
-      case "Chat":
         (navigation as any).getParent?.()?.navigate(route as never);
+        break;
+      case "Chat":
+        (navigation as any).getParent?.()?.navigate("ChatOnboarding" as never);
         break;
       default:
         (navigation as any).navigate(route as never);
         break;
+    }
+  };
+
+  // ========= BADGES (contadores) =========
+  const [notifCount, setNotifCount] = useState(0); // notificationsGlobal no leídas (todas)
+  const [bunkagramCount, setBunkagramCount] = useState(0); // /notifications/{uid}/items no leídas
+  const [chatCount, setChatCount] = useState(0); // notificationsGlobal type='chat' no leídas
+
+  // notificationsGlobal -> notifCount
+  useEffect(() => {
+    if (!uid) return;
+    const ref = collection(db, "notificationsGlobal");
+    const q = query(ref, where("read", "==", false));
+    const unsub = onSnapshot(q, (snap) => {
+      setNotifCount(snap.size);
+    });
+    return unsub;
+  }, [uid]);
+
+  // notificaciones de Bunkagram para este usuario
+  useEffect(() => {
+    if (!uid) return;
+    const ref = collection(db, "notifications", uid, "items");
+    const q = query(ref, where("read", "==", false));
+    const unsub = onSnapshot(q, (snap) => {
+      setBunkagramCount(snap.size);
+    });
+    return unsub;
+  }, [uid]);
+
+  // notifs de chat en notificationsGlobal
+  useEffect(() => {
+    if (!uid) return;
+    const ref = collection(db, "notificationsGlobal");
+    const q = query(ref, where("read", "==", false), where("type", "==", "chat"));
+    const unsub = onSnapshot(q, (snap) => {
+      setChatCount(snap.size);
+    });
+    return unsub;
+  }, [uid]);
+
+  const renderBadge = (count: number) => {
+    if (!count) return null;
+    const label = count > 99 ? "99+" : String(count);
+    return (
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>{label}</Text>
+      </View>
+    );
+  };
+
+  // ====== handlers que limpian contadores al entrar (Opción A) ======
+
+  // 👉 Marca TODAS las notificationsGlobal como read:true (no borra)
+  const handleOpenNotifications = async () => {
+    go("Notificaciones");
+    if (!uid) return;
+    try {
+      const ref = collection(db, "notificationsGlobal");
+      const q = query(ref, where("read", "==", false));
+      const snap = await getDocs(q);
+
+      await Promise.all(
+        snap.docs.map((d) => updateDoc(d.ref, { read: true }))
+      );
+
+      // UX inmediata (onSnapshot lo hará de todos modos)
+      setNotifCount(0);
+      setChatCount(0);
+    } catch (e) {
+      console.warn("Error marcando notificationsGlobal como leídas", e);
+    }
+  };
+
+  // 👉 Marca solo las notifs del usuario en /notifications/{uid}/items como read:true
+  const handleOpenBunkagram = async () => {
+    (navigation as any).navigate("Bunkagram" as never);
+    if (!uid) return;
+    try {
+      const ref = collection(db, "notifications", uid, "items");
+      const q = query(ref, where("read", "==", false));
+      const snap = await getDocs(q);
+
+      await Promise.all(
+        snap.docs.map((d) => updateDoc(d.ref, { read: true }))
+      );
+
+      setBunkagramCount(0);
+    } catch (e) {
+      console.warn("Error marcando notificaciones de Bunkagram como leídas", e);
+    }
+  };
+
+  // 👉 Marca SOLO las notifs de chat en notificationsGlobal como read:true
+  const handleOpenChat = async () => {
+    (navigation as any).getParent?.()?.navigate("ChatOnboarding" as never);
+    if (!uid) return;
+    try {
+      const ref = collection(db, "notificationsGlobal");
+      const q = query(
+        ref,
+        where("read", "==", false),
+        where("type", "==", "chat")
+      );
+      const snap = await getDocs(q);
+
+      await Promise.all(
+        snap.docs.map((d) => updateDoc(d.ref, { read: true }))
+      );
+
+      setChatCount(0);
+    } catch (e) {
+      console.warn("Error marcando notificaciones de chat como leídas", e);
     }
   };
 
@@ -454,8 +584,9 @@ export default function HomeScreen(): React.JSX.Element {
         {/* Barra inferior fija */}
         <View pointerEvents="box-none" style={styles.bottomBarFixed}>
           <View style={styles.bottomBg}>
+            {/* Notificaciones */}
             <TouchableOpacity
-              onPress={() => go("Notificaciones")}
+              onPress={handleOpenNotifications}
               style={styles.bottomItem}
               activeOpacity={0.8}
             >
@@ -463,9 +594,12 @@ export default function HomeScreen(): React.JSX.Element {
                 source={require("../../assets/icons/bell.webp")}
                 style={styles.bottomIcon}
               />
+              {renderBadge(notifCount)}
             </TouchableOpacity>
+
+            {/* Bunkagram */}
             <TouchableOpacity
-              onPress={() => go("Notas")}
+              onPress={handleOpenBunkagram}
               style={styles.bottomItem}
               activeOpacity={0.8}
             >
@@ -473,9 +607,12 @@ export default function HomeScreen(): React.JSX.Element {
                 source={require("../../assets/icons/heart.webp")}
                 style={styles.bottomIcon}
               />
+              {renderBadge(bunkagramCount)}
             </TouchableOpacity>
+
+            {/* Chat / IA */}
             <TouchableOpacity
-              onPress={() => go("Chat")}
+              onPress={handleOpenChat}
               style={styles.bottomItem}
               activeOpacity={0.8}
             >
@@ -483,6 +620,7 @@ export default function HomeScreen(): React.JSX.Element {
                 source={require("../../assets/icons/ia.webp")}
                 style={styles.bottomIcon}
               />
+              {renderBadge(chatCount)}
             </TouchableOpacity>
           </View>
         </View>
@@ -761,6 +899,26 @@ const styles = StyleSheet.create({
     height: 52,
     alignItems: "center",
     justifyContent: "center",
+    position: "relative", // para colocar el badge
   },
   bottomIcon: { width: 32, height: 32, resizeMode: "contain" },
+
+  // 🔴 Badge pequeño tipo Facebook
+  badge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#FF2B3B",
+    paddingHorizontal: 3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "800",
+  },
 });

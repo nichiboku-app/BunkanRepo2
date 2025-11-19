@@ -261,6 +261,10 @@ import RetoN3 from './src/screens/RetoN3';
 import RetoN4 from './src/screens/RetoN4';
 import RetoN5 from "./src/screens/RetoN5";
 
+import Bunkagram from "./src/screens/Bunkagram";
+import Chat from './src/screens/chat'; // tu pantalla de chat actual
+import ChatOnboarding from './src/screens/ChatOnboarding'; // la nueva pantalla
+import Notifications from "./src/screens/Notifications";
 
 import B6_ComprasScreen from "./src/screens/B6_Compras";
 
@@ -336,6 +340,23 @@ export default function App() {
               {/* === Drawer principal === */}
               <Stack.Screen name="Home" component={AppDrawerNavigator} />
 
+  <Stack.Screen
+    name="ChatOnboarding"
+    component={ChatOnboarding}
+    options={{ headerShown: false }}
+  />
+
+  <Stack.Screen
+    name="Chat"
+    component={Chat}
+    options={{ headerShown: false }}
+  />
+  <Stack.Screen
+                name="Notificaciones"
+                component={Notifications}
+                options={{ headerShown: true, title: "Notificaciones" }}
+              />
+  
               {/* === N5 fuera del Drawer === */}
               <Stack.Screen name="N5Bienvenida" component={N5Bienvenida} />
               <Stack.Screen name="EntradaActividadesN5" component={EntradaActividadesN5Screen} />
@@ -367,6 +388,10 @@ export default function App() {
                 component={TemasBasicosScreen}
                 options={{ headerShown: true, title: "Temas básicos (N5)" }}
               />
+              <Stack.Screen
+  name="Bunkagram"
+  component={Bunkagram}
+/>
 
               <Stack.Screen name="Subtema" component={SubtemaScreen} options={{ headerShown: false }} />
               <Stack.Screen

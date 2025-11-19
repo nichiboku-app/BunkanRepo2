@@ -3,24 +3,32 @@ require("dotenv").config({ quiet: true });
 
 /**
  * Config de Firebase
- * - authDomain corregido.
- * - storageBucket usualmente "<project-id>.appspot.com".
- * - Lee primero de variables de entorno y usa fallback válidos.
+ * Se toma primero de variables de entorno y, si no existen,
+ * se usan valores por defecto válidos para el proyecto "escuelanichiboku".
+ *
+ * IMPORTANTE:
+ * - storageBucket debe ser exactamente "<project-id>.appspot.com"
+ *   y coincidir con el que aparece en Firebase Console → Storage.
  */
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY || "AIzaSyAbJi5h4-YnWZ5Nq0_QGf0W-IhLCdnKyHM",
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN || "escuelanichiboku.firebaseapp.com",
+  authDomain:
+    process.env.FIREBASE_AUTH_DOMAIN || "escuelanichiboku.firebaseapp.com",
   projectId: process.env.FIREBASE_PROJECT_ID || "escuelanichiboku",
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "escuelanichiboku.appspot.com",
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "134897542862",
-  appId: process.env.FIREBASE_APP_ID || "1:134897542862:web:f779ed6c5b16bea386d29f",
+  storageBucket:
+    process.env.FIREBASE_STORAGE_BUCKET || "escuelanichiboku.appspot.com", // 👈 muy importante
+  messagingSenderId:
+    process.env.FIREBASE_MESSAGING_SENDER_ID || "134897542862",
+  appId:
+    process.env.FIREBASE_APP_ID ||
+    "1:134897542862:web:f779ed6c5b16bea386d29f",
 };
 
 module.exports = {
   expo: {
     name: "Escuela Nichiboku",
     slug: "escuela-nichiboku-app",
-    scheme: "nichiboku", // deep links
+    scheme: "nichiboku", // para deep links
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -43,7 +51,13 @@ module.exports = {
         backgroundColor: "#ffffff",
       },
       navigationBar: { visible: "leanback" },
-      // Permisos para grabación con expo-audio
+
+      /**
+       * Permisos para grabación con expo-audio / expo-av
+       * RECORD_AUDIO es necesario para poder usar el micrófono.
+       * Si en el futuro lees/escribes archivos fuera de cache,
+       * podrías añadir también permisos de lectura de almacenamiento.
+       */
       permissions: ["android.permission.RECORD_AUDIO"],
     },
 
@@ -53,16 +67,22 @@ module.exports = {
       favicon: "./assets/images/favicon.png",
     },
 
+    /**
+     * extra.firebase es lo que lee tu firebaseConfig.ts
+     * (Constants.expoConfig?.extra?.firebase)
+     */
     extra: {
       firebase: firebaseConfig,
     },
 
     plugins: [
-      // ✅ Requerido por tu proyecto
+      // Navegación con expo-router
       "expo-router",
+
+      // Fuentes personalizadas
       "expo-font",
 
-      // ✅ Splash
+      // Splash screen
       [
         "expo-splash-screen",
         {
@@ -73,7 +93,10 @@ module.exports = {
         },
       ],
 
-      // ✅ Reemplazo de expo-av (SDK 54+)
+      /**
+       * Reemplazo moderno de expo-av para audio (SDK 54+)
+       * Ya aquí declaras el texto del permiso de micrófono.
+       */
       [
         "expo-audio",
         {
@@ -81,12 +104,14 @@ module.exports = {
             "Permite que Nichiboku use el micrófono para prácticas de pronunciación.",
         },
       ],
+
+      // Para video (si lo usas en la app)
       "expo-video",
 
-      // ✅ Necesario para el warning que te salió (localización regional)
+      // Localización (ej: formatos de fecha/hora/lenguaje)
       "expo-localization",
 
-      // ✅ Mantengo tu web browser
+      // Web browser (si abres webs dentro de la app)
       "expo-web-browser",
     ],
 

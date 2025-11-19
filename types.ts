@@ -5,6 +5,9 @@ export type RootStackParamList = {
   Login: undefined;
   Bienvenida: undefined;
   Home: undefined;
+  Notificaciones: undefined;
+  Chat: undefined;
+ChatOnboarding: undefined; 
 
   // N5
   N5Bienvenida: undefined;
@@ -19,6 +22,10 @@ export type RootStackParamList = {
   EscrituraN5: undefined;
   CulturaN5: undefined;
    RetoN5: undefined;
+
+
+  Bunkagram: undefined;
+  Notifications: undefined;
 
   // Actividades intro
   QuizCultural: undefined;
