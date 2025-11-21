@@ -2,7 +2,7 @@
 import { DrawerContentComponentProps } from "@react-navigation/drawer";
 import { CommonActions } from "@react-navigation/native";
 import { Asset } from "expo-asset";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -59,7 +59,7 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
   const [userDoc, setUserDoc] = useState<any>(null);
 
   useEffect(() => {
-    console.log('[DEBUG] UID en Drawer:', auth.currentUser?.uid);
+    console.log("[DEBUG] UID en Drawer:", auth.currentUser?.uid);
     async function preloadDrawerAssets() {
       try {
         await Asset.loadAsync([
@@ -97,7 +97,11 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
     });
   }, []);
 
-  const go = (route: string) => props.navigation.navigate(route as never);
+  // Navegar a una ruta y cerrar el drawer
+  const go = (route: string) => {
+    props.navigation.navigate(route as never);
+    props.navigation.closeDrawer();
+  };
 
   const goHome = () => {
     props.navigation.navigate("Main" as never);
@@ -138,7 +142,13 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
         <ImageBackground
           source={BAMBOO_FULL}
           resizeMode="stretch"
-          style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: BAMBOO_WIDTH }}
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: BAMBOO_WIDTH,
+          }}
         />
         <ImageBackground
           source={BARRA_FULL}
@@ -176,7 +186,10 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
           <AvatarWithFrame size={86} uri={avatarUri} />
           <Text style={styles.nombre}>{displayName}</Text>
           <Text style={styles.correo}>{email}</Text>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => go("Perfil")}>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => go("Perfil")}
+          >
             <Text style={styles.primaryBtnText}>Mi página</Text>
           </TouchableOpacity>
         </View>
@@ -184,14 +197,43 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
         {/* Menú */}
         <View style={styles.menuWrapper}>
           <View style={styles.menu}>
-            <DrawerItem icon={ICO_PREMIUM} label="Obtén premium" onPress={() => go("Pagos")} />
-            <DrawerItem icon={ICO_CLASIF} label="Clasificación" onPress={() => go("Noticias")} />
-            <DrawerItem icon={ICO_IA} label="IA Bunkan" onPress={() => go("IA")} />
-            <DrawerItem icon={ICO_LIBRO} label="Libro de palabras" onPress={() => go("Preguntas")} />
-            <DrawerItem icon={ICO_INSTAGRAM} label="Instagram" onPress={() => {}} />
-            <DrawerItem icon={ICO_NOTIF} label="Notificación" onPress={() => go("Eventos")} />
-            <DrawerItem icon={ICO_FAQ} label="Preguntas frecuentes" onPress={() => go("Preguntas")} />
-            <DrawerItem icon={ICO_PRIV} label="Política de privacidad" onPress={() => go("Politica")} />
+            <DrawerItem
+              icon={ICO_PREMIUM}
+              label="Obtén premium"
+              onPress={() => go("Pagos")}
+            />
+            <DrawerItem
+              icon={ICO_CLASIF}
+              label="Clasificación"
+              onPress={() => go("Noticias")}
+            />
+            <DrawerItem
+              icon={ICO_IA}
+              label="IA Bunkan"
+              onPress={() => go("IA")}
+            />
+            <DrawerItem
+              icon={ICO_LIBRO}
+              label="Noticias"
+              onPress={() => go("Preguntas")}
+            />
+            {/* 👇 AQUÍ CAMBIAMOS Red Social */}
+            <DrawerItem
+              icon={ICO_INSTAGRAM}
+              label="Red Social"
+              onPress={() => go("RedesSociales")}
+            />
+
+            <DrawerItem
+              icon={ICO_FAQ}
+              label="Preguntas frecuentes"
+              onPress={() => go("Mejoras")}
+            />
+            <DrawerItem
+              icon={ICO_PRIV}
+              label="Política de privacidad"
+              onPress={() => go("Politica")}
+            />
           </View>
         </View>
 
@@ -199,7 +241,11 @@ export default function CustomDrawer(props: DrawerContentComponentProps) {
         <View style={styles.footerGroup}>
           <View style={{ height: 8 }} />
           <DrawerItem icon={ICO_HOME} label="Inicio" onPress={goHome} />
-          <DrawerItem icon={ICO_LOGOUT} label="Cerrar sesión" onPress={doSignOut} />
+          <DrawerItem
+            icon={ICO_LOGOUT}
+            label="Cerrar sesión"
+            onPress={doSignOut}
+          />
           <View style={{ height: 10 }} />
           <View style={styles.stampWrap}>
             <Image source={FOOTER_SEAL} style={styles.stamp} />
@@ -249,12 +295,21 @@ const styles = StyleSheet.create({
   headerBox: { alignItems: "center", paddingVertical: 8, marginBottom: 6 },
   nombre: { fontSize: 20, fontWeight: "800", marginTop: 8, marginBottom: 2 },
   correo: { fontSize: 12, opacity: 0.8, marginBottom: 12 },
-  primaryBtn: { borderWidth: 1.5, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 10 },
+  primaryBtn: {
+    borderWidth: 1.5,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
   primaryBtnText: { fontWeight: "700" },
   menuWrapper: { position: "relative", paddingRight: EDGE_INSET },
   menu: { gap: 22, marginTop: 8 },
   footerGroup: { marginTop: 16, paddingTop: 8 },
-  stampWrap: { alignItems: "center", justifyContent: "center", paddingVertical: 8 },
+  stampWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+  },
   stamp: { width: 64, height: 64, resizeMode: "contain", opacity: 0.96 },
   item: { paddingVertical: 10 },
   rowWrap: {
@@ -263,7 +318,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minHeight: Math.max(40, ICON_W + 6),
   },
-  itemIcon: { width: ICON_W, height: ICON_W, marginRight: ICON_GAP, resizeMode: "contain" },
+  itemIcon: {
+    width: ICON_W,
+    height: ICON_W,
+    marginRight: ICON_GAP,
+    resizeMode: "contain",
+  },
   itemText: { fontSize: 16, fontWeight: "700" },
   knotRight: {
     position: "absolute",

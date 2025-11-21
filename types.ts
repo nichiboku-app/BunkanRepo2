@@ -26,7 +26,7 @@ ChatOnboarding: undefined;
 
   Bunkagram: undefined;
   Notifications: undefined;
-
+RedesSociales: undefined;
   // Actividades intro
   QuizCultural: undefined;
   GifSaludo: undefined;

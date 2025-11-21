@@ -73,10 +73,11 @@ import TTrazoGif from "./src/screens/N5/FamiliaS/TTrazoGif";
 
 // familia N
 import CrearCuentaScreen from "./src/screens/CrearCuentaScreen";
+import MejorasScreen from "./src/screens/MejorasScreen";
 import FamiliaNHScreen from "./src/screens/N5/FamiliaN/FamiliaNHScreen";
 import HRoleplaySaludoScreen from "./src/screens/N5/FamiliaN/HRoleplaySaludoScreen";
 import NLecturaGuiadaScreen from "./src/screens/N5/FamiliaN/NLecturaGuiadaScreen";
-
+import RedesSocialesScreen from "./src/screens/RedesSocialesScreen";
 // Grupo M / Y–R
 import HiraganaMMenu from "./src/screens/N5/HiraganaM/HiraganaMMenu";
 import HiraganaYRMenu from "./src/screens/N5/HiraganaYR/HiraganaYRMenu";
@@ -356,6 +357,18 @@ export default function App() {
                 component={Notifications}
                 options={{ headerShown: true, title: "Notificaciones" }}
               />
+<Stack.Screen
+  name="RedesSociales"
+  component={RedesSocialesScreen}
+  options={{ headerShown: true, title: "Red Social" }}
+/>
+
+      
+<Stack.Screen
+  name="Mejoras"
+  component={MejorasScreen}
+  options={{ headerShown: true, title: "Mejoras y opiniones" }}
+/>        
   
               {/* === N5 fuera del Drawer === */}
               <Stack.Screen name="N5Bienvenida" component={N5Bienvenida} />
