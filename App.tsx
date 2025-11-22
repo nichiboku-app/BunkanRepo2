@@ -267,8 +267,8 @@ import Chat from './src/screens/chat'; // tu pantalla de chat actual
 import ChatOnboarding from './src/screens/ChatOnboarding'; // la nueva pantalla
 import Notifications from "./src/screens/Notifications";
 
+import { StripeProvider } from '@stripe/stripe-react-native';
 import B6_ComprasScreen from "./src/screens/B6_Compras";
-
 // Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -296,6 +296,7 @@ export default function App() {
   const routeNameRef = useRef<string | undefined>();
 
   return (
+    <StripeProvider publishableKey="pk_test_51SW4BY0ah48A1xwkicGIM1gEXwNCHkOVxY8rtmoccJBJWGWBTc7TllMeHmZWTKkx04BZuY5sXSTBJUBpYPWTMuuS00CvuO8tlc">
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <B3ScoreProvider>
@@ -932,5 +933,6 @@ export default function App() {
         </B3ScoreProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+     </StripeProvider>
   );
 }

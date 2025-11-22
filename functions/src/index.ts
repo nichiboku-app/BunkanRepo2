@@ -1,10 +1,99 @@
 // functions/src/index.ts
 import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import { onRequest } from "firebase-functions/v2/https";
+import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
+
+// Usamos require para Stripe, sin tipos (evitamos problemas con TS)
+ 
+const Stripe = require("stripe");
 
 admin.initializeApp();
 const db = admin.firestore();
+
+/* ===================== Stripe (pagos) ===================== */
+
+// Leemos la config de Firebase Functions (puede venir vacía)
+const functionsConfig = functions.config() as {
+  stripe?: { secret?: string };
+};
+
+// Tomamos primero variable de entorno STRIPE_SECRET (por si la pones después)
+// y si no, usamos functions.config().stripe.secret
+const stripeSecret: string =
+  (process.env.STRIPE_SECRET as string) ||
+  (functionsConfig?.stripe?.secret as string) ||
+  "";
+
+// Inicialización perezosa (lazy) para evitar fallos al arrancar el contenedor
+let stripe: any = null;
+
+function getStripe(): any {
+  if (!stripe) {
+    if (!stripeSecret) {
+      throw new Error(
+        "Stripe secret key no configurada. Define STRIPE_SECRET o functions.config().stripe.secret"
+      );
+    }
+    stripe = new Stripe(stripeSecret, {
+      // Usamos la versión por defecto de la cuenta, sin forzar apiVersion
+    });
+  }
+  return stripe;
+}
+
+/**
+ * createPaymentIntent
+ *
+ * Llamado desde la app con:
+ *   const fn = httpsCallable(getFunctions(), "createPaymentIntent");
+ *   fn({ planId: "premium_autodidacta" });
+ *
+ * data.planId:
+ *   - "premium_autodidacta" → cobra 400 MXN
+ *   - "bunkan_alumno"      → cobra 250 MXN
+ */
+export const createPaymentIntent = onCall(
+  {
+    region: "us-central1",
+  },
+  async (request) => {
+    const { planId } = request.data as { planId: string };
+
+    let amount: number;
+
+    switch (planId) {
+      case "premium_autodidacta":
+        amount = 40000; // 400.00 MXN en centavos
+        break;
+      case "bunkan_alumno":
+        amount = 25000; // 250.00 MXN en centavos
+        break;
+      default:
+        throw new HttpsError("invalid-argument", "Plan inválido");
+    }
+
+    try {
+      const stripeClient = getStripe();
+      const paymentIntent = await stripeClient.paymentIntents.create({
+        amount,
+        currency: "mxn",
+        // metadata opcional:
+        // metadata: {
+        //   planId,
+        //   uid: request.auth?.uid ?? "anon",
+        // },
+      });
+
+      return {
+        clientSecret: paymentIntent.client_secret,
+      };
+    } catch (error: any) {
+      console.error("Error creando PaymentIntent:", error);
+      throw new HttpsError("internal", "No se pudo crear el pago");
+    }
+  }
+);
 
 /* ===================== Utilidades de fecha (LATAM) ===================== */
 function todayTZ(tz = "America/Mexico_City") {
@@ -32,7 +121,7 @@ function isoWeekKey(date = new Date(), tz = "America/Mexico_City") {
       ((tmp.getTime() - firstThursday.getTime()) / 86400000 -
         3 +
         ((firstThursday.getUTCDay() + 6) % 7)) /
-        7,
+        7
     );
   return `${tmp.getUTCFullYear()}_${String(week).padStart(2, "0")}`;
 }
@@ -91,7 +180,9 @@ export const onUserEventCreate = onDocumentCreated(
       const prevWeekly = statsDoc.exists ? statsDoc.get("weeklyProgress") || 0 : 0;
       const weeklyGoal = statsDoc.exists ? statsDoc.get("weeklyGoal") || 350 : 350;
       const streakCount = statsDoc.exists ? statsDoc.get("streakCount") || 0 : 0;
-      const streakUpdatedOn = statsDoc.exists ? (statsDoc.get("streakUpdatedOn") as string) || "" : "";
+      const streakUpdatedOn = statsDoc.exists
+        ? ((statsDoc.get("streakUpdatedOn") as string) || "")
+        : "";
 
       // 2) Racha diaria
       let newStreak = streakCount;
@@ -119,14 +210,14 @@ export const onUserEventCreate = onDocumentCreated(
           streakUpdatedOn: todayKey,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
-        { merge: true },
+        { merge: true }
       );
 
       // 4) Marca actividad reciente
       tx.set(
         userRef,
         { lastActiveAt: admin.firestore.FieldValue.serverTimestamp() },
-        { merge: true },
+        { merge: true }
       );
 
       // 5) Leaderboards con rutas de componentes PARES
@@ -134,14 +225,14 @@ export const onUserEventCreate = onDocumentCreated(
       tx.set(
         db.doc(`leaderboards_local/${country}/users/${uid}`),
         { pointsAllTime: admin.firestore.FieldValue.increment(points) },
-        { merge: true },
+        { merge: true }
       );
 
       // Semanal: leaderboards_weekly/{weekKey}/users/{uid}
       tx.set(
         db.doc(`leaderboards_weekly/${weekKey}/users/${uid}`),
         { points: admin.firestore.FieldValue.increment(points) },
-        { merge: true },
+        { merge: true }
       );
 
       // Diario: leaderboards_daily/{YYYYMMDD}/users/{uid}
@@ -149,7 +240,7 @@ export const onUserEventCreate = onDocumentCreated(
       tx.set(
         db.doc(`leaderboards_daily/${dailyKey}/users/${uid}`),
         { points: admin.firestore.FieldValue.increment(points) },
-        { merge: true },
+        { merge: true }
       );
     });
 
@@ -174,18 +265,18 @@ export const onUserEventCreate = onDocumentCreated(
               unlockedAt: admin.firestore.FieldValue.serverTimestamp(),
               progress: cond.value,
             },
-            { merge: true },
+            { merge: true }
           );
 
         if (a.data().pointsReward) {
           await statsRef.set(
             { points: admin.firestore.FieldValue.increment(a.data().pointsReward) },
-            { merge: true },
+            { merge: true }
           );
         }
-      }),
+      })
     );
-  },
+  }
 );
 
 /* ====================================================================
@@ -195,7 +286,9 @@ export const onUserEventCreate = onDocumentCreated(
 export const seedEvent = onRequest({ region: "us-central1" }, async (req, res) => {
   try {
     const secret =
-      (req.method === "POST" ? (req.body?.secret as string) : (req.query.secret as string)) ?? "";
+      (req.method === "POST"
+        ? (req.body?.secret as string)
+        : (req.query.secret as string)) ?? "";
     if (secret !== "SEED_SECRET_123") {
       res.status(403).send("forbidden");
       return;
@@ -269,7 +362,10 @@ export const dumpUserData = onRequest({ region: "us-central1" }, async (req, res
     const [userSnap, statsSnap] = await Promise.all([userRef.get(), statsRef.get()]);
 
     // Página de eventos
-    let eventsQuery = userRef.collection("events").orderBy("createdAt", "desc").limit(limit);
+    let eventsQuery = userRef
+      .collection("events")
+      .orderBy("createdAt", "desc")
+      .limit(limit);
     if (startAfterId) {
       const cursorDoc = await userRef.collection("events").doc(startAfterId).get();
       if (cursorDoc.exists) eventsQuery = eventsQuery.startAfter(cursorDoc);
@@ -297,8 +393,14 @@ export const dumpUserData = onRequest({ region: "us-central1" }, async (req, res
       events,
       leaderboards: {
         local: localLB.exists ? localLB.data() : null,
-        weekly: { weekKey: resolvedWeekKey, data: weeklyLB.exists ? weeklyLB.data() : null },
-        daily: { dailyKey: resolvedDailyKey, data: dailyLB.exists ? dailyLB.data() : null },
+        weekly: {
+          weekKey: resolvedWeekKey,
+          data: weeklyLB.exists ? weeklyLB.data() : null,
+        },
+        daily: {
+          dailyKey: resolvedDailyKey,
+          data: dailyLB.exists ? dailyLB.data() : null,
+        },
         countryCode: userCountry,
       },
       page: {
