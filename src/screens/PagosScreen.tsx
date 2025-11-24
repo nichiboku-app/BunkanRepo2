@@ -1,5 +1,5 @@
 // src/screens/PagosScreen.tsx
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,11 +17,14 @@ import {
 } from "react-native";
 import { auth, db } from "../config/firebaseConfig";
 
+// src/screens/PagosScreen.tsx
+
+// 🔴 MODO PRUEBA – Payment Links TEST
 const PREMIUM_URL =
-  "https://buy.stripe.com/cNi28j37f5xOaXFaIz83C00"; // Plan Premium 400 MXN
+  "https://buy.stripe.com/test_eVq3cnajqaQ7dNI43814401"; // Plan Premium 400 MXN (TEST)
 
 const STUDENT_URL =
-  "https://buy.stripe.com/00w8wHcHPgcs7Lt03V83C01"; // Plan Estudiante / Alumno 250 MXN
+  "https://buy.stripe.com/test_9B6cMX1MUcYfeRM6bg14400"; // Plan Estudiante 250 MXN (TEST)
 
 // ⬇ TAMAÑO SOLO DE LAS IMÁGENES DE CADA TARJETA ⬇
 const FREE_CARD_WIDTH = 450;
@@ -36,7 +39,6 @@ const PREMIUM_CARD_HEIGHT = 300;
 
 // 🔐 Valida credencial en Firestore
 async function validateStudentCredential(rawCode: string) {
-  // 1) Limpiamos: quitamos espacios, guiones, etc. y dejamos solo letras/números en mayúsculas
   const sanitized = (rawCode || "")
     .trim()
     .toUpperCase()
@@ -46,18 +48,15 @@ async function validateStudentCredential(rawCode: string) {
     throw new Error("Por favor escribe tu número de credencial.");
   }
 
-  // 2) Mínimo 6 caracteres
   if (sanitized.length < 6) {
     throw new Error(
       "La credencial debe tener al menos 6 caracteres (solo letras y números, sin guiones)."
     );
   }
 
-  // 🔥 SDK modular: doc / getDoc / updateDoc
   const docRef = doc(db, "studentCredentials", sanitized);
   const snap = await getDoc(docRef);
 
-  // 3) Si no existe: mensaje específico
   if (!snap.exists()) {
     throw new Error(
       "El número de la credencial es incorrecto. Revisa que esté bien escrito o consulta a tu profesor."
@@ -66,11 +65,11 @@ async function validateStudentCredential(rawCode: string) {
 
   const data = snap.data() || {};
 
-  if (data.active === false) {
+  if ((data as any).active === false) {
     throw new Error("Esta credencial está inactiva. Habla con tu profesor.");
   }
 
-  if (data.used) {
+  if ((data as any).used) {
     throw new Error("Esta credencial ya fue utilizada por otro alumno.");
   }
 
@@ -111,6 +110,12 @@ export default function PagosScreen() {
   const [credentialInput, setCredentialInput] = useState("");
   const [validating, setValidating] = useState(false);
 
+  // Plan actual del usuario
+  const [plan, setPlan] = useState<"free" | "student" | "premium">("free");
+  const [planStatus, setPlanStatus] = useState<"none" | "active" | "inactive">(
+    "none"
+  );
+
   useEffect(() => {
     // Premium
     Animated.loop(
@@ -145,6 +150,34 @@ export default function PagosScreen() {
     ).start();
   }, [pulsePremium, pulseStudent]);
 
+  // Escuchar plan del usuario en Firestore
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    const ref = doc(db, "Usuarios", uid);
+
+    const unsubscribe = onSnapshot(
+      ref,
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          setPlan((data.plan as any) || "free");
+          setPlanStatus((data.planStatus as any) || "none");
+          console.log("Plan desde Firestore:", data.plan, data.planStatus);
+        } else {
+          setPlan("free");
+          setPlanStatus("none");
+        }
+      },
+      (error) => {
+        console.log("Error leyendo plan del usuario:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
   const handleStudentPress = () => {
     setStudentModalVisible(true);
   };
@@ -165,7 +198,6 @@ export default function PagosScreen() {
           : "Se activará el pago especial para alumnos."
       );
 
-      // Ahora sí, abrir Stripe para alumnos
       openPaymentLink(STUDENT_URL);
     } catch (err: any) {
       console.log(err);
@@ -177,6 +209,22 @@ export default function PagosScreen() {
     }
   };
 
+  const isActive = planStatus === "active";
+  const planLabel =
+    plan === "premium"
+      ? "Plan Premium Autodidacta"
+      : plan === "student"
+      ? "Plan Estudiante / Alumno"
+      : "Versión gratuita";
+  const statusLabel = isActive ? "Activo" : "Sin activar";
+
+  const bannerStyle = [
+    styles.planBanner,
+    plan === "premium" && styles.planBannerPremium,
+    plan === "student" && styles.planBannerStudent,
+    plan === "free" && styles.planBannerFree,
+  ];
+
   return (
     <ImageBackground
       source={require("../../assets/pagos-bg.webp")}
@@ -187,6 +235,18 @@ export default function PagosScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* BANNER PLAN ACTUAL */}
+        <View style={bannerStyle}>
+          <Text style={styles.planBannerTitle}>Tu plan actual</Text>
+          <Text style={styles.planBannerPlan}>{planLabel}</Text>
+          <Text style={styles.planBannerStatus}>
+            Estado:{" "}
+            <Text style={isActive ? styles.planStatusActive : styles.planStatusInactive}>
+              {statusLabel}
+            </Text>
+          </Text>
+        </View>
+
         {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.logoText}>NICHIBOKU</Text>
@@ -222,7 +282,6 @@ export default function PagosScreen() {
                 <Text style={styles.bulletText}>• Sin acceso completo</Text>
               </View>
 
-              {/* BOTÓN AZUL VISIBLE */}
               <TouchableOpacity
                 style={styles.buttonFree}
                 onPress={() =>
@@ -270,7 +329,6 @@ export default function PagosScreen() {
                   </Text>
                 </View>
 
-                {/* BOTÓN ROJO/AMARILLO VISIBLE (abre modal) */}
                 <TouchableOpacity
                   style={styles.buttonStudent}
                   onPress={handleStudentPress}
@@ -323,7 +381,6 @@ export default function PagosScreen() {
                   </Text>
                 </View>
 
-                {/* BOTÓN NEGRO VISIBLE */}
                 <TouchableOpacity
                   style={styles.buttonPremium}
                   onPress={() => openPaymentLink(PREMIUM_URL)}
@@ -343,7 +400,7 @@ export default function PagosScreen() {
         </View>
       </ScrollView>
 
-      {/* ================= MODAL CREDENCIAL ESTUDIANTE ================= */}
+      {/* MODAL CREDENCIAL ESTUDIANTE */}
       <Modal
         visible={studentModalVisible}
         transparent
@@ -421,6 +478,55 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
+  /* BANNER PLAN ACTUAL */
+  planBanner: {
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 16,
+    alignItems: "flex-start",
+    backgroundColor: "rgba(15,23,42,0.9)",
+    borderWidth: 1,
+    borderColor: "rgba(148,163,184,0.6)",
+  },
+  planBannerFree: {
+    backgroundColor: "rgba(30,64,175,0.85)", // azul
+    borderColor: "rgba(191,219,254,0.8)",
+  },
+  planBannerStudent: {
+    backgroundColor: "rgba(185,28,28,0.9)", // rojo
+    borderColor: "rgba(254,202,202,0.9)",
+  },
+  planBannerPremium: {
+    backgroundColor: "rgba(161,98,7,0.95)", // dorado oscuro
+    borderColor: "#facc15",
+  },
+  planBannerTitle: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: "#e5e7eb",
+    marginBottom: 2,
+  },
+  planBannerPlan: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#f9fafb",
+  },
+  planBannerStatus: {
+    marginTop: 2,
+    fontSize: 12,
+    color: "#e5e7eb",
+  },
+  planStatusActive: {
+    fontWeight: "700",
+    color: "#bbf7d0", // verde claro
+  },
+  planStatusInactive: {
+    fontWeight: "700",
+    color: "#fee2e2", // rojo claro
+  },
+
   /* HEADER */
   header: {
     marginBottom: 24,
@@ -445,11 +551,11 @@ const styles = StyleSheet.create({
   /* CONTENEDORES DE TARJETAS */
   cardContainerTop: {
     alignItems: "center",
-    marginBottom: 2, // pegadas pero sin encimar
+    marginBottom: 2,
   },
   cardContainer: {
     alignItems: "center",
-    marginBottom: 2, // pegadas pero sin encimar
+    marginBottom: 2,
   },
 
   cardImage: {

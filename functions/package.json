@@ -10,16 +10,17 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "22"
+    "node": "18"
   },
   "main": "lib/index.js",
   "dependencies": {
     "escuelanichiboku": "file:..",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.6.0",
-    "stripe": "14.23.0"
+    "stripe": "^14.23.0"
   },
   "devDependencies": {
+    "@types/stripe": "^8.0.416",
     "firebase-functions-test": "^3.1.0",
     "typescript": "^5.7.3"
   },
