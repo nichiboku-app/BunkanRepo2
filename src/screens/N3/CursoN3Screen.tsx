@@ -1,3 +1,4 @@
+// src/screens/N3/CursoN3Screen.tsx
 import { MaterialCommunityIcons as MCI } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -6,6 +7,7 @@ import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useMemo, useRef } from "react";
 import {
+  Alert,
   Animated,
   Pressable,
   StatusBar,
@@ -13,6 +15,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useUserPlan } from "../../context/UserPlanContext";
 
 /* ---------------- Types ---------------- */
 type RootStackParamList = {
@@ -30,6 +33,17 @@ type Nav = NativeStackNavigationProp<RootStackParamList, "CursoN3">;
 type Unit = { title: string; minutes?: number; icon?: string; color?: string };
 type Block = { emoji: string; title: string; accent: string; units: Unit[] };
 
+/* --------- Unidades gratuitas (bloque/unidad) --------- */
+const FREE_UNITS = [
+  { block: 1, unit: 1 }, // Bloque 1 — Tema 01
+  { block: 1, unit: 2 }, // Bloque 1 — Tema 02
+] as const;
+
+const isUnitFree = (blockIdx: number, unitIdx: number) =>
+  FREE_UNITS.some(
+    (u) => u.block === blockIdx + 1 && u.unit === unitIdx + 1
+  );
+
 /* --------- Marco japonés en esquinas --------- */
 function Corners({ color }: { color: string }) {
   return (
@@ -45,6 +59,8 @@ function Corners({ color }: { color: string }) {
 /* ---------------- Screen ---------------- */
 export default function CursoN3Screen() {
   const navigation = useNavigation<Nav>();
+  const { plan, planStatus, isPremium } = useUserPlan();
+  const hasPremiumAccess = isPremium && planStatus === "active";
 
   // ===== Mapa de rutas por Bloque/Unidad =====
   const ROUTES = useMemo(
@@ -157,8 +173,20 @@ export default function CursoN3Screen() {
   const tY = scrollY.interpolate({ inputRange: [-100, 0, 200], outputRange: [-40, 0, 40] });
   const scale = scrollY.interpolate({ inputRange: [-100, 0], outputRange: [1.08, 1] });
 
-  // ===== Navegación por tema =====
+  // ===== Navegación por tema (con gating) =====
   const openUnit = (blockIdx: number, unitIdx: number, title: string) => {
+    const isFree = isUnitFree(blockIdx, unitIdx);
+    const isPremiumUnit = !isFree;
+    const isLocked = isPremiumUnit && !hasPremiumAccess;
+
+    if (isLocked) {
+      Alert.alert(
+        "Contenido Premium",
+        "Este tema forma parte de Nichiboku Premium.\n\nSe desbloquea al activar tu plan Premium."
+      );
+      return;
+    }
+
     const routeName = ROUTES[blockIdx]?.[unitIdx];
 
     if (routeName === "N3_Unit") {
@@ -173,8 +201,37 @@ export default function CursoN3Screen() {
     }
   };
 
-  // ===== Ir a la prueba final =====
-  const goToFinalExam = () => navigation.navigate("N3_FinalExam");
+  // ===== Ir a la prueba final (Premium) =====
+  const goToFinalExam = () => {
+    if (!hasPremiumAccess) {
+      Alert.alert(
+        "Contenido Premium",
+        "La prueba final del Nivel N3 se desbloquea con Nichiboku Premium.\n\nActiva tu plan para realizar el simulacro completo."
+      );
+      return;
+    }
+    navigation.navigate("N3_FinalExam");
+  };
+
+  const planBannerTitle = (() => {
+    if (hasPremiumAccess) {
+      return "Nivel N3 completo incluido en tu plan Premium activo ✨";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Tu plan Premium está inactivo.";
+    }
+    return "Explora gratis el Bloque 1 (temas 01 y 02) del Nivel N3.";
+  })();
+
+  const planBannerBody = (() => {
+    if (hasPremiumAccess) {
+      return "Accede a los 6 bloques, 30 temas y la prueba final sin límites.";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Reactiva tu plan para desbloquear todos los bloques, temas y la prueba final del Nivel N3.";
+    }
+    return "El resto de bloques, temas avanzados y la prueba final se desbloquean con Nichiboku Premium.";
+  })();
 
   return (
     <View style={styles.root}>
@@ -222,13 +279,19 @@ export default function CursoN3Screen() {
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}
       >
-        {/* Plan */}
+        {/* Plan / descripción general */}
         <View style={styles.cardIntro}>
           <Text style={styles.cardTitle}>📘 Plan completo — Nivel N3</Text>
           <Text style={styles.cardBody}>
             Objetivo general: dominar estructuras intermedias del japonés para comunicarse con naturalidad,
             comprender textos y audios más complejos, y aprobar el examen JLPT N3.
           </Text>
+        </View>
+
+        {/* Banner de plan / Premium */}
+        <View style={styles.planBanner}>
+          <Text style={styles.planBannerTitle}>{planBannerTitle}</Text>
+          <Text style={styles.planBannerBody}>{planBannerBody}</Text>
         </View>
 
         {/* Bloques → Unidades clicables */}
@@ -240,12 +303,17 @@ export default function CursoN3Screen() {
             <View style={styles.unitGrid}>
               {b.units.map((u, ui) => {
                 const isLast = ui === b.units.length - 1;
+                const free = isUnitFree(bi, ui);
+                const isPremiumUnit = !free;
+                const isLocked = isPremiumUnit && !hasPremiumAccess;
+
                 return (
                   <Pressable
                     key={ui}
                     style={[
                       styles.unit,
                       isLast && styles.unitSpan2,
+                      isLocked && styles.unitLocked,
                       { borderColor: b.accent },
                     ]}
                     onPress={() => openUnit(bi, ui, u.title)}
@@ -256,14 +324,37 @@ export default function CursoN3Screen() {
                       <View style={[styles.unitBadge, { backgroundColor: b.accent }]}>
                         <Text style={styles.unitBadgeTxt}>{String(ui + 1).padStart(2, "0")}</Text>
                       </View>
-                      {!!u.icon && <MCI name={u.icon as any} size={22} color={u.color || b.accent} />}
+                      {!!u.icon && (
+                        <MCI
+                          name={u.icon as any}
+                          size={22}
+                          color={u.color || b.accent}
+                        />
+                      )}
                     </View>
 
                     <Text style={styles.unitTitle} numberOfLines={2}>{u.title}</Text>
 
                     <View style={styles.unitFooter}>
                       <Text style={[styles.unitMeta, { color: b.accent }]}>{u.minutes ?? 10} min</Text>
-                      <Text style={[styles.unitCta, { color: b.accent }]}>Ver unidad ›</Text>
+                      <View style={styles.unitFooterRight}>
+                        {isPremiumUnit && (
+                          <View style={[styles.premiumPill, isLocked && styles.premiumPillLocked]}>
+                            <MCI
+                              name={hasPremiumAccess ? "crown-outline" : "lock-outline"}
+                              size={13}
+                              color="#111827"
+                              style={{ marginRight: 4 }}
+                            />
+                            <Text style={styles.premiumPillText}>
+                              {hasPremiumAccess ? "Incluido" : "Premium"}
+                            </Text>
+                          </View>
+                        )}
+                        <Text style={[styles.unitCta, { color: b.accent }]}>
+                          {isLocked ? "Ver detalles" : "Ver unidad ›"}
+                        </Text>
+                      </View>
                     </View>
 
                     <Corners color={b.accent} />
@@ -274,10 +365,13 @@ export default function CursoN3Screen() {
           </View>
         ))}
 
-        {/* PRUEBA FINAL */}
+        {/* PRUEBA FINAL (Premium) */}
         <Pressable style={styles.examCard} onPress={goToFinalExam}>
           <LinearGradient colors={["#E31D1A", "#AF0F2A"]} style={StyleSheet.absoluteFill} />
           <Text style={styles.examTitle}>🦁 Prueba final — Nivel N3</Text>
+          <Text style={styles.examBadge}>
+            {hasPremiumAccess ? "Incluida en tu plan Premium" : "Parte de Nichiboku Premium"}
+          </Text>
           <Text style={styles.examSub}>Simulacro JLPT N3 • Lectura • Gramática • Audio</Text>
           <View style={styles.examPills}>
             <View style={styles.examPill}><Text style={styles.examPillTxt}>40 preguntas</Text></View>
@@ -338,7 +432,7 @@ const styles = StyleSheet.create({
   /* INTRO */
   cardIntro: {
     marginHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     backgroundColor: "#121319",
     borderRadius: R,
     padding: 16,
@@ -347,6 +441,29 @@ const styles = StyleSheet.create({
   },
   cardTitle: { color: "#fff", fontWeight: "900", fontSize: 16, marginBottom: 6 },
   cardBody: { color: "rgba(255,255,255,0.92)" },
+
+  /* BANNER PLAN */
+  planBanner: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "#101118",
+  },
+  planBannerTitle: {
+    color: "#F9FAFB",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  planBannerBody: {
+    marginTop: 2,
+    color: "rgba(249,250,251,0.88)",
+    fontWeight: "500",
+    fontSize: 11,
+  },
 
   /* BLOQUES */
   blockCard: {
@@ -374,14 +491,48 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
+  unitLocked: {
+    opacity: 0.94,
+  },
   unitSpan2: { width: "100%" },
   unitHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   unitBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   unitBadgeTxt: { color: "#fff", fontWeight: "900", fontSize: 12 },
   unitTitle: { marginTop: 8, fontWeight: "800", color: "#0E1015" },
-  unitFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 },
+
+  unitFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  unitFooterRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   unitMeta: { fontWeight: "800" },
-  unitCta: { fontWeight: "900" },
+  unitCta: { fontWeight: "900", marginLeft: 6 },
+
+  /* Pill Premium “efecto oro” */
+  premiumPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    height: 20,
+    borderRadius: 999,
+    backgroundColor: "#FDE047", // amarillo dorado
+    borderWidth: 1,
+    borderColor: "#FACC15",
+  },
+  premiumPillLocked: {
+    backgroundColor: "#EAB308", // un poco más oscuro cuando está bloqueado
+    borderColor: "#CA8A04",
+  },
+  premiumPillText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#111827", // casi negro
+  },
 
   /* Marco japonés (esquinas en L) */
   cornersWrap: { position: "absolute", left: 0, top: 0, right: 0, bottom: 0 },
@@ -400,6 +551,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   examTitle: { color: "#fff", fontSize: 18, fontWeight: "900" },
+  examBadge: {
+    marginTop: 4,
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 12,
+    fontWeight: "700",
+  },
   examSub: { color: "rgba(255,255,255,0.95)", marginTop: 6 },
   examPills: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
   examPill: {

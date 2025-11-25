@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import type { RootStackParamList } from "../../../../types";
+import { useUserPlan } from "../../../context/UserPlanContext"; // ✅ NUEVO
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 const { width: W, height: H } = Dimensions.get("window");
@@ -1323,8 +1324,16 @@ function Tsuru({
    ========================================================= */
 export default function HiraganaWNMenu() {
   const navigation = useNavigation<Nav>();
+  const { plan, planStatus } = useUserPlan(); // ✅ leemos plan del contexto
+  const isPremiumActive = plan === "premium" && planStatus === "active";
 
   const handlePremiumLockedPress = () => {
+    if (isPremiumActive) {
+      // Si por alguna razón cae aquí siendo premium, lo mandamos al bloque 4
+      navigation.navigate("B4GramaticaIMenu");
+      return;
+    }
+
     Alert.alert(
       "Contenido Premium",
       "Los bloques 4 al 8 se desbloquearán cuando actives NICHI·BOKU Premium.\nMuy pronto podrás hacerlo desde esta app. 💛"
@@ -1380,7 +1389,7 @@ export default function HiraganaWNMenu() {
         {/* Separador visual */}
         <View style={styles.sep} />
 
-        {/* Bloque 3: Vocabulario esencial — NO bloqueado (subido arriba) */}
+        {/* Bloque 3: Vocabulario esencial — NO bloqueado */}
         <NichiBtn
           title="Bloque 3: Vocabulario esencial (10 temas)"
           desc="Vocabulario base de uso diario con audio y mini juegos."
@@ -1388,47 +1397,87 @@ export default function HiraganaWNMenu() {
           onPress={() => navigation.navigate("B3VocabularioMenu")}
         />
 
-        {/* CTA Premium dorado: “Incluido en Premium” */}
+        {/* CTA Premium dorado: cambia según si ya es premium */}
         <NichiBtn
-          title="Incluido en Premium"
-          desc="Desbloquea los bloques 4 a 8 para seguir aprendiendo con más temas."
+          title={isPremiumActive ? "Premium activado" : "Incluido en Premium"}
+          desc={
+            isPremiumActive
+              ? "Ya tienes acceso a los bloques 4 al 8. Empieza por Gramática I."
+              : "Desbloquea los bloques 4 a 8 para seguir aprendiendo con más temas."
+          }
           palette={PALETTES.gold}
           centerText
           style={styles.ctaBorder}
-          rightAdornment={<PremiumTag />}
-          onPress={handlePremiumLockedPress}
+          rightAdornment={!isPremiumActive ? <PremiumTag /> : undefined}
+          onPress={() => {
+            if (isPremiumActive) {
+              navigation.navigate("B4GramaticaIMenu");
+            } else {
+              handlePremiumLockedPress();
+            }
+          }}
         />
 
-        {/* 4) Bloques Premium (4–8) bloqueados hasta pago */}
+        {/* 4) Bloques Premium (4–8): bloqueados o no según plan */}
         <NichiBtn
           title="Bloque 4: Gramática I"
-          palette={PALETTES.premium}
-          rightAdornment={<PremiumTag />}
-          onPress={handlePremiumLockedPress}
+          palette={isPremiumActive ? PALETTES.light : PALETTES.premium}
+          rightAdornment={!isPremiumActive ? <PremiumTag /> : undefined}
+          onPress={() => {
+            if (isPremiumActive) {
+              navigation.navigate("B4GramaticaIMenu");
+            } else {
+              handlePremiumLockedPress();
+            }
+          }}
         />
         <NichiBtn
           title="Bloque 5: Gramática II"
-          palette={PALETTES.premium}
-          rightAdornment={<PremiumTag />}
-          onPress={handlePremiumLockedPress}
+          palette={isPremiumActive ? PALETTES.light : PALETTES.premium}
+          rightAdornment={!isPremiumActive ? <PremiumTag /> : undefined}
+          onPress={() => {
+            if (isPremiumActive) {
+              navigation.navigate("B5GramaticaIIMenu");
+            } else {
+              handlePremiumLockedPress();
+            }
+          }}
         />
         <NichiBtn
           title="Bloque 6: Vida cotidiana"
-          palette={PALETTES.premium}
-          rightAdornment={<PremiumTag />}
-          onPress={handlePremiumLockedPress}
+          palette={isPremiumActive ? PALETTES.light : PALETTES.premium}
+          rightAdornment={!isPremiumActive ? <PremiumTag /> : undefined}
+          onPress={() => {
+            if (isPremiumActive) {
+              navigation.navigate("B6VidaCotidianaMenu");
+            } else {
+              handlePremiumLockedPress();
+            }
+          }}
         />
         <NichiBtn
           title="Bloque 7: Lectura y práctica"
-          palette={PALETTES.premium}
-          rightAdornment={<PremiumTag />}
-          onPress={handlePremiumLockedPress}
+          palette={isPremiumActive ? PALETTES.light : PALETTES.premium}
+          rightAdornment={!isPremiumActive ? <PremiumTag /> : undefined}
+          onPress={() => {
+            if (isPremiumActive) {
+              navigation.navigate("B7LecturaPracticaMenu");
+            } else {
+              handlePremiumLockedPress();
+            }
+          }}
         />
         <NichiBtn
           title="Bloque 8: Evaluaciones y logros"
-          palette={PALETTES.premium}
-          rightAdornment={<PremiumTag />}
-          onPress={handlePremiumLockedPress}
+          palette={isPremiumActive ? PALETTES.light : PALETTES.premium}
+          rightAdornment={!isPremiumActive ? <PremiumTag /> : undefined}
+          onPress={() => {
+            if (isPremiumActive) {
+              navigation.navigate("B8EvaluacionesLogrosMenu");
+            } else {
+              handlePremiumLockedPress();
+            }
+          }}
         />
 
         <View style={{ height: 40 }} />

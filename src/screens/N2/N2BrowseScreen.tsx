@@ -6,6 +6,7 @@ import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef } from "react";
 import {
+  Alert,
   Animated,
   Dimensions,
   Easing,
@@ -16,6 +17,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useUserPlan } from "../../context/UserPlanContext";
 import { coverFor } from "./covers";
 
 type RootStackParamList = {
@@ -29,7 +31,7 @@ type RootStackParamList = {
   N2_B2_U3?: undefined;
   N2_B3_U1?: undefined;
   N2_B3_U2?: undefined;
-   // B4
+  // B4
   N2_B4_U1?: undefined;
   N2_B4_U2?: undefined; // <— NUEVA
 };
@@ -52,15 +54,28 @@ function routeFor(block: number, unit: number) {
   if (block === 3 && unit === 2) return "N2_B3_U2";
   if (block === 3 && unit === 3) return "N2_B3_U3"; // temporal
 
-    if (block === 4 && unit === 1) return "N2_B4_U1";
-    if (block === 4 && unit === 2) return "N2_B4_U2";
-    if (block === 4 && unit === 3) return "N2_B4_U3"; 
+  // B4
+  if (block === 4 && unit === 1) return "N2_B4_U1";
+  if (block === 4 && unit === 2) return "N2_B4_U2";
+  if (block === 4 && unit === 3) return "N2_B4_U3";
 
-    if (block===5 && unit===1) return "N2_B5_U1";
-  if (block===5 && unit===2) return "N2_B5_U2";
-  if (block===5 && unit===3) return "N2_B5_U3";
+  // B5
+  if (block === 5 && unit === 1) return "N2_B5_U1";
+  if (block === 5 && unit === 2) return "N2_B5_U2";
+  if (block === 5 && unit === 3) return "N2_B5_U3";
+
   return "N2_Unit"; // fallback
 }
+
+/* --------- Unidades gratuitas --------- */
+// B1 U1 y B1 U2 básicos (gratis). Todo lo demás Premium.
+const FREE_UNITS = [
+  { block: 1, unit: 1 },
+  { block: 1, unit: 2 },
+] as const;
+
+const isUnitFree = (block: number, unit: number) =>
+  FREE_UNITS.some((u) => u.block === block && u.unit === unit);
 
 /* -------- Tarjeta con animación de selección -------- */
 function PosterCard({
@@ -70,6 +85,8 @@ function PosterCard({
   h,
   onOpen,
   isLast,
+  isPremium,
+  isLocked,
 }: {
   item: UnitItem;
   accent: string;
@@ -77,6 +94,8 @@ function PosterCard({
   h: number;
   onOpen: (block: number, unit: number, title: string) => void;
   isLast?: boolean;
+  isPremium: boolean;
+  isLocked: boolean;
 }) {
   const pressScale = useRef(new Animated.Value(1)).current;
   const fade = useRef(new Animated.Value(0)).current;
@@ -123,6 +142,12 @@ function PosterCard({
     });
   };
 
+  const tagText = isPremium
+    ? isLocked
+      ? "Premium"
+      : "Incluido"
+    : item.subtitle;
+
   return (
     <Animated.View
       style={{
@@ -159,8 +184,23 @@ function PosterCard({
           ]}
         />
         <View style={styles.posterInfo}>
-          <View style={[styles.tag, { borderColor: accent }]}>
-            <Text style={[styles.tagTxt, { color: accent }]}>{item.subtitle}</Text>
+          <View
+            style={[
+              styles.tag,
+              isPremium && styles.tagPremium,
+              isPremium && isLocked && styles.tagPremiumLocked,
+              { borderColor: isPremium ? "#FACC15" : accent },
+            ]}
+          >
+            <Text
+              style={[
+                styles.tagTxt,
+                isPremium && styles.tagPremiumTxt,
+                !isPremium && { color: accent },
+              ]}
+            >
+              {tagText}
+            </Text>
           </View>
           <Text numberOfLines={2} style={styles.posterTitle}>
             {item.title}
@@ -174,16 +214,17 @@ function PosterCard({
 export default function N2BrowseScreen() {
   const navigation = useNavigation<Nav>();
   const width = Dimensions.get("window").width;
+  const { plan, planStatus, isPremium } = useUserPlan();
+  const hasPremiumAccess = isPremium && planStatus === "active";
 
   // ===== HERO con efecto "fold-away 3D" + Ken Burns + Parallax + Shine =====
   const hero = require("../../../assets/images/n2/n2_hero_street.webp");
   const heroH = 360;
 
-  // Scroll animado (ONLY transforms & opacity → useNativeDriver: true)
+  // Scroll animado
   const scrollY = useRef(new Animated.Value(0)).current;
   const clamped = Animated.diffClamp(scrollY, 0, heroH);
 
-  // Hero se traslada y "se dobla" en X
   const headerTranslateY = clamped.interpolate({
     inputRange: [0, heroH],
     outputRange: [0, -heroH],
@@ -205,14 +246,12 @@ export default function N2BrowseScreen() {
     extrapolate: "clamp",
   });
 
-  // Parallax de imagen (sutil)
   const heroImgTY = clamped.interpolate({
     inputRange: [0, heroH],
     outputRange: [0, 40],
     extrapolate: "clamp",
   });
 
-  // Brillo diagonal que cruza el hero al hacer scroll
   const shineTX = clamped.interpolate({
     inputRange: [0, heroH],
     outputRange: [-width, width * 1.4],
@@ -224,7 +263,6 @@ export default function N2BrowseScreen() {
     extrapolate: "clamp",
   });
 
-  // Mini top bar aparece al final
   const miniOpacity = clamped.interpolate({
     inputRange: [heroH * 0.6, heroH],
     outputRange: [0, 1],
@@ -236,7 +274,7 @@ export default function N2BrowseScreen() {
     extrapolate: "clamp",
   });
 
-  // Ken Burns loop (zoom-in/out lento que se combina con foldScale)
+  // Ken Burns
   const kb = useRef(new Animated.Value(0)).current;
   const kbScale = kb.interpolate({
     inputRange: [0, 1],
@@ -245,8 +283,18 @@ export default function N2BrowseScreen() {
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(kb, { toValue: 1, duration: 6000, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(kb, { toValue: 0, duration: 6000, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(kb, {
+          toValue: 1,
+          duration: 6000,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(kb, {
+          toValue: 0,
+          duration: 6000,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
       ])
     );
     loop.start();
@@ -316,6 +364,18 @@ export default function N2BrowseScreen() {
   const POSTER_H = Math.round(POSTER_W * 1.35);
 
   const openUnit = (block: number, unit: number, title: string) => {
+    const free = isUnitFree(block, unit);
+    const isPremiumUnit = !free;
+    const isLocked = isPremiumUnit && !hasPremiumAccess;
+
+    if (isLocked) {
+      Alert.alert(
+        "Contenido Premium",
+        "Este tema forma parte de Nichiboku Premium.\n\nSe desbloquea al activar tu plan Premium."
+      );
+      return;
+    }
+
     const route = routeFor(block, unit) as any;
     if (route === "N2_Unit") {
       (navigation as any).navigate("N2_Unit", { block, unit, title });
@@ -323,6 +383,26 @@ export default function N2BrowseScreen() {
       (navigation as any).navigate(route);
     }
   };
+
+  const planBannerTitle = (() => {
+    if (hasPremiumAccess) {
+      return "Nivel N2 completo incluido en tu plan Premium activo ✨";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Tu plan Premium está inactivo.";
+    }
+    return "Comienza con B1・U1 y B1・U2 gratis en el Nivel N2.";
+  })();
+
+  const planBannerBody = (() => {
+    if (hasPremiumAccess) {
+      return "Explora todos los bloques y temas N2, con gramática aplicada a contextos reales.";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Reactiva tu plan para desbloquear todas las unidades avanzadas y situaciones reales de N2.";
+    }
+    return "El resto de unidades N2 se desbloquean con Nichiboku Premium.";
+  })();
 
   return (
     <View style={styles.root}>
@@ -421,10 +501,16 @@ export default function N2BrowseScreen() {
         contentContainerStyle={{ paddingTop: heroH + 8, paddingBottom: 36 }}
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: true, // SOLO transforms/opacidad (ultra fluido)
+          useNativeDriver: true,
         })}
         scrollEventThrottle={16}
       >
+        {/* Banner de plan / Premium */}
+        <View style={styles.planBanner}>
+          <Text style={styles.planBannerTitle}>{planBannerTitle}</Text>
+          <Text style={styles.planBannerBody}>{planBannerBody}</Text>
+        </View>
+
         {rows.map((row) => (
           <View key={row.key} style={{ marginTop: 8 }}>
             <View style={styles.rowHeader}>
@@ -438,20 +524,25 @@ export default function N2BrowseScreen() {
               decelerationRate="fast"
               snapToAlignment="start"
             >
-              {row.items.map((it, i) => (
-                <PosterCard
-                  key={`${row.key}-${i}`}
-                  item={it}
-                  accent={row.accent}
-                  w={POSTER_W}
-                  h={POSTER_H}
-                  onOpen={(b, u, t) => {
-                    // micro haptic feel (visualmente)
-                    openUnit(b, u, t);
-                  }}
-                  isLast={i === row.items.length - 1}
-                />
-              ))}
+              {row.items.map((it, i) => {
+                const free = isUnitFree(it.block, it.unit);
+                const isPremiumUnit = !free;
+                const isLocked = isPremiumUnit && !hasPremiumAccess;
+
+                return (
+                  <PosterCard
+                    key={`${row.key}-${i}`}
+                    item={it}
+                    accent={row.accent}
+                    w={POSTER_W}
+                    h={POSTER_H}
+                    onOpen={(b, u, t) => openUnit(b, u, t)}
+                    isLast={i === row.items.length - 1}
+                    isPremium={isPremiumUnit}
+                    isLocked={isLocked}
+                  />
+                );
+              })}
             </ScrollView>
           </View>
         ))}
@@ -552,8 +643,37 @@ const styles = StyleSheet.create({
   },
   miniBrand: { color: "#fff", fontWeight: "900", fontSize: 16 },
 
+  /* BANNER PLAN */
+  planBanner: {
+    marginHorizontal: 16,
+    marginBottom: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "#101118",
+  },
+  planBannerTitle: {
+    color: "#F9FAFB",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  planBannerBody: {
+    marginTop: 2,
+    color: "rgba(249,250,251,0.88)",
+    fontWeight: "500",
+    fontSize: 11,
+  },
+
   /* ROWS */
-  rowHeader: { paddingHorizontal: 12, paddingVertical: 6, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  rowHeader: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   rowTitle: { color: "#fff", fontWeight: "900", fontSize: 16 },
 
   /* POSTERS */
@@ -567,6 +687,7 @@ const styles = StyleSheet.create({
   },
   posterInfo: { position: "absolute", left: 10, right: 10, bottom: 10 },
   posterTitle: { color: "#fff", fontWeight: "900", fontSize: 14, marginTop: 6 },
+
   tag: {
     alignSelf: "flex-start",
     borderRadius: 999,
@@ -576,4 +697,17 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.85)",
   },
   tagTxt: { fontWeight: "900", fontSize: 12, color: "#0B0C10" },
+
+  // Tag Premium “efecto oro”
+  tagPremium: {
+    backgroundColor: "#FDE047",
+    borderColor: "#FACC15",
+  },
+  tagPremiumLocked: {
+    backgroundColor: "#EAB308",
+    borderColor: "#CA8A04",
+  },
+  tagPremiumTxt: {
+    color: "#111827",
+  },
 });

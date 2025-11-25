@@ -27,6 +27,8 @@ import { N1_LESSONS } from "../../data/n1.lessons";
 import { routeForN1 } from "../../navigation/routeForN1";
 // Mapeador de portadas centralizado
 import { coverFor } from "./covers";
+// Contexto de plan de usuario
+import { useUserPlan } from "../../context/UserPlanContext";
 
 /* ---------------- NAV ---------------- */
 type Nav = NativeStackNavigationProp<RootStackParamList, "N1Home">;
@@ -58,7 +60,7 @@ const CHIP_ORDER = [
   "LISTENING",
   "KANJI",
 ] as const;
-type ChipKey = typeof CHIP_ORDER[number];
+type ChipKey = (typeof CHIP_ORDER)[number];
 
 const CHIP_TIPS: Record<
   ChipKey,
@@ -178,7 +180,7 @@ function TipOverlay({
   return (
     <View
       pointerEvents="box-none"
-      style={styles.tipContainer} // zIndex + elevation altos
+      style={styles.tipContainer}
     >
       {/* Fondo oscurecido que cierra al tocar */}
       <Pressable onPress={onClose} style={styles.tipBackdrop} />
@@ -261,6 +263,8 @@ function goTo(nav: any, name: keyof RootStackParamList) {
 
 export default function N1HomeScreen() {
   const nav = useNavigation<Nav>();
+  const { plan, planStatus, isPremium } = useUserPlan();
+  const hasPremiumAccess = isPremium && planStatus === "active";
 
   const headerShadow = useMemo(
     () => ({
@@ -284,9 +288,12 @@ export default function N1HomeScreen() {
   const notchLeft = useMemo(() => {
     if (!tipChip || !chipsLayout[tipChip]) return 24;
     const { x, w } = chipsLayout[tipChip];
-    const chipCenterScreen = (x - chipScrollX) + w / 2;
+    const chipCenterScreen = x - chipScrollX + w / 2;
     const notchHalf = 8;
-    const rel = Math.max(16, Math.min(width - P * 2 - 16, chipCenterScreen - P - notchHalf));
+    const rel = Math.max(
+      16,
+      Math.min(width - P * 2 - 16, chipCenterScreen - P - notchHalf)
+    );
     return rel;
   }, [tipChip, chipsLayout, chipScrollX]);
 
@@ -316,11 +323,61 @@ export default function N1HomeScreen() {
 
   const chips: ChipKey[] = [...CHIP_ORDER];
 
-  const safeOpen = (item: (typeof N1_LESSONS)[number]) => {
+  /* ---- Gating de lecciones N1 ---- */
+  const isLessonFree = (lesson: (typeof N1_LESSONS)[number]) => {
+    const routeName = routeForN1(lesson.id);
+    // Solo Política y sociedad es básica
+    return routeName === "N1_Politics";
+  };
+
+  const openLesson = (item: (typeof N1_LESSONS)[number]) => {
     const routeName = routeForN1(item.id);
+    const free = isLessonFree(item);
+    const isPremiumLesson = !free;
+    const isLocked = isPremiumLesson && !hasPremiumAccess;
+
+    if (isLocked) {
+      Alert.alert(
+        "Contenido Premium",
+        "Esta lección forma parte de Nichiboku Premium.\n\nSe desbloquea al activar tu plan Premium."
+      );
+      return;
+    }
+
     if (routeName) return goTo(nav, routeName as keyof RootStackParamList);
     nav.navigate("N1Lesson", { id: item.id });
   };
+
+  const requirePremium = (onOk: () => void) => {
+    if (!hasPremiumAccess) {
+      Alert.alert(
+        "Contenido Premium",
+        "El examen diagnóstico y el centro de kanji del Nivel N1 se desbloquean con Nichiboku Premium."
+      );
+      return;
+    }
+    onOk();
+  };
+
+  const planBannerTitle = (() => {
+    if (hasPremiumAccess) {
+      return "Todo el contenido N1 está incluido en tu plan Premium activo ✨";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Tu plan Premium está inactivo.";
+    }
+    return "Política y sociedad está incluida en tu plan básico. El resto del Nivel N1 es contenido Premium.";
+  })();
+
+  const planBannerBody = (() => {
+    if (hasPremiumAccess) {
+      return "Explora todas las lecciones, el examen diagnóstico y el centro de kanji sin límites.";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Reactiva tu plan para desbloquear todas las lecciones, el examen diagnóstico y el hub de kanji de N1.";
+    }
+    return "Actualiza a Nichiboku Premium para desbloquear el examen diagnóstico, el centro de kanji y todas las demás lecciones N1.";
+  })();
 
   return (
     <View style={styles.wrap}>
@@ -341,7 +398,9 @@ export default function N1HomeScreen() {
         <View style={{ flexDirection: "row", gap: 8 }}>
           <Pressable
             style={[styles.kanjiPill, { backgroundColor: "#7C8CFD" }]}
-            onPress={() => nav.navigate("N1KanjiMock")}
+            onPress={() =>
+              requirePremium(() => nav.navigate("N1KanjiMock"))
+            }
           >
             <Text style={[styles.kanjiPillTxt, { color: "#0B0F19" }]}>
               MOCK KANJI
@@ -350,7 +409,9 @@ export default function N1HomeScreen() {
 
           <Pressable
             style={styles.kanjiPill}
-            onPress={() => nav.navigate("N1KanjiHub")}
+            onPress={() =>
+              requirePremium(() => nav.navigate("N1KanjiHub"))
+            }
           >
             <Text style={styles.kanjiPillTxt}>KANJI (200)</Text>
           </Pressable>
@@ -397,7 +458,9 @@ export default function N1HomeScreen() {
                 <View style={styles.ctaRow}>
                   <Pressable
                     style={styles.btnPrimary}
-                    onPress={() => nav.navigate("N1Exam")}
+                    onPress={() =>
+                      requirePremium(() => nav.navigate("N1Exam"))
+                    }
                   >
                     <Text style={styles.btnPrimaryTxt}>
                       EXAMEN DE DIAGNÓSTICO
@@ -405,7 +468,9 @@ export default function N1HomeScreen() {
                   </Pressable>
                   <Pressable
                     style={styles.btnGhost}
-                    onPress={() => nav.navigate("N1KanjiHub")}
+                    onPress={() =>
+                      requirePremium(() => nav.navigate("N1KanjiHub"))
+                    }
                   >
                     <Text style={styles.btnGhostTxt}>CENTRO DE KANJI</Text>
                   </Pressable>
@@ -414,11 +479,21 @@ export default function N1HomeScreen() {
                 {/* Acceso directo al Mock de Kanji */}
                 <Pressable
                   style={[styles.mockBtn]}
-                  onPress={() => nav.navigate("N1KanjiMock")}
+                  onPress={() =>
+                    requirePremium(() => nav.navigate("N1KanjiMock"))
+                  }
                 >
-                  <Text style={styles.mockBtnTxt}>🎯 MOCK TEST: 200 KANJI</Text>
+                  <Text style={styles.mockBtnTxt}>
+                    🎯 MOCK TEST: 200 KANJI
+                  </Text>
                 </Pressable>
               </View>
+            </View>
+
+            {/* Banner de plan / Premium */}
+            <View style={styles.planBanner}>
+              <Text style={styles.planBannerTitle}>{planBannerTitle}</Text>
+              <Text style={styles.planBannerBody}>{planBannerBody}</Text>
             </View>
 
             {/* chips */}
@@ -457,9 +532,19 @@ export default function N1HomeScreen() {
             <Text style={styles.sectionTitle}>CARTELERA N1</Text>
           </>
         }
-        renderItem={({ item }) => (
-          <LessonCard item={item} onPress={() => safeOpen(item)} />
-        )}
+        renderItem={({ item }) => {
+          const free = isLessonFree(item);
+          const isPremiumLesson = !free;
+          const isLocked = isPremiumLesson && !hasPremiumAccess;
+          return (
+            <LessonCard
+              item={item}
+              onPress={() => openLesson(item)}
+              isPremium={isPremiumLesson}
+              isLocked={isLocked}
+            />
+          );
+        }}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         contentContainerStyle={{ paddingHorizontal: P, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
@@ -472,10 +557,20 @@ export default function N1HomeScreen() {
 function LessonCard({
   item,
   onPress,
+  isPremium,
+  isLocked,
 }: {
   item: (typeof N1_LESSONS)[number];
   onPress: () => void;
+  isPremium: boolean;
+  isLocked: boolean;
 }) {
+  const startLabel = isPremium
+    ? isLocked
+      ? "PREMIUM"
+      : "INCLUIDO"
+    : "EMPEZAR";
+
   return (
     <Pressable onPress={onPress} style={styles.card}>
       <View style={styles.posterWrap}>
@@ -513,8 +608,21 @@ function LessonCard({
             {(item as any).durationMin ?? 65} MIN
           </Text>
           <View style={styles.spacer} />
-          <View style={styles.startPill}>
-            <Text style={styles.startTxt}>EMPEZAR</Text>
+          <View
+            style={[
+              styles.startPill,
+              isPremium && styles.startPillPremium,
+              isPremium && isLocked && styles.startPillPremiumLocked,
+            ]}
+          >
+            <Text
+              style={[
+                styles.startTxt,
+                isPremium && styles.startTxtPremium,
+              ]}
+            >
+              {startLabel}
+            </Text>
           </View>
         </View>
 
@@ -585,35 +693,59 @@ const styles = StyleSheet.create({
   },
   heroSub: { color: "rgba(255,255,255,0.88)", marginTop: 2 },
 
-  progressRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 2 },
+  progressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 2,
+  },
   track: {
     flex: 1,
     height: 8,
     backgroundColor: "rgba(255,255,255,0.16)",
     borderRadius: 999,
   },
-  bar: { width: "32%", height: 8, borderRadius: 999, backgroundColor: PALETTE.aqua },
+  bar: {
+    width: "32%",
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: PALETTE.aqua,
+  },
   progressPct: { color: "#D7FDF9", fontWeight: "900" },
 
   ctaRow: { flexDirection: "row", gap: 10, marginTop: 4 },
+
+  // Botón Premium principal (Examen diagnóstico)
   btnPrimary: {
     flex: 1,
-    backgroundColor: PALETTE.blue,
+    backgroundColor: "#FDE047",
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#FACC15",
   },
-  btnPrimaryTxt: { color: "#EAF1FF", fontWeight: "900", letterSpacing: 0.3 },
+  btnPrimaryTxt: {
+    color: "#111827",
+    fontWeight: "900",
+    letterSpacing: 0.3,
+  },
+
+  // Botón Premium secundario (Centro de Kanji)
   btnGhost: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.28)",
+    borderColor: "#FACC15",
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: "rgba(250,204,21,0.18)",
   },
-  btnGhostTxt: { color: "rgba(255,255,255,0.92)", fontWeight: "900", letterSpacing: 0.3 },
+  btnGhostTxt: {
+    color: "#111827",
+    fontWeight: "900",
+    letterSpacing: 0.3,
+  },
 
   mockBtn: {
     alignSelf: "flex-start",
@@ -623,7 +755,35 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 4,
   },
-  mockBtnTxt: { color: "#0B0F19", fontWeight: "900", letterSpacing: 0.2 },
+  mockBtnTxt: {
+    color: "#0B0F19",
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+
+  /* ---- BANNER PLAN ---- */
+  planBanner: {
+    marginHorizontal: P,
+    marginTop: 6,
+    marginBottom: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "#101118",
+  },
+  planBannerTitle: {
+    color: "#F9FAFB",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  planBannerBody: {
+    marginTop: 2,
+    color: "rgba(249,250,251,0.88)",
+    fontWeight: "500",
+    fontSize: 11,
+  },
 
   /* ---- CHIPS ---- */
   chip: {
@@ -663,7 +823,11 @@ const styles = StyleSheet.create({
   cardTitle: { color: PALETTE.text, fontWeight: "900", fontSize: 16 },
   cardSub: { color: PALETTE.sub, fontSize: 13, marginTop: 4 },
 
-  badgesRow: { flexDirection: "row", alignItems: "center", marginTop: 10 },
+  badgesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
   levelPill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -684,7 +848,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(46,190,213,0.6)",
   },
-  startTxt: { color: "#8FF1F2", fontWeight: "900", fontSize: 12, letterSpacing: 0.2 },
+  startTxt: {
+    color: "#8FF1F2",
+    fontWeight: "900",
+    fontSize: 12,
+    letterSpacing: 0.2,
+  },
+
+  // Estado Premium (efecto oro)
+  startPillPremium: {
+    backgroundColor: "#FDE047",
+    borderColor: "#FACC15",
+  },
+  startPillPremiumLocked: {
+    backgroundColor: "#EAB308",
+    borderColor: "#CA8A04",
+  },
+  startTxtPremium: {
+    color: "#111827",
+  },
 
   cardBtn: {
     alignSelf: "flex-start",
@@ -694,7 +876,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
   },
-  cardBtnTxt: { color: "#EAF1FF", fontWeight: "900", letterSpacing: 0.2 },
+  cardBtnTxt: {
+    color: "#EAF1FF",
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
 
   /* ---- TIP OVERLAY (siempre por encima) ---- */
   tipContainer: {
@@ -749,7 +935,12 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.16)",
     zIndex: 10001,
   },
-  tipCloseTxt: { color: "#FFFFFF", fontWeight: "900", fontSize: 14, lineHeight: 16 },
+  tipCloseTxt: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    fontSize: 14,
+    lineHeight: 16,
+  },
 
   tipCard: {
     padding: 14,
@@ -779,7 +970,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
   },
-  tipPrimaryTxt: { color: "#EAF1FF", fontWeight: "900", letterSpacing: 0.2 },
+  tipPrimaryTxt: {
+    color: "#EAF1FF",
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
   tipGhostBtn: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.18)",
@@ -788,7 +983,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "rgba(255,255,255,0.04)",
   },
-  tipGhostTxt: { color: "rgba(255,255,255,0.92)", fontWeight: "900", letterSpacing: 0.2 },
+  tipGhostTxt: {
+    color: "rgba(255,255,255,0.92)",
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
   tipGlow: {
     position: "absolute",
     left: 20,

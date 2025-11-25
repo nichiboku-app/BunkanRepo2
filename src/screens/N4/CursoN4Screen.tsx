@@ -6,6 +6,7 @@ import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo } from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   Pressable,
@@ -16,6 +17,7 @@ import {
   View,
 } from "react-native";
 import { Fuji, Lantern, Sakura, Torii } from "../../../components/icons/JapaneseIcons";
+import { useUserPlan } from "../../context/UserPlanContext";
 
 const { width: W } = Dimensions.get("window");
 
@@ -173,6 +175,9 @@ const buildGroups = (rows: TopicRow[]): Group[] => {
   return out;
 };
 
+// Temas gratuitos en este curso
+const FREE_TOPICS = [1, 2];
+
 /* ========= Screen ========= */
 type RootStackParamList = {
   CursoN4: undefined;
@@ -182,8 +187,43 @@ type RootStackParamList = {
 export default function CursoN4Screen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const GROUPS = useMemo(() => buildGroups(DATA), []);
+  const { plan, planStatus, isPremium } = useUserPlan();
+
+  const hasPremiumAccess = isPremium && planStatus === "active";
 
   const imageForTopic = (num: number) => IMG_BY_TOPIC[num] ?? coverForIdx(num);
+
+  const handlePressTopic = (topic: Topic) => {
+    const isPremiumTopic = !FREE_TOPICS.includes(topic.num);
+    const isLocked = isPremiumTopic && !hasPremiumAccess;
+
+    if (isLocked) {
+      Alert.alert(
+        "Contenido Premium",
+        "Este tema forma parte de Nichiboku Premium.\n\nSe desbloquea al activar tu plan Premium."
+      );
+      return;
+    }
+
+    navigation.navigate("N4_Tema", { id: Number(topic.num), title: topic.title });
+  };
+
+  const planBannerText = (() => {
+    if (hasPremiumAccess) {
+      return "Curso N4 completo incluido en tu plan Premium activo ✨";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Tu plan Premium está inactivo. Reactívalo para desbloquear todos los temas del Curso N4.";
+    }
+    return "Las unidades 1 y 2 son gratuitas. El resto del Curso N4 se desbloquea con Nichiboku Premium.";
+  })();
+
+  const planBannerSubText = (() => {
+    if (hasPremiumAccess) {
+      return "Explora libremente las 30 unidades con ejemplos reales y gramática aplicada.";
+    }
+    return "Actualiza a Nichiboku Premium para acceder a las 30 unidades completas del curso.";
+  })();
 
   return (
     <View style={styles.root}>
@@ -227,6 +267,12 @@ export default function CursoN4Screen() {
         </Text>
       </View>
 
+      {/* ====== Banner de plan ====== */}
+      <View style={styles.planBanner}>
+        <Text style={styles.planBannerText}>{planBannerText}</Text>
+        <Text style={styles.planBannerSubText}>{planBannerSubText}</Text>
+      </View>
+
       {/* ====== Secciones + carruseles ====== */}
       <FlatList
         data={GROUPS}
@@ -259,10 +305,17 @@ export default function CursoN4Screen() {
               renderItem={({ item: t }) => {
                 const emoji = (t.title.match(/^\p{Extended_Pictographic}/u) || ["✦"])[0];
                 const text = t.title.replace(/^\p{Extended_Pictographic}\s*/u, "");
+                const isPremiumTopic = !FREE_TOPICS.includes(t.num);
+                const isLocked = isPremiumTopic && !hasPremiumAccess;
+
                 return (
                   <Pressable
-                    style={({ pressed }) => [styles.card, pressed && { transform: [{ translateY: 1 }] }]}
-                    onPress={() => navigation.navigate("N4_Tema", { id: Number(t.num), title: t.title })}
+                    style={({ pressed }) => [
+                      styles.card,
+                      isLocked && styles.cardLocked,
+                      pressed && { transform: [{ translateY: 1 }] },
+                    ]}
+                    onPress={() => handlePressTopic(t)}
                     accessibilityRole="button"
                     accessibilityLabel={`Abrir tema ${t.num}`}
                   >
@@ -285,6 +338,14 @@ export default function CursoN4Screen() {
                           <Text style={styles.cardTitle} numberOfLines={2}>{text}</Text>
                         </View>
                         <View style={styles.trailing}>
+                          {isPremiumTopic && (
+                            <View style={[styles.premiumPill, isLocked && styles.premiumPillLocked]}>
+                              <AntDesign name="lock" size={11} color="#FCE9C8" style={{ marginRight: 4 }} />
+                              <Text style={styles.premiumPillText}>
+                                {hasPremiumAccess ? "Incluido" : "Premium"}
+                              </Text>
+                            </View>
+                          )}
                           <View style={styles.badge}>
                             <Text style={styles.badgeText}>{t.num}</Text>
                           </View>
@@ -349,7 +410,7 @@ const styles = StyleSheet.create({
   foxMedallionWrap: {
     alignItems: "center",
     marginTop: -75,
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   goldRingOuter: {
     width: 132, height: 132, borderRadius: 66,
@@ -372,7 +433,38 @@ const styles = StyleSheet.create({
     overflow: "hidden", borderWidth: 2, borderColor: "#F5E2C7", backgroundColor: "#fff",
   },
   heroJP: { marginTop: 10, color: CREMA, fontWeight: "900", fontSize: 16, letterSpacing: 1 },
-  heroES: { marginTop: 4, color: "rgba(246,231,211,0.8)", fontWeight: "600", fontSize: 12, paddingHorizontal: 16, textAlign: "center" },
+  heroES: {
+    marginTop: 4,
+    color: "rgba(246,231,211,0.8)",
+    fontWeight: "600",
+    fontSize: 12,
+    paddingHorizontal: 16,
+    textAlign: "center",
+  },
+
+  /* Banner de plan */
+  planBanner: {
+    marginTop: 4,
+    marginBottom: 4,
+    marginHorizontal: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(246,231,211,0.4)",
+    backgroundColor: "rgba(23,28,39,0.96)",
+  },
+  planBannerText: {
+    color: "#F6E7D3",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  planBannerSubText: {
+    marginTop: 2,
+    color: "rgba(246,231,211,0.86)",
+    fontSize: 11,
+    fontWeight: "500",
+  },
 
   sectionRow: {
     marginTop: 12, marginBottom: 8, paddingHorizontal: 16,
@@ -394,6 +486,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 4,
   },
+  cardLocked: {
+    opacity: 0.92,
+    borderColor: "rgba(246,231,211,0.10)",
+  },
   cardIn: { flex: 1, padding: 14, justifyContent: "flex-end" },
   cardHeaderRow: { flexDirection: "row", alignItems: "center" },
   leadIcon: {
@@ -405,6 +501,28 @@ const styles = StyleSheet.create({
   leadEmoji: { fontSize: 17 },
   cardTitle: { color: "#FFF5E5", fontWeight: "900", fontSize: 14, lineHeight: 18 },
   trailing: { flexDirection: "row", alignItems: "center", marginLeft: 10 },
+
+  premiumPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    height: 22,
+    borderRadius: 11,
+    marginRight: 8,
+    backgroundColor: "rgba(255,233,198,0.28)",
+    borderWidth: 1,
+    borderColor: "rgba(255,233,198,0.85)",
+  },
+  premiumPillLocked: {
+    backgroundColor: "rgba(15,15,20,0.75)",
+    borderColor: "rgba(255,233,198,0.45)",
+  },
+  premiumPillText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#FCE9C8",
+  },
+
   badge: {
     minWidth: 26, height: 26, paddingHorizontal: 6, borderRadius: 13,
     alignItems: "center", justifyContent: "center",

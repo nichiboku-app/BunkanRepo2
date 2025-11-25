@@ -1,5 +1,6 @@
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
+  Alert,
   Dimensions,
   ImageBackground,
   ScrollView,
@@ -7,60 +8,122 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import type { RootStackParamList } from '../../types';
+} from "react-native";
+import type { RootStackParamList } from "../../types";
+import { useUserPlan } from "../context/UserPlanContext";
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'MapaNiveles'>;
+  navigation: NativeStackNavigationProp<RootStackParamList, "MapaNiveles">;
 };
 
 type Zona = {
-  key: string;
+  key: "n5" | "n4" | "n3" | "n2" | "n1";
   label: string;
   topPercent: number;
   leftPercent: number;
   screen: keyof RootStackParamList;
 };
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 const mapaHeight = 500;
 
 const zonas: Zona[] = [
-  { key: 'n5', label: 'N5', topPercent: 0.13, leftPercent: 0.12, screen: 'RetoN5' },
-  { key: 'n4', label: 'N4', topPercent: 0.42, leftPercent: 0.45, screen: 'RetoN4' },
-  { key: 'n3', label: 'N3', topPercent: 0.52, leftPercent: 0.15, screen: 'RetoN3' },
-  { key: 'n2', label: 'N2', topPercent: 0.71, leftPercent: 0.52, screen: 'RetoN2' },
-  { key: 'n1', label: 'N1', topPercent: 0.33, leftPercent: 0.68, screen: 'RetoN1' },
+  { key: "n5", label: "N5", topPercent: 0.13, leftPercent: 0.12, screen: "RetoN5" },
+  { key: "n4", label: "N4", topPercent: 0.42, leftPercent: 0.45, screen: "RetoN4" },
+  { key: "n3", label: "N3", topPercent: 0.52, leftPercent: 0.15, screen: "RetoN3" },
+  { key: "n2", label: "N2", topPercent: 0.71, leftPercent: 0.52, screen: "RetoN2" },
+  { key: "n1", label: "N1", topPercent: 0.33, leftPercent: 0.68, screen: "RetoN1" },
 ];
 
 export default function MapaNiveles({ navigation }: Props) {
+  const { plan, planStatus, isPremium } = useUserPlan();
+  const hasPremiumAccess = isPremium && planStatus === "active";
+
+  const handlePressZona = (zona: Zona) => {
+    const isFree = zona.key === "n5";
+
+    if (!isFree && !hasPremiumAccess) {
+      Alert.alert(
+        "Contenido Premium",
+        "Los niveles N4, N3, N2 y N1 forman parte de Nichiboku Premium.\n\nSe desbloquean al activar tu plan Premium."
+      );
+      return;
+    }
+
+    navigation.navigate(zona.screen);
+  };
+
+  const planBannerTitle = (() => {
+    if (hasPremiumAccess) {
+      return "Tu plan Premium está activo: puedes explorar todos los niveles del mapa ✨";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Tu plan Premium está inactivo.";
+    }
+    return "El Nivel N5 está incluido en tu plan actual. N4, N3, N2 y N1 son contenido Premium.";
+  })();
+
+  const planBannerBody = (() => {
+    if (hasPremiumAccess) {
+      return "Entra libremente a N5, N4, N3, N2 y N1: retos, minijuegos y personajes sin límites.";
+    }
+    if (plan === "premium" && planStatus === "inactive") {
+      return "Reactiva tu plan Premium para desbloquear los niveles N4, N3, N2 y N1 en este mapa.";
+    }
+    return "Actualiza a Nichiboku Premium para desbloquear los niveles intermedios y avanzados (N4–N1).";
+  })();
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
         <ImageBackground
-          source={require('../../assets/mapa.webp')}
+          source={require("../../assets/mapa.webp")}
           style={[styles.mapa, { height: mapaHeight }]}
           resizeMode="cover"
         >
-          {zonas.map((zona) => (
-            <TouchableOpacity
-              key={zona.key}
-              style={[
-                styles.zona,
-                {
-                  top: zona.topPercent * mapaHeight,
-                  left: zona.leftPercent * width,
-                },
-              ]}
-              onPress={() => navigation.navigate(zona.screen)}
-            >
-              <Text style={styles.zonaText}>{zona.label}</Text>
-            </TouchableOpacity>
-          ))}
+          {zonas.map((zona) => {
+            const isFree = zona.key === "n5";
+            const isPremiumZona = !isFree;
+            const isLocked = isPremiumZona && !hasPremiumAccess;
+
+            return (
+              <TouchableOpacity
+                key={zona.key}
+                style={[
+                  styles.zona,
+                  {
+                    top: zona.topPercent * mapaHeight,
+                    left: zona.leftPercent * width,
+                  },
+                  isPremiumZona && styles.zonaPremiumBase,
+                  isPremiumZona && isLocked && styles.zonaPremiumLocked,
+                  isPremiumZona && !isLocked && styles.zonaPremiumUnlocked,
+                ]}
+                onPress={() => handlePressZona(zona)}
+              >
+                <Text
+                  style={[
+                    styles.zonaText,
+                    isPremiumZona && styles.zonaTextPremium,
+                  ]}
+                >
+                  {zona.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ImageBackground>
 
         <View style={styles.instrucciones}>
-          <Text style={styles.instruccionesTitulo}>🌸 ¿Cómo funciona este mapa? 🌸</Text>
+          {/* Banner de plan / premium */}
+          <View style={styles.planBanner}>
+            <Text style={styles.planBannerTitle}>{planBannerTitle}</Text>
+            <Text style={styles.planBannerBody}>{planBannerBody}</Text>
+          </View>
+
+          <Text style={styles.instruccionesTitulo}>
+            🌸 ¿Cómo funciona este mapa? 🌸
+          </Text>
 
           <View style={styles.tip}>
             <Text style={styles.tipIcon}>🗺️</Text>
@@ -98,50 +161,85 @@ export default function MapaNiveles({ navigation }: Props) {
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   container: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   mapa: {
     width: width,
-    position: 'relative',
+    position: "relative",
   },
   zona: {
-    position: 'absolute',
+    position: "absolute",
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  // Estados Premium (efecto oro)
+  zonaPremiumBase: {
+    borderWidth: 1,
+  },
+  zonaPremiumLocked: {
+    backgroundColor: "#EAB308",
+    borderColor: "#CA8A04",
+  },
+  zonaPremiumUnlocked: {
+    backgroundColor: "#FDE047",
+    borderColor: "#FACC15",
   },
   zonaText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  zonaTextPremium: {
+    color: "#111827",
+    fontWeight: "900",
   },
   instrucciones: {
-    backgroundColor: '#ffeef5',
+    backgroundColor: "#ffeef5",
     paddingVertical: 32,
     paddingHorizontal: 24,
-    width: '100%',
+    width: "100%",
     minHeight: height * 0.45,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     marginTop: -10,
     elevation: 6,
   },
+  planBanner: {
+    marginBottom: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FED7AA",
+  },
+  planBannerTitle: {
+    fontWeight: "800",
+    fontSize: 14,
+    color: "#7C2D12",
+    marginBottom: 2,
+  },
+  planBannerBody: {
+    fontSize: 12,
+    color: "#7C2D12",
+  },
   instruccionesTitulo: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 20,
     marginBottom: 20,
-    textAlign: 'center',
-    color: '#bf1650',
+    textAlign: "center",
+    color: "#bf1650",
   },
   tip: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: 14,
   },
   tipIcon: {
@@ -150,7 +248,9 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 15,
-    color: '#444',
+    color: "#444",
     flex: 1,
   },
 });
+
+

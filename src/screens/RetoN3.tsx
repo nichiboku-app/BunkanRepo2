@@ -1,19 +1,18 @@
 // src/screens/RetoN3.tsx
-
 import { useNavigation } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import { useEffect, useRef, useState } from 'react';
 import {
-    Animated,
-    Dimensions,
-    Image,
-    ImageBackground,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  ImageBackground,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
 
 import { questionsN3 } from '../data/Reton3leon';
@@ -568,9 +567,9 @@ export default function RetoN3() {
 
             <View style={styles.options}>
               {currentQuestion &&
-                currentQuestion.options.map((option) => (
+                currentQuestion.options.map((option, idx) => (
                   <TouchableOpacity
-                    key={option}
+                    key={`${currentQuestionIndex}-${idx}`}  // 🔑 clave única
                     style={getOptionStyle(option)}
                     onPress={() => handleOptionPress(option)}
                     disabled={!!selectedOption || timeLeft === 0}

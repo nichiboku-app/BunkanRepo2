@@ -5,13 +5,13 @@ import { Audio } from "expo-av";
 import { Image as ExpoImage } from "expo-image";
 import { useEffect, useRef } from "react";
 import {
-    Animated,
-    Easing,
-    ImageBackground,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Easing,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 /* ---------------- Tipos de rutas ---------------- */
@@ -66,7 +66,7 @@ export default function N2IntroScreen() {
 
         // ⚠️ Asegúrate de tener este archivo en tu proyecto
         const { sound } = await Audio.Sound.createAsync(
-          require("../../assets/audio/spooky-gongwav-14904.mp3"),
+          require("../../assets/audio/pandan2.mp3"),
           { volume: 1.0, shouldPlay: true }
         );
         soundRef.current = sound;
