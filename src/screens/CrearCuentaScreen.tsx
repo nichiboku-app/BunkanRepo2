@@ -1,23 +1,24 @@
+// src/screens/CrearCuentaScreen.tsx
 import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import React, { useState } from 'react';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { useState } from 'react';
 import {
-    Dimensions,
-    Image,
-    ImageBackground,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    Vibration,
-    View,
+  Dimensions,
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Vibration,
+  View,
 } from 'react-native';
-import { auth, db } from '../config/firebaseConfig'; // Asegúrate de que esté bien
+import { auth, db } from '../config/firebaseConfig';
 
 const { width, height } = Dimensions.get('window');
 
@@ -56,27 +57,50 @@ export default function CrearCuentaScreen() {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // 1) Crear usuario en Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const uid = userCredential.user.uid;
 
-      await setDoc(doc(db, 'usuarios', uid), {
+      // 2) Crear documento en la colección "Usuarios" (como en tu BD)
+      await setDoc(doc(db, 'Usuarios', uid), {
         uid,
         email,
-        telefono,
-        creado: new Date(),
+        phoneNumber: telefono,
+        displayName: '',
+        countryCode: 'MX',
+        // Plan por defecto compatible con el resto de la app
+        plan: 'basic',
+        planStatus: 'inactive',
+        planExpiresAt: null,
+        planUpdatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
       });
 
       Vibration.vibrate(200);
       navigation.replace('Bienvenida');
     } catch (error: any) {
+      console.log('Error creando cuenta / Firestore:', error?.code, error?.message);
+
       let msg = 'Ocurrió un error';
+
       if (error.code === 'auth/email-already-in-use') {
         msg = 'Este correo ya está registrado';
       } else if (error.code === 'auth/invalid-email') {
         msg = 'Correo inválido';
       } else if (error.code === 'auth/weak-password') {
         msg = 'Contraseña débil';
+      } else if (error.code === 'permission-denied') {
+        msg =
+          'No hay permiso para crear tu perfil en la base de datos. Revisa las reglas de Firestore.';
+      } else if (error.message) {
+        // Mostrar mensaje “crudo” si no lo estamos manejando
+        msg = error.message;
       }
+
       setErrorMensaje(msg);
       setShowError(true);
     }
@@ -104,6 +128,8 @@ export default function CrearCuentaScreen() {
                 placeholderTextColor="#000"
                 value={email}
                 onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
 

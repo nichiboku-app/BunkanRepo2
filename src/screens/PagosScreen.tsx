@@ -17,14 +17,16 @@ import {
 } from "react-native";
 import { auth, db } from "../config/firebaseConfig";
 
-// src/screens/PagosScreen.tsx
-
-// 🔴 MODO PRUEBA – Payment Links TEST
+// 🔴 MODO PRUEBA – Payment Links TEST (Stripe TEST)
 const PREMIUM_URL =
-  "https://buy.stripe.com/test_eVq3cnajqaQ7dNI43814401"; // Plan Premium 400 MXN (TEST)
+  "https://buy.stripe.com/cNi28j37f5xOaXFaIz83C00"; // Plan Premium 400 MXN (TEST)
 
 const STUDENT_URL =
-  "https://buy.stripe.com/test_9B6cMX1MUcYfeRM6bg14400"; // Plan Estudiante 250 MXN (TEST)
+  "https://buy.stripe.com/00w8wHcHPgcs7Lt03V83C01"; // Plan Estudiante 250 MXN (TEST)
+
+// 🟢 PAGO REAL BARATO – SOLO PRUEBA (Stripe LIVE)
+const TEST_REAL_10_URL =
+  "https://buy.stripe.com/28EfZ90Z72lC5Dl2c383C02"; // Pago real 10 MXN (LIVE, solo pruebas)
 
 // ⬇ TAMAÑO SOLO DE LAS IMÁGENES DE CADA TARJETA ⬇
 const FREE_CARD_WIDTH = 450;
@@ -398,6 +400,21 @@ export default function PagosScreen() {
             </ImageBackground>
           </Animated.View>
         </View>
+
+        {/* ========== BLOQUE TEMPORAL – PRUEBA PAGO REAL $10 MXN ========== */}
+        <View style={styles.testBlock}>
+          <Text style={styles.testTitle}>Prueba de pago real (MXN $10)</Text>
+          <Text style={styles.testSubtitle}>
+            Solo para verificar Stripe en modo real. Este botón cobra 10 MXN y
+            también activará tu plan de pago en la app.
+          </Text>
+          <TouchableOpacity
+            style={styles.buttonTest}
+            onPress={() => openPaymentLink(TEST_REAL_10_URL)}
+          >
+            <Text style={styles.buttonTestText}>Probar pago real de $10</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* MODAL CREDENCIAL ESTUDIANTE */}
@@ -748,6 +765,41 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 11,
     color: "#9ca3af",
+  },
+
+  /* BLOQUE DE PRUEBA PAGO REAL */
+  testBlock: {
+    marginTop: 24,
+    marginHorizontal: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: "rgba(15,23,42,0.95)",
+    borderWidth: 1,
+    borderColor: "rgba(250,204,21,0.6)",
+  },
+  testTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#facc15",
+    marginBottom: 4,
+  },
+  testSubtitle: {
+    fontSize: 12,
+    color: "#e5e7eb",
+    marginBottom: 10,
+  },
+  buttonTest: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    backgroundColor: "#facc15",
+  },
+  buttonTestText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#111827",
   },
 
   /* MODAL ESTUDIANTE */
