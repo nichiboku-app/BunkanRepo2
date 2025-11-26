@@ -1,3 +1,4 @@
+// src/screens/PagosScreen.tsx
 import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -34,7 +35,11 @@ const PREMIUM_CARD_WIDTH = 450;
 const PREMIUM_CARD_HEIGHT = 300;
 // Subes/bajas estos valores para ajustar SOLO las imágenes de las tarjetas.
 
-// 🔐 Valida credencial en Firestore
+/**
+ * 🔐 Valida credencial en Firestore y activa el plan "student" al usuario
+ * Colección: studentCredentials (docId = código)
+ * Usuarios: Usuarios/<uid> (plan, planStatus, planExpiresAt, planUpdatedAt)
+ */
 async function validateStudentCredential(rawCode: string) {
   const sanitized = (rawCode || "")
     .trim()
@@ -45,14 +50,16 @@ async function validateStudentCredential(rawCode: string) {
     throw new Error("Por favor escribe tu número de credencial.");
   }
 
-  if (sanitized.length < 6) {
+  // ⬇⬇ Ahora pedimos mínimo 8 caracteres (por ejemplo BK12345AB) ⬇⬇
+  if (sanitized.length < 8) {
     throw new Error(
-      "La credencial debe tener al menos 6 caracteres (solo letras y números, sin guiones)."
+      "La credencial debe tener al menos 8 caracteres (solo letras y números, sin guiones). Ejemplo: BK12345AB."
     );
   }
 
-  const docRef = doc(db, "studentCredentials", sanitized);
-  const snap = await getDoc(docRef);
+  // 1) Buscar credencial en studentCredentials/<CÓDIGO>
+  const credRef = doc(db, "studentCredentials", sanitized);
+  const snap = await getDoc(credRef);
 
   if (!snap.exists()) {
     throw new Error(
@@ -72,11 +79,29 @@ async function validateStudentCredential(rawCode: string) {
 
   const uid = auth.currentUser?.uid || null;
 
-  await updateDoc(docRef, {
+  // 2) Marcar la credencial como usada
+  await updateDoc(credRef, {
     used: true,
     usedByUid: uid,
     usedAt: new Date(),
   });
+
+  // 3) ACTUALIZAR PLAN DEL USUARIO EN "Usuarios/<UID>"
+  if (uid) {
+    const userRef = doc(db, "Usuarios", uid);
+
+    const now = new Date();
+    const expires = new Date();
+    // Aquí decides la duración del plan estudiante (ej: 30 días)
+    expires.setDate(now.getDate() + 30);
+
+    await updateDoc(userRef, {
+      plan: "student",
+      planStatus: "active",
+      planUpdatedAt: now,
+      planExpiresAt: expires,
+    });
+  }
 
   return {
     code: sanitized,
@@ -195,6 +220,7 @@ export default function PagosScreen() {
           : "Se activará el pago especial para alumnos."
       );
 
+      // Abrir página de pago Stripe para estudiantes
       openPaymentLink(STUDENT_URL);
     } catch (err: any) {
       console.log(err);
@@ -361,7 +387,7 @@ export default function PagosScreen() {
                       Plan Premium Autodidacta
                     </Text>
                   </View>
-                  <Text style={styles.badgePremium}>RECOMENDADO</Text>
+                <Text style={styles.badgePremium}>RECOMENDADO</Text>
                 </View>
 
                 <Text style={styles.pricePremium}>
@@ -418,7 +444,7 @@ export default function PagosScreen() {
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Ej. BKN1234ABCD"
+              placeholder="Ej. BK12345AB"
               placeholderTextColor="#6b7280"
               autoCapitalize="characters"
               value={credentialInput}
@@ -456,9 +482,9 @@ export default function PagosScreen() {
             </View>
 
             <Text style={styles.modalHint}>
-              Escribe tu credencial todo junto, sin guiones, mínimo 6 caracteres
-              (solo letras y números). Si no la conoces, pide ayuda a tu
-              profesor.
+              Escribe tu credencial todo junto, sin guiones. Ejemplo: BK12345AB.
+              Debe tener mínimo 8 caracteres (solo letras y números). Si no la
+              conoces, pide ayuda a tu profesor.
             </Text>
           </View>
         </View>

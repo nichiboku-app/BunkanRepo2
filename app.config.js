@@ -31,7 +31,7 @@ module.exports = {
     scheme: "nichiboku", // para deep links
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
+    icon: "./assets/applogobunkan.webp",
     userInterfaceStyle: "automatic",
 
     ios: {

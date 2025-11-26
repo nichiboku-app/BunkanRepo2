@@ -16,7 +16,7 @@ import {
   View,
 } from 'react-native';
 
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import CameraIcon from '../../assets/icons/camera.svg';
 import CrownIcon from '../../assets/icons/crown.svg';
@@ -85,6 +85,8 @@ export default function PerfilScreen() {
   const user = auth.currentUser;
   const uid = user?.uid ?? '';
 
+  const navigation = useNavigation<any>(); // 👈 para ir a Pagos
+
   // ===== estado =====
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
@@ -139,7 +141,7 @@ export default function PerfilScreen() {
   useEffect(() => {
     if (!uid) return;
     const unsub = streamProfile(uid, (piece) => {
-      setProfile((prev) => ({ ...(prev ?? { displayName: '' , stats: null}), ...piece }));
+      setProfile((prev) => ({ ...(prev ?? { displayName: '', stats: null }), ...piece }));
       if (piece.stats !== undefined) setStats(piece.stats ?? null);
 
       // avatar (preferencia: photoURL > photoBase64 > auth.photoURL)
@@ -227,7 +229,7 @@ export default function PerfilScreen() {
     }, []),
   );
 
-  // Botón dorado: suma +50 XP (refleja en tiempo real)
+  // Botón dorado: lo dejamos por si lo usas en otro lado
   const add50 = async () => {
     try {
       await awardXpCurrentUser(50, { source: 'premium_button' });
@@ -338,8 +340,12 @@ export default function PerfilScreen() {
             <Text style={styles.countryTxt}>País: {safeCCA2} (cambiar)</Text>
           </TouchableOpacity>
 
-          {/* Botón premium (suma +50 XP) */}
-          <TouchableOpacity style={styles.premiumBtn} activeOpacity={0.9} onPress={add50}>
+          {/* Botón premium → ir a Pagos */}
+          <TouchableOpacity
+            style={styles.premiumBtn}
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate('Pagos')}
+          >
             <CrownIcon width={18} height={18} />
             <Text style={styles.premiumTxt}>Obtener premium</Text>
           </TouchableOpacity>
@@ -427,7 +433,9 @@ export default function PerfilScreen() {
                   contentContainerStyle={styles.hScroll}
                 >
                   {achievements.length === 0 ? (
-                    <Text style={styles.emptyAch}>Aún no tienes logros — ¡comienza una actividad!</Text>
+                    <Text style={styles.emptyAch}>
+                      Aún no tienes logros — ¡comienza una actividad!
+                    </Text>
                   ) : (
                     achievements.map((a, idx) => (
                       <Achievement
@@ -479,7 +487,12 @@ export default function PerfilScreen() {
       </ScrollView>
 
       {/* ===== Modal editar nombre ===== */}
-      <Modal visible={showNameModal} transparent animationType="fade" onRequestClose={() => setShowNameModal(false)}>
+      <Modal
+        visible={showNameModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNameModal(false)}
+      >
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Editar nombre</Text>
@@ -491,10 +504,16 @@ export default function PerfilScreen() {
               maxLength={40}
             />
             <View style={styles.modalRow}>
-              <TouchableOpacity onPress={() => setShowNameModal(false)} style={[styles.modalBtn, { backgroundColor: '#eee' }]}>
+              <TouchableOpacity
+                onPress={() => setShowNameModal(false)}
+                style={[styles.modalBtn, { backgroundColor: '#eee' }]}
+              >
                 <Text>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={submitEditName} style={[styles.modalBtn, { backgroundColor: '#c9a23a' }]}>
+              <TouchableOpacity
+                onPress={submitEditName}
+                style={[styles.modalBtn, { backgroundColor: '#c9a23a' }]}
+              >
                 <Text style={{ fontWeight: '700' }}>Guardar</Text>
               </TouchableOpacity>
             </View>
@@ -766,7 +785,7 @@ const styles = StyleSheet.create({
   pointsImg: { width: 20, height: 20 },
   pointsTxt: { color: '#2f7a3b', fontWeight: '800' },
 
-  emptyAch: { color: '#6b6b6b', fontStyle: 'italic', paddingHorizontal: 8 },
+  emptyAch: { color: '#6b6bb6', fontStyle: 'italic', paddingHorizontal: 8 },
 
   modalBg: {
     ...StyleSheet.absoluteFillObject,

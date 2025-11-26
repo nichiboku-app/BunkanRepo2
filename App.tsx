@@ -1,16 +1,17 @@
+// App.tsx
+import { useRef } from "react"; // ✅ Agregado useEffect
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { RootErrorBoundary } from "./src/RootErrorBoundary"; // ✅ Importado
+import { RootErrorBoundary } from "./src/RootErrorBoundary";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { useRef } from "react";
-import { Text, View } from "react-native";
+import { LogBox, Text, View } from "react-native"; // 👈 LogBox agregado
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { B3ScoreProvider } from "./src/context/B3ScoreContext";
-import { UserPlanProvider } from "./src/context/UserPlanContext"; // ✅ UserPlanProvider
+import { UserPlanProvider } from "./src/context/UserPlanContext";
 import type { RootStackParamList } from "./types";
 
-// 🔐 Gamificación: auto-award onEnter
+// 🔐 Gamificación y Servicios
 import { auth } from "./src/config/firebaseConfig";
 import { awardFromScreen, getAwardMode } from "./src/services/award";
 
@@ -235,6 +236,11 @@ import N1IntroScreen from "./src/screens/N1IntroScreen";
 // Otros
 import { StripeProvider } from '@stripe/stripe-react-native';
 
+// 👇 Ignorar el warning específico de expo-notifications en Expo Go Android
+LogBox.ignoreLogs([
+  "Android Push notifications (remote notifications) functionality provided by expo-notifications was removed from Expo Go",
+]);
+
 // Stack
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -260,6 +266,13 @@ function getActiveRouteName(state: any): string | undefined {
 export default function App() {
   const newLocal = "N3_B3_U1_Practice";
   const routeNameRef = useRef<string | undefined>();
+
+  // 🔔 Registrar push remoto al arrancar la app
+  // useEffect(() => {
+  //   (async () => {
+  //     await registerForPushNotificationsAsync();
+  //   })();
+  // }, []);
 
   return (
     <UserPlanProvider>
@@ -307,7 +320,6 @@ export default function App() {
                     <Stack.Screen name="Login" component={LoginScreen} />
                     <Stack.Screen name="Bienvenida" component={BienvenidaScreen} />
                     <Stack.Screen name="CrearCuenta" component={CrearCuentaScreen} options={{ headerShown: false }} />
-
 
                     {/* === Drawer principal === */}
                     <Stack.Screen name="Home" component={AppDrawerNavigator} />
