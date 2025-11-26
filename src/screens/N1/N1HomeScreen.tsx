@@ -178,10 +178,7 @@ function TipOverlay({
   const tip = CHIP_TIPS[chip];
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={styles.tipContainer}
-    >
+    <View pointerEvents="box-none" style={styles.tipContainer}>
       {/* Fondo oscurecido que cierra al tocar */}
       <Pressable onPress={onClose} style={styles.tipBackdrop} />
 
@@ -263,8 +260,10 @@ function goTo(nav: any, name: keyof RootStackParamList) {
 
 export default function N1HomeScreen() {
   const nav = useNavigation<Nav>();
-  const { plan, planStatus, isPremium } = useUserPlan();
-  const hasPremiumAccess = isPremium && planStatus === "active";
+
+  // ✅ usamos isPremiumActive del contexto
+  const { plan, planStatus, isPremiumActive } = useUserPlan();
+  const hasPremiumAccess = isPremiumActive;
 
   const headerShadow = useMemo(
     () => ({

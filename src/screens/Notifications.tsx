@@ -96,7 +96,6 @@ export default function Notifications() {
 
   // 👉 Al tocar una notificación:
   // - la marcamos read:true
-  // - la movemos a "Anteriores"
   // - navegamos a la pantalla correspondiente
   const handlePressNotification = async (item: NotificationItem) => {
     // 1) Optimista en UI
@@ -117,7 +116,6 @@ export default function Notifications() {
     const parent = navigation.getParent?.();
 
     if (item.source === 'chat') {
-      // Intentamos primero en el padre, si no existe usamos el actual
       if (parent) {
         parent.navigate('ChatOnboarding' as never);
       } else {
@@ -136,8 +134,8 @@ export default function Notifications() {
   const newNotifs = notifications.filter((n) => !n.read);
   const earlierNotifs = notifications.filter((n) => n.read);
 
-  // límite de 6 anteriores
-  const earlierNotifsLimited = earlierNotifs.slice(0, 6);
+  // 👉 mostrar hasta 100 notificaciones anteriores
+  const earlierNotifsLimited = earlierNotifs.slice(0, 100);
 
   const renderItem = ({ item }: { item: NotificationItem }) => {
     const avatarSource = item.actorAvatar
@@ -156,20 +154,19 @@ export default function Notifications() {
     return (
       <TouchableOpacity
         style={styles.row}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
         onPress={() => handlePressNotification(item)}
       >
         <Image source={avatarSource} style={styles.avatar} />
         <View style={{ flex: 1 }}>
           <Text style={styles.rowText}>
-            <Text style={styles.rowName}>{item.actorName}</Text>
-            {' '}
+            <Text style={styles.rowName}>{item.actorName}</Text>{' '}
             {body}
           </Text>
           <Text style={styles.rowTime}>{timeAgo(item.createdAt)}</Text>
         </View>
 
-        {/* Punto rojo si no está leída */}
+        {/* Punto si no está leída */}
         {!item.read && <View style={styles.unreadDot} />}
       </TouchableOpacity>
     );
@@ -236,38 +233,52 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#666',
+    color: '#FDF2F2',
     marginBottom: 6,
     marginTop: 10,
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowRadius: 4,
   },
+  // 🔴 Caja roja para cada notificación
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    borderRadius: 12,
+    backgroundColor: '#C7081F', // rojo
+    borderWidth: 1,
+    borderColor: '#7E0D18',
   },
   avatar: {
     width: 42,
     height: 42,
     borderRadius: 21,
     marginRight: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.7)',
   },
   rowText: {
     fontSize: 13,
-    color: '#222',
+    color: '#FFFFFF', // letras blancas
   },
   rowName: {
     fontWeight: '700',
+    color: '#FFFFFF',
   },
   rowTime: {
     fontSize: 11,
-    color: '#999',
+    color: 'rgba(255,255,255,0.82)',
     marginTop: 2,
   },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#B80C1F',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FFFFFF', // puntito blanco
     marginLeft: 8,
+    borderWidth: 1,
+    borderColor: '#7E0D18',
   },
 });

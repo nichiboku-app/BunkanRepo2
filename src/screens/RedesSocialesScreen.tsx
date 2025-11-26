@@ -1,26 +1,35 @@
 // src/screens/RedesSocialesScreen.tsx
+import { Image as ExpoImage } from "expo-image";
 import {
-    Alert,
-    ImageBackground,
-    Linking,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ImageBackground,
+  Linking,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-const BG_SOCIAL = require("../../assets/images/drawer_bgx.webp"); // Cambiable
+const BG_SOCIAL = require("../../assets/images/drawer_bgx.webp");
+
+// Logos (ajusta las rutas si los tienes en otra carpeta)
+const LOGO_FACEBOOK = require("../../assets/facebooklogo.webp");
+const LOGO_INSTAGRAM = require("../../assets/intagramlogo.webp");
+const LOGO_TIKTOK = require("../../assets/ticktock.webp");
+const LOGO_YOUTUBE = require("../../assets/youtubelogo.webp");
+const LOGO_TELEGRAM = require("../../assets/telegramlogo.webp");
+const LOGO_WHATSAPP = require("../../assets/wahstlogo.webp");
 
 type SocialItem = {
   id: string;
   name: string;
   label: string;
-  emoji: string;
   url: string;
   description: string;
   pillText: string;
+  icon: any;
 };
 
 const SOCIALS: SocialItem[] = [
@@ -28,55 +37,55 @@ const SOCIALS: SocialItem[] = [
     id: "facebook",
     name: "Facebook",
     label: "Facebook",
-    emoji: "📘",
     url: "https://www.facebook.com/bunkan.nichiboku",
     description: "Publicaciones, avisos y fotos oficiales de la escuela.",
     pillText: "Comunidad",
+    icon: LOGO_FACEBOOK,
   },
   {
     id: "instagram",
     name: "Instagram",
     label: "Instagram",
-    emoji: "📸",
     url: "https://www.instagram.com/bunkan_nichiboku?igsh=MWdpNGc5cmQ0aXRnMw==",
     description: "Fotos, historias y contenido visual de la escuela.",
-    pillText: "Galería",
+    pillText: "Galeria",
+    icon: LOGO_INSTAGRAM,
   },
   {
     id: "tiktok",
     name: "TikTok",
     label: "TikTok",
-    emoji: "🎵",
     url: "https://www.tiktok.com/@bunkan_nichiboku?_r=1&_t=ZS-91ZMY2cadzb",
     description: "Clips divertidos, cultura japonesa y retos.",
-    pillText: "Corto",
+    pillText: "Clips",
+    icon: LOGO_TIKTOK,
   },
   {
     id: "youtube",
     name: "YouTube",
     label: "YouTube",
-    emoji: "▶️",
     url: "https://youtube.com/@bunkannichiboku6134?si=vJawE_qh0popk7eW",
     description: "Videos educativos, cultura y clases especiales.",
     pillText: "Videos",
+    icon: LOGO_YOUTUBE,
   },
   {
     id: "telegram",
     name: "Telegram",
     label: "Telegram",
-    emoji: "📨",
     url: "https://t.me/INTBUNKANNICHIBOKU",
     description: "Canal oficial para anuncios y comunicados.",
     pillText: "Canal",
+    icon: LOGO_TELEGRAM,
   },
   {
     id: "whatsapp",
     name: "WhatsApp",
     label: "WhatsApp Canal",
-    emoji: "💬",
     url: "https://whatsapp.com/channel/0029VaRTqDjAInPu5my8Dx0k",
-    description: "Anuncios rápidos en el canal oficial de WhatsApp.",
+    description: "Anuncios rapidos en el canal oficial de WhatsApp.",
     pillText: "Canal",
+    icon: LOGO_WHATSAPP,
   },
 ];
 
@@ -87,7 +96,7 @@ export default function RedesSocialesScreen() {
       if (!can) {
         Alert.alert(
           "No se pudo abrir",
-          `Parece que ${name} no está disponible en este dispositivo.`
+          "Parece que " + name + " no esta disponible en este dispositivo."
         );
         return;
       }
@@ -112,7 +121,7 @@ export default function RedesSocialesScreen() {
               <Text style={styles.headerJp}>SNS 文日</Text>
               <Text style={styles.headerTitle}>Redes sociales Bunkan</Text>
               <Text style={styles.headerSubtitle}>
-                Síguenos en nuestras redes oficiales para noticias, eventos y
+                Siguenos en nuestras redes oficiales para noticias, eventos y
                 contenido exclusivo.
               </Text>
             </View>
@@ -126,8 +135,12 @@ export default function RedesSocialesScreen() {
                   onPress={() => openSocial(item.url, item.name)}
                 >
                   <View style={styles.cardTopRow}>
-                    <View style={styles.emojiCircle}>
-                      <Text style={styles.emoji}>{item.emoji}</Text>
+                    <View style={styles.logoCircle}>
+                      <ExpoImage
+                        source={item.icon}
+                        style={styles.logoImg}
+                        contentFit="contain"
+                      />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.cardName}>{item.label}</Text>
@@ -140,7 +153,7 @@ export default function RedesSocialesScreen() {
                       <Text style={styles.pillText}>{item.pillText}</Text>
                     </View>
                     <Text style={styles.cardBtnText}>
-                      Ir a {item.label} →
+                      {"Ir a " + item.label}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -149,7 +162,7 @@ export default function RedesSocialesScreen() {
 
             <View style={{ height: 24 }} />
             <Text style={styles.footerNote}>
-              * Si tienes una app instalada, se abrirá automáticamente.
+              * Si tienes una app instalada, se abrira automaticamente.
             </Text>
             <View style={{ height: Platform.OS === "ios" ? 30 : 16 }} />
           </ScrollView>
@@ -208,7 +221,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  emojiCircle: {
+  logoCircle: {
     width: 52,
     height: 52,
     borderRadius: 26,
@@ -217,7 +230,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
   },
-  emoji: { fontSize: 26 },
+  logoImg: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+  },
   cardName: {
     fontSize: 16,
     fontWeight: "800",

@@ -23,21 +23,43 @@ import { coverFor } from "./covers";
 type RootStackParamList = {
   N2Browse: undefined;
   N2_Unit?: { block: number; unit: number; title: string };
+
+  // BLOQUE 1
   N2_B1_U1?: undefined;
   N2_B1_U2?: undefined;
   N2_B1_U3?: undefined;
+
+  // BLOQUE 2
   N2_B2_U1?: undefined;
   N2_B2_U2?: undefined;
   N2_B2_U3?: undefined;
+
+  // BLOQUE 3
   N2_B3_U1?: undefined;
   N2_B3_U2?: undefined;
-  // B4
+  N2_B3_U3?: undefined;
+
+  // BLOQUE 4
   N2_B4_U1?: undefined;
-  N2_B4_U2?: undefined; // <— NUEVA
+  N2_B4_U2?: undefined;
+  N2_B4_U3?: undefined;
+
+  // BLOQUE 5
+  N2_B5_U1?: undefined;
+  N2_B5_U2?: undefined;
+  N2_B5_U3?: undefined;
 };
+
 type Nav = NativeStackNavigationProp<RootStackParamList, "N2Browse">;
 
-type UnitItem = { title: string; subtitle: string; cover: any; block: number; unit: number };
+type UnitItem = {
+  title: string;
+  subtitle: string;
+  cover: any;
+  block: number;
+  unit: number;
+};
+
 type Row = { key: string; label: string; accent: string; items: UnitItem[] };
 
 /* ---------- helper: ruta por bloque/unidad ---------- */
@@ -45,14 +67,16 @@ function routeFor(block: number, unit: number) {
   if (block === 1 && unit === 1) return "N2_B1_U1";
   if (block === 1 && unit === 2) return "N2_B1_U2";
   if (block === 1 && unit === 3) return "N2_B1_U3";
+
   // B2
   if (block === 2 && unit === 1) return "N2_B2_U1";
   if (block === 2 && unit === 2) return "N2_B2_U2";
   if (block === 2 && unit === 3) return "N2_B2_U3";
+
   // B3
   if (block === 3 && unit === 1) return "N2_B3_U1";
   if (block === 3 && unit === 2) return "N2_B3_U2";
-  if (block === 3 && unit === 3) return "N2_B3_U3"; // temporal
+  if (block === 3 && unit === 3) return "N2_B3_U3";
 
   // B4
   if (block === 4 && unit === 1) return "N2_B4_U1";
@@ -160,8 +184,15 @@ function PosterCard({
       pointerEvents={animatingRef.current ? "none" : "auto"}
     >
       <Pressable onPress={tap} style={styles.poster}>
-        <ExpoImage source={item.cover} style={StyleSheet.absoluteFill} contentFit="cover" />
-        <LinearGradient colors={["transparent", "rgba(0,0,0,0.85)"]} style={StyleSheet.absoluteFill} />
+        <ExpoImage
+          source={item.cover}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+        />
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.85)"]}
+          style={StyleSheet.absoluteFill}
+        />
         {/* Glow */}
         <Animated.View
           pointerEvents="none"
@@ -171,7 +202,10 @@ function PosterCard({
               borderWidth: 2,
               borderRadius: 16,
               borderColor: accent,
-              opacity: growing.interpolate({ inputRange: [0, 1], outputRange: [0, 0.35] }),
+              opacity: growing.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0.35],
+              }),
             },
           ]}
         />
@@ -214,8 +248,10 @@ function PosterCard({
 export default function N2BrowseScreen() {
   const navigation = useNavigation<Nav>();
   const width = Dimensions.get("window").width;
-  const { plan, planStatus, isPremium } = useUserPlan();
-  const hasPremiumAccess = isPremium && planStatus === "active";
+
+  // ✅ usamos isPremiumActive del contexto
+  const { plan, planStatus, isPremiumActive } = useUserPlan();
+  const hasPremiumAccess = isPremiumActive;
 
   // ===== HERO con efecto "fold-away 3D" + Ken Burns + Parallax + Shine =====
   const hero = require("../../../assets/images/n2/n2_hero_street.webp");
@@ -310,9 +346,27 @@ export default function N2BrowseScreen() {
         label: "B1 — Causa / consecuencia",
         accent: "#C01E2E",
         items: [
-          { title: "〜にしたがって・〜につれて", subtitle: "B1・U1", cover: coverFor(1, 1), block: 1, unit: 1 },
-          { title: "〜せいで・〜おかげで・〜ために", subtitle: "B1・U2", cover: coverFor(1, 2), block: 1, unit: 2 },
-          { title: "〜からには・〜以上（は）", subtitle: "B1・U3", cover: coverFor(1, 3), block: 1, unit: 3 },
+          {
+            title: "〜にしたがって・〜につれて",
+            subtitle: "B1・U1",
+            cover: coverFor(1, 1),
+            block: 1,
+            unit: 1,
+          },
+          {
+            title: "〜せいで・〜おかげで・〜ために",
+            subtitle: "B1・U2",
+            cover: coverFor(1, 2),
+            block: 1,
+            unit: 2,
+          },
+          {
+            title: "〜からには・〜以上（は）",
+            subtitle: "B1・U3",
+            cover: coverFor(1, 3),
+            block: 1,
+            unit: 3,
+          },
         ],
       },
       {
@@ -320,9 +374,27 @@ export default function N2BrowseScreen() {
         label: "B2 — Lenguaje formal (Keigo)",
         accent: "#9B1221",
         items: [
-          { title: "尊敬語・謙譲語・丁寧語", subtitle: "B2・U1", cover: coverFor(2, 1), block: 2, unit: 1 },
-          { title: "Correos / llamadas", subtitle: "B2・U2", cover: coverFor(2, 2), block: 2, unit: 2 },
-          { title: "〜させていただきます", subtitle: "B2・U3", cover: coverFor(2, 3), block: 2, unit: 3 },
+          {
+            title: "尊敬語・謙譲語・丁寧語",
+            subtitle: "B2・U1",
+            cover: coverFor(2, 1),
+            block: 2,
+            unit: 1,
+          },
+          {
+            title: "Correos / llamadas",
+            subtitle: "B2・U2",
+            cover: coverFor(2, 2),
+            block: 2,
+            unit: 2,
+          },
+          {
+            title: "〜させていただきます",
+            subtitle: "B2・U3",
+            cover: coverFor(2, 3),
+            block: 2,
+            unit: 3,
+          },
         ],
       },
       {
@@ -330,9 +402,27 @@ export default function N2BrowseScreen() {
         label: "B3 — Opiniones y matices",
         accent: "#7E0D18",
         items: [
-          { title: "〜わけだ／〜とは限らない", subtitle: "B3・U1", cover: coverFor(3, 1), block: 3, unit: 1 },
-          { title: "〜っけ・〜ものだ", subtitle: "B3・U2", cover: coverFor(3, 2), block: 3, unit: 2 },
-          { title: "〜に違いない・〜かもしれない", subtitle: "B3・U3", cover: coverFor(3, 3), block: 3, unit: 3 },
+          {
+            title: "〜わけだ／〜とは限らない",
+            subtitle: "B3・U1",
+            cover: coverFor(3, 1),
+            block: 3,
+            unit: 1,
+          },
+          {
+            title: "〜っけ・〜ものだ",
+            subtitle: "B3・U2",
+            cover: coverFor(3, 2),
+            block: 3,
+            unit: 2,
+          },
+          {
+            title: "〜に違いない・〜かもしれない",
+            subtitle: "B3・U3",
+            cover: coverFor(3, 3),
+            block: 3,
+            unit: 3,
+          },
         ],
       },
       {
@@ -340,9 +430,27 @@ export default function N2BrowseScreen() {
         label: "B4 — Noticias y medios",
         accent: "#5C0A14",
         items: [
-          { title: "Titulares reales", subtitle: "B4・U1", cover: coverFor(4, 1), block: 4, unit: 1 },
-          { title: "〜をめぐって・〜において", subtitle: "B4・U2", cover: coverFor(4, 2), block: 4, unit: 2 },
-          { title: "〜そうだ／〜らしい", subtitle: "B4・U3", cover: coverFor(4, 3), block: 4, unit: 3 },
+          {
+            title: "Titulares reales",
+            subtitle: "B4・U1",
+            cover: coverFor(4, 1),
+            block: 4,
+            unit: 1,
+          },
+          {
+            title: "〜をめぐって・〜において",
+            subtitle: "B4・U2",
+            cover: coverFor(4, 2),
+            block: 4,
+            unit: 2,
+          },
+          {
+            title: "〜そうだ／〜らしい",
+            subtitle: "B4・U3",
+            cover: coverFor(4, 3),
+            block: 4,
+            unit: 3,
+          },
         ],
       },
       {
@@ -350,9 +458,27 @@ export default function N2BrowseScreen() {
         label: "B5 — Vida urbana / trabajo",
         accent: "#4A0A12",
         items: [
-          { title: "Etiqueta en empresas", subtitle: "B5・U1", cover: coverFor(5, 1), block: 5, unit: 1 },
-          { title: "Cortesía natural", subtitle: "B5・U2", cover: coverFor(5, 2), block: 5, unit: 2 },
-          { title: "Hospital / restaurante", subtitle: "B5・U3", cover: coverFor(5, 3), block: 5, unit: 3 },
+          {
+            title: "Etiqueta en empresas",
+            subtitle: "B5・U1",
+            cover: coverFor(5, 1),
+            block: 5,
+            unit: 1,
+          },
+          {
+            title: "Cortesía natural",
+            subtitle: "B5・U2",
+            cover: coverFor(5, 2),
+            block: 5,
+            unit: 2,
+          },
+          {
+            title: "Hospital / restaurante",
+            subtitle: "B5・U3",
+            cover: coverFor(5, 3),
+            block: 5,
+            unit: 3,
+          },
         ],
       },
     ],
@@ -431,7 +557,10 @@ export default function N2BrowseScreen() {
         />
 
         {/* Degradado para texto legible */}
-        <LinearGradient colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.88)"]} style={StyleSheet.absoluteFill} />
+        <LinearGradient
+          colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.88)"]}
+          style={StyleSheet.absoluteFill}
+        />
 
         {/* BRILLO DIAGONAL animado */}
         <Animated.View
@@ -472,9 +601,15 @@ export default function N2BrowseScreen() {
             La gramática se trabaja en contexto — para hablar y entender mejor.
           </Text>
           <View style={styles.heroChips}>
-            <View style={styles.chip}><Text style={styles.chipTxt}>JLPT N2</Text></View>
-            <View style={styles.chip}><Text style={styles.chipTxt}>Keigo</Text></View>
-            <View style={styles.chip}><Text style={styles.chipTxt}>Noticias</Text></View>
+            <View style={styles.chip}>
+              <Text style={styles.chipTxt}>JLPT N2</Text>
+            </View>
+            <View style={styles.chip}>
+              <Text style={styles.chipTxt}>Keigo</Text>
+            </View>
+            <View style={styles.chip}>
+              <Text style={styles.chipTxt}>Noticias</Text>
+            </View>
           </View>
         </Animated.View>
 
@@ -488,7 +623,12 @@ export default function N2BrowseScreen() {
       </Animated.View>
 
       {/* Mini top bar que aparece cuando el hero ya se ocultó */}
-      <Animated.View style={[styles.miniBar, { opacity: miniOpacity, transform: [{ translateY: miniTranslateY }] }]}>
+      <Animated.View
+        style={[
+          styles.miniBar,
+          { opacity: miniOpacity, transform: [{ translateY: miniTranslateY }] },
+        ]}
+      >
         <Text style={styles.miniBrand}>N2 • Browse</Text>
         <View style={{ flexDirection: "row" }}>
           <MCI name="magnify" size={22} color="#fff" style={{ marginRight: 10 }} />
@@ -500,9 +640,12 @@ export default function N2BrowseScreen() {
       <Animated.ScrollView
         contentContainerStyle={{ paddingTop: heroH + 8, paddingBottom: 36 }}
         showsVerticalScrollIndicator={false}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-          useNativeDriver: true,
-        })}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          {
+            useNativeDriver: true,
+          }
+        )}
         scrollEventThrottle={16}
       >
         {/* Banner de plan / Premium */}

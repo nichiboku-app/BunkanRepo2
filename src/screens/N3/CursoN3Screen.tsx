@@ -59,8 +59,9 @@ function Corners({ color }: { color: string }) {
 /* ---------------- Screen ---------------- */
 export default function CursoN3Screen() {
   const navigation = useNavigation<Nav>();
-  const { plan, planStatus, isPremium } = useUserPlan();
-  const hasPremiumAccess = isPremium && planStatus === "active";
+  // 👇 usamos isPremiumActive del contexto, no isPremium
+  const { plan, planStatus, isPremiumActive } = useUserPlan();
+  const hasPremiumAccess = isPremiumActive;
 
   // ===== Mapa de rutas por Bloque/Unidad =====
   const ROUTES = useMemo(
@@ -520,18 +521,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     height: 20,
     borderRadius: 999,
-    backgroundColor: "#FDE047", // amarillo dorado
+    backgroundColor: "#FDE047",
     borderWidth: 1,
     borderColor: "#FACC15",
   },
   premiumPillLocked: {
-    backgroundColor: "#EAB308", // un poco más oscuro cuando está bloqueado
+    backgroundColor: "#EAB308",
     borderColor: "#CA8A04",
   },
   premiumPillText: {
     fontSize: 10,
     fontWeight: "800",
-    color: "#111827", // casi negro
+    color: "#111827",
   },
 
   /* Marco japonés (esquinas en L) */

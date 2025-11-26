@@ -36,8 +36,8 @@ const zonas: Zona[] = [
 ];
 
 export default function MapaNiveles({ navigation }: Props) {
-  const { plan, planStatus, isPremium } = useUserPlan();
-  const hasPremiumAccess = isPremium && planStatus === "active";
+  const { plan, planStatus, isPremiumActive } = useUserPlan();
+  const hasPremiumAccess = isPremiumActive;
 
   const handlePressZona = (zona: Zona) => {
     const isFree = zona.key === "n5";
@@ -115,7 +115,6 @@ export default function MapaNiveles({ navigation }: Props) {
         </ImageBackground>
 
         <View style={styles.instrucciones}>
-          {/* Banner de plan / premium */}
           <View style={styles.planBanner}>
             <Text style={styles.planBannerTitle}>{planBannerTitle}</Text>
             <Text style={styles.planBannerBody}>{planBannerBody}</Text>
@@ -180,7 +179,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  // Estados Premium (efecto oro)
   zonaPremiumBase: {
     borderWidth: 1,
   },
@@ -252,5 +250,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
-

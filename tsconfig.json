@@ -19,7 +19,8 @@
       "@/*": ["./*"]
     },
 
-    "types": ["react", "react-native", "expo"]
+    "types": ["react", "react-native", "expo"],
+    "ignoreDeprecations": "6.0"   // 👈 añade esta línea
   },
   "include": [
     "**/*.ts",

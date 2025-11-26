@@ -16,7 +16,12 @@ import {
   Text,
   View,
 } from "react-native";
-import { Fuji, Lantern, Sakura, Torii } from "../../../components/icons/JapaneseIcons";
+import {
+  Fuji,
+  Lantern,
+  Sakura,
+  Torii,
+} from "../../../components/icons/JapaneseIcons";
 import { useUserPlan } from "../../context/UserPlanContext";
 
 const { width: W } = Dimensions.get("window");
@@ -26,46 +31,67 @@ const BANNER_IMG = require("../../../assets/cursoN4/banner_warm_cropped.webp");
 const FOX_BANNER = require("../../../assets/cursoN4/fox_banner.webp");
 
 // Imágenes con nombres en español (y algunos con typos, tal como existen)
-const CASA                 = require("../../../assets/cursoN4/casa.webp");
-const RESTAURANTE          = require("../../../assets/cursoN4/restaurante.webp");
-const TRANSPORTE_TYPO      = require("../../../assets/cursoN4/trasnporte.webp");            // (typo) existe así
-const ESCUELA              = require("../../../assets/cursoN4/escuela.webp");
-const HOSPITAL             = require("../../../assets/cursoN4/hospital.webp");
-const PLANES_CITAS         = require("../../../assets/cursoN4/planes_citas.webp");
-const OFICINA              = require("../../../assets/cursoN4/oficina.webp");
-const DAR_INSTRUCCIONES    = require("../../../assets/cursoN4/darintrucciones.webp");       // (typo) existe así
-const OPINIONES_CONSEJO    = require("../../../assets/cursoN4/opiniones_consejo.webp");
-const CAUSA_CONSECUENCIAS  = require("../../../assets/cursoN4/causa_consecuencias.webp");
-const COMPARACIONES        = require("../../../assets/cursoN4/comparaciones.webp");
-const DESEO_ESPERANZAS     = require("../../../assets/cursoN4/deseo_esperanzas.webp");
-const PASADO               = require("../../../assets/cursoN4/pasado.webp");
-const NARRAR_HISTORIAS     = require("../../../assets/cursoN4/narrar_historias.webp");
-const EVENTOS_FIESTAS_TYPO = require("../../../assets/cursoN4/evetnos_fiestas.webp");       // (typo) existe así
-const RUTINA               = require("../../../assets/cursoN4/rutina.webp");
-const TRANSFORMACIONES     = require("../../../assets/cursoN4/transformaciones.webp");
-const SUPOSICIONES         = require("../../../assets/cursoN4/suposiciones.webp");
-const PERMISO_PROHIBICION  = require("../../../assets/cursoN4/permiso_prohibicion.webp");
-const CONDICIONALES        = require("../../../assets/cursoN4/condicionales.webp");
-const INTENCION            = require("../../../assets/cursoN4/intencion.webp");
-// (también tienes intension.webp, pero usamos intencion.webp)
-const PERMISO_CAUSATIVO    = require("../../../assets/cursoN4/permiso_causativo.webp");
+const CASA = require("../../../assets/cursoN4/casa.webp");
+const RESTAURANTE = require("../../../assets/cursoN4/restaurante.webp");
+const TRANSPORTE_TYPO = require("../../../assets/cursoN4/trasnporte.webp"); // (typo)
+const ESCUELA = require("../../../assets/cursoN4/escuela.webp");
+const HOSPITAL = require("../../../assets/cursoN4/hospital.webp");
+const PLANES_CITAS = require("../../../assets/cursoN4/planes_citas.webp");
+const OFICINA = require("../../../assets/cursoN4/oficina.webp");
+const DAR_INSTRUCCIONES = require("../../../assets/cursoN4/darintrucciones.webp"); // (typo)
+const OPINIONES_CONSEJO = require("../../../assets/cursoN4/opiniones_consejo.webp");
+const CAUSA_CONSECUENCIAS = require("../../../assets/cursoN4/causa_consecuencias.webp");
+const COMPARACIONES = require("../../../assets/cursoN4/comparaciones.webp");
+const DESEO_ESPERANZAS = require("../../../assets/cursoN4/deseo_esperanzas.webp");
+const PASADO = require("../../../assets/cursoN4/pasado.webp");
+const NARRAR_HISTORIAS = require("../../../assets/cursoN4/narrar_historias.webp");
+const EVENTOS_FIESTAS_TYPO = require("../../../assets/cursoN4/evetnos_fiestas.webp"); // (typo)
+const RUTINA = require("../../../assets/cursoN4/rutina.webp");
+const TRANSFORMACIONES = require("../../../assets/cursoN4/transformaciones.webp");
+const SUPOSICIONES = require("../../../assets/cursoN4/suposiciones.webp");
+const PERMISO_PROHIBICION = require("../../../assets/cursoN4/permiso_prohibicion.webp");
+const CONDICIONALES = require("../../../assets/cursoN4/condicionales.webp");
+const INTENCION = require("../../../assets/cursoN4/intencion.webp");
+const PERMISO_CAUSATIVO = require("../../../assets/cursoN4/permiso_causativo.webp");
 const PARTICULAS_AVANZADAS = require("../../../assets/cursoN4/particulas_avanzadas.webp");
-const REPASO_FINAL_TYPO    = require("../../../assets/cursoN4/repasofinal.webp");           // (typo) existe así
-const SOLICITUD_FORMAL_TYPO= require("../../../assets/cursoN4/solicitudformal.webp");       // (typo) existe así
+const REPASO_FINAL_TYPO = require("../../../assets/cursoN4/repasofinal.webp"); // (typo)
+const SOLICITUD_FORMAL_TYPO = require("../../../assets/cursoN4/solicitudformal.webp"); // (typo)
 
-// 4 fotos sueltas que tienes en esa carpeta (las usamos para completar mapeos faltantes)
-const PHOTO_45   = require("../../../assets/cursoN4/photo_2025_11_03_18_28_45.webp");
-const PHOTO_54   = require("../../../assets/cursoN4/photo_2025_11_03_18_28_54.webp");
+// 4 fotos sueltas
+const PHOTO_45 = require("../../../assets/cursoN4/photo_2025_11_03_18_28_45.webp");
+const PHOTO_54 = require("../../../assets/cursoN4/photo_2025_11_03_18_28_54.webp");
 const PHOTO_2912 = require("../../../assets/cursoN4/photo_2025_11_03_18_29_12.webp");
 const PHOTO_2919 = require("../../../assets/cursoN4/photo_2025_11_03_18_29_19.webp");
 
-// Fallback rotatorio por si algún número no tuviera asignación directa
+// Fallback rotatorio
 const TOPIC_COVERS = [
-  CASA, RESTAURANTE, TRANSPORTE_TYPO, ESCUELA, HOSPITAL, PLANES_CITAS, OFICINA,
-  OPINIONES_CONSEJO, CAUSA_CONSECUENCIAS, COMPARACIONES, DESEO_ESPERANZAS, PASADO,
-  NARRAR_HISTORIAS, EVENTOS_FIESTAS_TYPO, RUTINA, TRANSFORMACIONES, SUPOSICIONES,
-  PERMISO_PROHIBICION, CONDICIONALES, INTENCION, PERMISO_CAUSATIVO, PARTICULAS_AVANZADAS,
-  REPASO_FINAL_TYPO, PHOTO_45, PHOTO_54, PHOTO_2912, PHOTO_2919,
+  CASA,
+  RESTAURANTE,
+  TRANSPORTE_TYPO,
+  ESCUELA,
+  HOSPITAL,
+  PLANES_CITAS,
+  OFICINA,
+  OPINIONES_CONSEJO,
+  CAUSA_CONSECUENCIAS,
+  COMPARACIONES,
+  DESEO_ESPERANZAS,
+  PASADO,
+  NARRAR_HISTORIAS,
+  EVENTOS_FIESTAS_TYPO,
+  RUTINA,
+  TRANSFORMACIONES,
+  SUPOSICIONES,
+  PERMISO_PROHIBICION,
+  CONDICIONALES,
+  INTENCION,
+  PERMISO_CAUSATIVO,
+  PARTICULAS_AVANZADAS,
+  REPASO_FINAL_TYPO,
+  PHOTO_45,
+  PHOTO_54,
+  PHOTO_2912,
+  PHOTO_2919,
 ] as const;
 
 const coverForIdx = (n: number) => {
@@ -75,38 +101,38 @@ const coverForIdx = (n: number) => {
   return TOPIC_COVERS[idx];
 };
 
-// Mapeo 1:1 por número de tema → imagen con el nombre que tienes
+// Mapeo 1:1 por número de tema → imagen
 const IMG_BY_TOPIC: Record<number, any> = {
-  1: PHOTO_45,              // Presentaciones avanzadas (foto)
-  2: CASA,                  // Casa
-  3: RESTAURANTE,           // Restaurante
-  4: PHOTO_54,              // Tiendas y centros (usamos una foto)
-  5: TRANSPORTE_TYPO,       // Transporte (archivo existe como "trasnporte.webp")
-  6: ESCUELA,               // Escuela
-  7: HOSPITAL,              // Hospital
-  8: PLANES_CITAS,          // Planes y citas
-  9: OFICINA,               // Oficina
-  10: PHOTO_2912,           // Proyectos y metas (foto)
-  11: SOLICITUD_FORMAL_TYPO,// Solicitudes formales (archivo existe como "solicitudformal.webp")
-  12: DAR_INSTRUCCIONES,    // Dar instrucciones (archivo existe como "darintrucciones.webp")
-  13: OPINIONES_CONSEJO,    // Opiniones y pensamientos
-  14: CAUSA_CONSECUENCIAS,  // Dar explicaciones (usamos causas/consecuencias)
-  15: COMPARACIONES,        // Comparaciones y preferencias
-  16: DESEO_ESPERANZAS,     // Deseos y esperanzas
-  17: PASADO,               // Hablar del pasado
-  18: NARRAR_HISTORIAS,     // Narrar historias
-  19: EVENTOS_FIESTAS_TYPO, // Eventos y fiestas (archivo existe como "evetnos_fiestas.webp")
-  20: CAUSA_CONSECUENCIAS,  // Causas y consecuencias
-  21: RUTINA,               // Rutinas y hábitos
-  22: TRANSFORMACIONES,     // Transformaciones
-  23: OPINIONES_CONSEJO,    // Dar opiniones y consejos
-  24: SUPOSICIONES,         // Suposiciones y probabilidades
-  25: PERMISO_PROHIBICION,  // Permiso y prohibición
-  26: CONDICIONALES,        // Condicionales
-  27: INTENCION,            // Intención
-  28: PERMISO_CAUSATIVO,    // Pasivo y causativo (usamos permiso_causativo)
-  29: PARTICULAS_AVANZADAS, // Partículas avanzadas
-  30: REPASO_FINAL_TYPO,    // Repaso final (archivo existe como "repasofinal.webp")
+  1: PHOTO_45,
+  2: CASA,
+  3: RESTAURANTE,
+  4: PHOTO_54,
+  5: TRANSPORTE_TYPO,
+  6: ESCUELA,
+  7: HOSPITAL,
+  8: PLANES_CITAS,
+  9: OFICINA,
+  10: PHOTO_2912,
+  11: SOLICITUD_FORMAL_TYPO,
+  12: DAR_INSTRUCCIONES,
+  13: OPINIONES_CONSEJO,
+  14: CAUSA_CONSECUENCIAS,
+  15: COMPARACIONES,
+  16: DESEO_ESPERANZAS,
+  17: PASADO,
+  18: NARRAR_HISTORIAS,
+  19: EVENTOS_FIESTAS_TYPO,
+  20: CAUSA_CONSECUENCIAS,
+  21: RUTINA,
+  22: TRANSFORMACIONES,
+  23: OPINIONES_CONSEJO,
+  24: SUPOSICIONES,
+  25: PERMISO_PROHIBICION,
+  26: CONDICIONALES,
+  27: INTENCION,
+  28: PERMISO_CAUSATIVO,
+  29: PARTICULAS_AVANZADAS,
+  30: REPASO_FINAL_TYPO,
 };
 
 /* ========= DATA ========= */
@@ -116,17 +142,17 @@ type TopicRow =
 
 const DATA: TopicRow[] = [
   { type: "section", key: "sec1", title: "Vida cotidiana y comunicación básica", emoji: "🏠" },
-  { type: "topic", key: "t1",  num: 1,  title: "🗣 Presentaciones avanzadas – Hablar de ti, tu pasado y tus metas" },
-  { type: "topic", key: "t2",  num: 2,  title: "🏡 Conversaciones en casa – Pedir favores, dar órdenes y consejos" },
-  { type: "topic", key: "t3",  num: 3,  title: "🍱 En un restaurante – Hacer pedidos, expresar preferencias" },
-  { type: "topic", key: "t4",  num: 4,  title: "🏪 En tiendas y centros comerciales – Pedir tallas, precios y ofertas" },
-  { type: "topic", key: "t5",  num: 5,  title: "🚉 Transporte y viajes – Preguntar rutas, horarios, retrasos" },
-  { type: "topic", key: "t6",  num: 6,  title: "🏫 En la escuela – Hablar de asignaturas, horarios y eventos" },
-  { type: "topic", key: "t7",  num: 7,  title: "🏥 En el hospital – Explicar síntomas, pedir ayuda médica" },
-  { type: "topic", key: "t8",  num: 8,  title: "📅 Planes y citas – Acordar fechas, sugerir actividades, rechazar planes" },
+  { type: "topic", key: "t1", num: 1, title: "🗣 Presentaciones avanzadas – Hablar de ti, tu pasado y tus metas" },
+  { type: "topic", key: "t2", num: 2, title: "🏡 Conversaciones en casa – Pedir favores, dar órdenes y consejos" },
+  { type: "topic", key: "t3", num: 3, title: "🍱 En un restaurante – Hacer pedidos, expresar preferencias" },
+  { type: "topic", key: "t4", num: 4, title: "🏪 En tiendas y centros comerciales – Pedir tallas, precios y ofertas" },
+  { type: "topic", key: "t5", num: 5, title: "🚉 Transporte y viajes – Preguntar rutas, horarios, retrasos" },
+  { type: "topic", key: "t6", num: 6, title: "🏫 En la escuela – Hablar de asignaturas, horarios y eventos" },
+  { type: "topic", key: "t7", num: 7, title: "🏥 En el hospital – Explicar síntomas, pedir ayuda médica" },
+  { type: "topic", key: "t8", num: 8, title: "📅 Planes y citas – Acordar fechas, sugerir actividades, rechazar planes" },
 
   { type: "section", key: "sec2", title: "Trabajo, responsabilidades y opiniones", emoji: "💼" },
-  { type: "topic", key: "t9",  num: 9,  title: "💻 En la oficina – Expresar tareas, responsabilidades y permisos" },
+  { type: "topic", key: "t9", num: 9, title: "💻 En la oficina – Expresar tareas, responsabilidades y permisos" },
   { type: "topic", key: "t10", num: 10, title: "📈 Proyectos y metas – Expresar intenciones, objetivos y planes futuros" },
   { type: "topic", key: "t11", num: 11, title: "🧑‍💼 Solicitudes formales – 〜ていただけますか" },
   { type: "topic", key: "t12", num: 12, title: "🧭 Dar instrucciones – Forma imperativa y causativa" },
@@ -187,9 +213,10 @@ type RootStackParamList = {
 export default function CursoN4Screen() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const GROUPS = useMemo(() => buildGroups(DATA), []);
-  const { plan, planStatus, isPremium } = useUserPlan();
+  const { plan, planStatus, isPremiumActive } = useUserPlan(); // ✅ usamos isPremiumActive del contexto
 
-  const hasPremiumAccess = isPremium && planStatus === "active";
+  // ✅ acceso premium real
+  const hasPremiumAccess = isPremiumActive;
 
   const imageForTopic = (num: number) => IMG_BY_TOPIC[num] ?? coverForIdx(num);
 
@@ -239,12 +266,19 @@ export default function CursoN4Screen() {
             contentPosition="top center"
           />
           <LinearGradient
-            colors={["rgba(0,0,0,0.30)", "rgba(0,0,0,0.10)", "transparent", "rgba(0,0,0,0.35)"]}
+            colors={[
+              "rgba(0,0,0,0.30)",
+              "rgba(0,0,0,0.10)",
+              "transparent",
+              "rgba(0,0,0,0.35)",
+            ]}
             locations={[0, 0.22, 0.55, 1]}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.bannerTextBox}>
-            <Text style={styles.bannerTitle} numberOfLines={1}>Kitsune・Curso N4</Text>
+            <Text style={styles.bannerTitle} numberOfLines={1}>
+              Kitsune・Curso N4
+            </Text>
             <Text style={styles.bannerSub} numberOfLines={2}>
               30 unidades ・ Temas reales ・ Gramática con propósito
             </Text>
@@ -257,7 +291,11 @@ export default function CursoN4Screen() {
         <View style={styles.goldRingOuter}>
           <View style={styles.goldRingInner}>
             <View style={styles.foxCircle}>
-              <ExpoImage source={FOX_BANNER} style={StyleSheet.absoluteFill} contentFit="cover" />
+              <ExpoImage
+                source={FOX_BANNER}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+              />
             </View>
           </View>
         </View>
@@ -281,15 +319,47 @@ export default function CursoN4Screen() {
         renderItem={({ item }) => (
           <View style={{ marginTop: 14 }}>
             <View style={styles.sectionRow}>
-              {({
-                "Vida cotidiana y comunicación básica": <Sakura size={18} color="#E5C7A2" style={{ marginRight: 6 }} />,
-                "Trabajo, responsabilidades y opiniones": <Lantern size={18} color="#E5C7A2" style={{ marginRight: 6 }} />,
-                "Historias, recuerdos y experiencias": <Fuji size={18} color="#E5C7A2" style={{ marginRight: 6 }} />,
-                "Comunicación avanzada y expresiones naturales": <Torii size={18} color="#E5C7A2" style={{ marginRight: 6 }} />,
-              } as Record<string, React.ReactNode>)[item.title] ?? (
-                <Torii size={18} color="#E5C7A2" style={{ marginRight: 6 }} />
+              {(
+                {
+                  "Vida cotidiana y comunicación básica": (
+                    <Sakura
+                      size={18}
+                      color="#E5C7A2"
+                      style={{ marginRight: 6 }}
+                    />
+                  ),
+                  "Trabajo, responsabilidades y opiniones": (
+                    <Lantern
+                      size={18}
+                      color="#E5C7A2"
+                      style={{ marginRight: 6 }}
+                    />
+                  ),
+                  "Historias, recuerdos y experiencias": (
+                    <Fuji
+                      size={18}
+                      color="#E5C7A2"
+                      style={{ marginRight: 6 }}
+                    />
+                  ),
+                  "Comunicación avanzada y expresiones naturales": (
+                    <Torii
+                      size={18}
+                      color="#E5C7A2"
+                      style={{ marginRight: 6 }}
+                    />
+                  ),
+                } as Record<string, React.ReactNode>
+              )[item.title] ?? (
+                <Torii
+                  size={18}
+                  color="#E5C7A2"
+                  style={{ marginRight: 6 }}
+                />
               )}
-              <Text style={styles.sectionTitle} numberOfLines={1}>{item.title}</Text>
+              <Text style={styles.sectionTitle} numberOfLines={1}>
+                {item.title}
+              </Text>
             </View>
 
             <FlatList
@@ -303,8 +373,12 @@ export default function CursoN4Screen() {
               snapToInterval={CARD_W + 12}
               snapToAlignment="start"
               renderItem={({ item: t }) => {
-                const emoji = (t.title.match(/^\p{Extended_Pictographic}/u) || ["✦"])[0];
-                const text = t.title.replace(/^\p{Extended_Pictographic}\s*/u, "");
+                const emoji =
+                  (t.title.match(/^\p{Extended_Pictographic}/u) || ["✦"])[0];
+                const text = t.title.replace(
+                  /^\p{Extended_Pictographic}\s*/u,
+                  ""
+                );
                 const isPremiumTopic = !FREE_TOPICS.includes(t.num);
                 const isLocked = isPremiumTopic && !hasPremiumAccess;
 
@@ -325,8 +399,12 @@ export default function CursoN4Screen() {
                       contentFit="cover"
                     />
                     <LinearGradient
-                      colors={["rgba(0,0,0,0.05)","rgba(0,0,0,0.35)","rgba(0,0,0,0.70)"]}
-                      locations={[0,0.45,1]}
+                      colors={[
+                        "rgba(0,0,0,0.05)",
+                        "rgba(0,0,0,0.35)",
+                        "rgba(0,0,0,0.70)",
+                      ]}
+                      locations={[0, 0.45, 1]}
                       style={StyleSheet.absoluteFill}
                     />
                     <View style={styles.cardIn}>
@@ -335,12 +413,24 @@ export default function CursoN4Screen() {
                           <Text style={styles.leadEmoji}>{emoji}</Text>
                         </View>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.cardTitle} numberOfLines={2}>{text}</Text>
+                          <Text style={styles.cardTitle} numberOfLines={2}>
+                            {text}
+                          </Text>
                         </View>
                         <View style={styles.trailing}>
                           {isPremiumTopic && (
-                            <View style={[styles.premiumPill, isLocked && styles.premiumPillLocked]}>
-                              <AntDesign name="lock" size={11} color="#FCE9C8" style={{ marginRight: 4 }} />
+                            <View
+                              style={[
+                                styles.premiumPill,
+                                isLocked && styles.premiumPillLocked,
+                              ]}
+                            >
+                              <AntDesign
+                                name="lock"
+                                size={11}
+                                color="#FCE9C8"
+                                style={{ marginRight: 4 }}
+                              />
                               <Text style={styles.premiumPillText}>
                                 {hasPremiumAccess ? "Incluido" : "Premium"}
                               </Text>
@@ -349,7 +439,12 @@ export default function CursoN4Screen() {
                           <View style={styles.badge}>
                             <Text style={styles.badgeText}>{t.num}</Text>
                           </View>
-                          <AntDesign name="right" size={16} color="#F3D9B6" style={{ marginLeft: 6 }} />
+                          <AntDesign
+                            name="right"
+                            size={16}
+                            color="#F3D9B6"
+                            style={{ marginLeft: 6 }}
+                          />
                         </View>
                       </View>
                     </View>
@@ -397,14 +492,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   bannerTitle: {
-    fontSize: 24, fontWeight: "900", color: CREMA, letterSpacing: 0.3,
+    fontSize: 24,
+    fontWeight: "900",
+    color: CREMA,
+    letterSpacing: 0.3,
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.35)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   bannerSub: {
-    marginTop: 4, fontSize: 13, fontWeight: "700", color: CREMA_SUB, lineHeight: 18,
+    marginTop: 4,
+    fontSize: 13,
+    fontWeight: "700",
+    color: CREMA_SUB,
+    lineHeight: 18,
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.35)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+    textShadowColor: "rgba(0,0,0,0.35)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
 
   foxMedallionWrap: {
@@ -413,8 +519,11 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   goldRingOuter: {
-    width: 132, height: 132, borderRadius: 66,
-    alignItems: "center", justifyContent: "center",
+    width: 132,
+    height: 132,
+    borderRadius: 66,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "rgba(255,215,170,0.35)",
     shadowColor: "#F7D190",
     shadowOpacity: 0.9,
@@ -423,16 +532,31 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   goldRingInner: {
-    width: 124, height: 124, borderRadius: 62,
-    borderWidth: 10, borderColor: "#E7C26A",
+    width: 124,
+    height: 124,
+    borderRadius: 62,
+    borderWidth: 10,
+    borderColor: "#E7C26A",
     backgroundColor: BG,
-    alignItems: "center", justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "center",
   },
   foxCircle: {
-    width: 92, height: 92, borderRadius: 46,
-    overflow: "hidden", borderWidth: 2, borderColor: "#F5E2C7", backgroundColor: "#fff",
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#F5E2C7",
+    backgroundColor: "#fff",
   },
-  heroJP: { marginTop: 10, color: CREMA, fontWeight: "900", fontSize: 16, letterSpacing: 1 },
+  heroJP: {
+    marginTop: 10,
+    color: CREMA,
+    fontWeight: "900",
+    fontSize: 16,
+    letterSpacing: 1,
+  },
   heroES: {
     marginTop: 4,
     color: "rgba(246,231,211,0.8)",
@@ -442,7 +566,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  /* Banner de plan */
   planBanner: {
     marginTop: 4,
     marginBottom: 4,
@@ -467,10 +590,17 @@ const styles = StyleSheet.create({
   },
 
   sectionRow: {
-    marginTop: 12, marginBottom: 8, paddingHorizontal: 16,
-    flexDirection: "row", alignItems: "center",
+    marginTop: 12,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  sectionTitle: { fontSize: 16, fontWeight: "800", color: "#EBD9C4" },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#EBD9C4",
+  },
 
   card: {
     width: CARD_W,
@@ -488,19 +618,33 @@ const styles = StyleSheet.create({
   },
   cardLocked: {
     opacity: 0.92,
-    borderColor: "rgba(246,231,211,0.10)",
+    borderColor: "rgba(246,231,211,0.1)",
   },
   cardIn: { flex: 1, padding: 14, justifyContent: "flex-end" },
   cardHeaderRow: { flexDirection: "row", alignItems: "center" },
   leadIcon: {
-    width: 36, height: 36, borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: "rgba(246,231,211,0.14)",
-    alignItems: "center", justifyContent: "center",
-    marginRight: 10, borderWidth: 1, borderColor: "rgba(246,231,211,0.28)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "rgba(246,231,211,0.28)",
   },
   leadEmoji: { fontSize: 17 },
-  cardTitle: { color: "#FFF5E5", fontWeight: "900", fontSize: 14, lineHeight: 18 },
-  trailing: { flexDirection: "row", alignItems: "center", marginLeft: 10 },
+  cardTitle: {
+    color: "#FFF5E5",
+    fontWeight: "900",
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  trailing: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 10,
+  },
 
   premiumPill: {
     flexDirection: "row",
@@ -524,9 +668,15 @@ const styles = StyleSheet.create({
   },
 
   badge: {
-    minWidth: 26, height: 26, paddingHorizontal: 6, borderRadius: 13,
-    alignItems: "center", justifyContent: "center",
-    backgroundColor: "#FFE9C6", borderWidth: 1, borderColor: "#E3BBB3",
+    minWidth: 26,
+    height: 26,
+    paddingHorizontal: 6,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFE9C6",
+    borderWidth: 1,
+    borderColor: "#E3BBB3",
   },
   badgeText: { fontWeight: "900", color: "#6B3C2F", fontSize: 12 },
 });

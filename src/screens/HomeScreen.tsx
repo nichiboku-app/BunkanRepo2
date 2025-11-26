@@ -2,6 +2,7 @@
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Asset } from "expo-asset";
+import { Audio } from "expo-av";
 import { Image as ExpoImage } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -272,6 +273,72 @@ export default function HomeScreen(): React.JSX.Element {
   const [bunkagramCount, setBunkagramCount] = useState(0); // /notifications/{uid}/items no leídas
   const [chatCount, setChatCount] = useState(0); // notificationsGlobal type='chat' no leídas
 
+  // 🔊 Sonido de notificaciones
+  const notificationSoundRef = useRef<Audio.Sound | null>(null);
+
+  // Guardamos contadores previos para detectar incrementos
+  const prevCountsRef = useRef<{
+    notif: number;
+    bunkagram: number;
+    chat: number;
+    initialized: boolean;
+  }>({
+    notif: 0,
+    bunkagram: 0,
+    chat: 0,
+    initialized: false,
+  });
+
+  // Cargar el sonido de notificación una sola vez
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          require("../../assets/audio/notificacioneshome.mp3")
+        );
+
+        if (!mounted) {
+          await sound.unloadAsync();
+          return;
+        }
+
+        notificationSoundRef.current = sound;
+
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+        });
+      } catch (e) {
+        console.warn("No se pudo cargar el sonido de notificación", e);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      if (notificationSoundRef.current) {
+        notificationSoundRef.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  const playNotificationSound = async () => {
+    try {
+      const sound = notificationSoundRef.current;
+      if (!sound) return;
+
+      const status = await sound.getStatusAsync();
+      if (!status.isLoaded) return;
+
+      if ("positionMillis" in status) {
+        await sound.setPositionAsync(0);
+      }
+      await sound.playAsync();
+    } catch (e) {
+      console.warn("Error reproduciendo sonido de notificación", e);
+    }
+  };
+
   // notificationsGlobal -> notifCount
   useEffect(() => {
     if (!uid) return;
@@ -305,6 +372,36 @@ export default function HomeScreen(): React.JSX.Element {
     return unsub;
   }, [uid]);
 
+  // 🔔 Sonido cuando llegan nuevas notificaciones (en foreground)
+  useEffect(() => {
+    const prev = prevCountsRef.current;
+
+    // Primera vez: inicializamos pero no sonamos
+    if (!prev.initialized) {
+      prevCountsRef.current = {
+        notif: notifCount,
+        bunkagram: bunkagramCount,
+        chat: chatCount,
+        initialized: true,
+      };
+      return;
+    }
+
+    const prevTotal = prev.notif + prev.bunkagram + prev.chat;
+    const currentTotal = notifCount + bunkagramCount + chatCount;
+
+    if (currentTotal > prevTotal) {
+      playNotificationSound();
+    }
+
+    prevCountsRef.current = {
+      notif: notifCount,
+      bunkagram: bunkagramCount,
+      chat: chatCount,
+      initialized: true,
+    };
+  }, [notifCount, bunkagramCount, chatCount]);
+
   const renderBadge = (count: number) => {
     if (!count) return null;
     const label = count > 99 ? "99+" : String(count);
@@ -314,8 +411,6 @@ export default function HomeScreen(): React.JSX.Element {
       </View>
     );
   };
-
-  // ====== handlers que limpian contadores al entrar (Opción A) ======
 
   // 👉 Marca TODAS las notificationsGlobal como read:true (no borra)
   const handleOpenNotifications = async () => {
@@ -330,7 +425,6 @@ export default function HomeScreen(): React.JSX.Element {
         snap.docs.map((d) => updateDoc(d.ref, { read: true }))
       );
 
-      // UX inmediata (onSnapshot lo hará de todos modos)
       setNotifCount(0);
       setChatCount(0);
     } catch (e) {
@@ -725,7 +819,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  // Hamburguesa más pequeña
   hamburger: {
     width: 64,
     height: 64,
@@ -740,12 +833,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: "center",
-    fontSize: 26, // más pequeño
+    fontSize: 26,
     fontWeight: "800",
     color: "#5C0A14",
   },
 
-  // Progreso / Dojo
   progressCard: {
     backgroundColor: "#7E0D18",
     marginHorizontal: 16,
@@ -776,7 +868,7 @@ const styles = StyleSheet.create({
   progressTextCol: { flex: 1, paddingRight: 60 },
   progressTitle: {
     color: "#fff",
-    fontSize: 14, // más pequeño
+    fontSize: 14,
     fontWeight: "800",
     lineHeight: 20,
   },
@@ -793,7 +885,6 @@ const styles = StyleSheet.create({
     color: "#7E0D18",
   },
 
-  // Notas / Calendario
   panelWrap: { marginTop: 12, paddingHorizontal: 16 },
   panelBg: { height: 118, justifyContent: "center", paddingHorizontal: 18 },
   panelBgImage: { resizeMode: "stretch", borderRadius: 14 },
@@ -822,7 +913,6 @@ const styles = StyleSheet.create({
   actionIcon: { width: 26, height: 26, resizeMode: "contain" },
   actionText: { fontWeight: "800", fontSize: 16, color: "#6B0F17" },
 
-  // Cards
   cardsGrid: {
     marginTop: 16,
     paddingHorizontal: 16,
@@ -857,7 +947,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 6,
   },
 
-  // Wide
   wide: { width: "100%", borderRadius: 22, padding: 14, overflow: "hidden" },
   wideRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   wideIcon: { width: 105, height: 105, resizeMode: "contain" },
@@ -870,12 +959,11 @@ const styles = StyleSheet.create({
     textShadowRadius: 6,
   },
 
-  // Barra inferior (subida 25 px)
   bottomBarFixed: {
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 37, // antes 12 → subido ~25px
+    bottom: 37,
     alignItems: "center",
     pointerEvents: "box-none",
   },
@@ -899,11 +987,10 @@ const styles = StyleSheet.create({
     height: 52,
     alignItems: "center",
     justifyContent: "center",
-    position: "relative", // para colocar el badge
+    position: "relative",
   },
   bottomIcon: { width: 32, height: 32, resizeMode: "contain" },
 
-  // 🔴 Badge pequeño tipo Facebook
   badge: {
     position: "absolute",
     top: 4,

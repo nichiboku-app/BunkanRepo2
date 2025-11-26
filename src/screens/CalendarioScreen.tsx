@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import DateTimePicker, {
-    DateTimePickerEvent,
+  DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { Audio } from 'expo-av';
 import * as Notifications from 'expo-notifications';
@@ -19,17 +19,16 @@ import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
-    addDoc,
-    collection,
-    deleteDoc,
-    getDocs,
-    onSnapshot,
-    orderBy,
-    query,
-    serverTimestamp,
+  addDoc,
+  collection,
+  deleteDoc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
-
 
 type CalendarEvent = {
   id: string;
@@ -42,8 +41,8 @@ type CalendarEvent = {
 
 const WUONG_SOUND = require('../../assets/audio/wuong.mp3');
 
-// 👇 UID de admin simple (debe coincidir con el de las reglas)
-const ADMIN_UID = 'TU_UID_ADMIN';
+// 👇 UID del admin real (nosferatum963)
+const ADMIN_UID = '6cvsTORtR3ShBN7ZCLlBjAkSo3p1';
 
 export default function CalendarioScreen() {
   const uid = auth.currentUser?.uid;
@@ -118,7 +117,8 @@ export default function CalendarioScreen() {
     const requestPerms = async () => {
       const { status } = await Notifications.getPermissionsAsync();
       if (status !== 'granted') {
-        const { status: newStatus } = await Notifications.requestPermissionsAsync();
+        const { status: newStatus } =
+          await Notifications.requestPermissionsAsync();
         if (newStatus !== 'granted') {
           console.warn('Permiso de notificaciones denegado');
         }
@@ -242,7 +242,10 @@ export default function CalendarioScreen() {
     if (!uid) return;
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
-      Alert.alert('Título requerido', 'Por favor escribe un título para el evento.');
+      Alert.alert(
+        'Título requerido',
+        'Por favor escribe un título para el evento.'
+      );
       return;
     }
 
@@ -250,7 +253,7 @@ export default function CalendarioScreen() {
 
     try {
       if (asGlobal && isAdminUser) {
-        // Evento global
+        // 👉 1) Guardar evento GLOBAL (lo ven todos en el calendario)
         await addDoc(collection(db, 'calendarGlobal'), {
           title: trimmedTitle,
           date: selectedDate,
@@ -258,6 +261,22 @@ export default function CalendarioScreen() {
           reminderMinutes: reminder,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
+        });
+
+        // 👉 2) Crear NOTIFICACIÓN GLOBAL para todos
+        const previewText = time
+          ? `Nuevo evento: ${trimmedTitle} el ${selectedDate} a las ${time}`
+          : `Nuevo evento: ${trimmedTitle} el ${selectedDate}`;
+
+        await addDoc(collection(db, 'notificationsGlobal'), {
+          actorId: uid,
+          actorName: 'Administración Bunkan', // texto que verán los alumnos
+          actorAvatar: null,
+          type: 'calendar',
+          source: 'calendar',
+          preview: previewText,
+          createdAt: serverTimestamp(),
+          read: false,
         });
       } else {
         // Evento personal
@@ -273,7 +292,12 @@ export default function CalendarioScreen() {
 
       // Programar notificación local si hay recordatorio (>0)
       if (reminder > 0) {
-        await scheduleLocalNotification(trimmedTitle, selectedDate, time || null, reminder);
+        await scheduleLocalNotification(
+          trimmedTitle,
+          selectedDate,
+          time || null,
+          reminder
+        );
       }
 
       setModalVisible(false);
@@ -288,7 +312,7 @@ export default function CalendarioScreen() {
     }
   };
 
-  // ========= Programar notificación local =========
+  // ========= Programar notificación local (en el dispositivo del usuario actual) =========
   const scheduleLocalNotification = async (
     title: string,
     date: string,
@@ -308,10 +332,14 @@ export default function CalendarioScreen() {
       // Fecha del evento
       const eventDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
       // Recordatorio X minutos antes
-      const triggerDate = new Date(eventDate.getTime() - reminderMinutes * 60 * 1000);
+      const triggerDate = new Date(
+        eventDate.getTime() - reminderMinutes * 60 * 1000
+      );
 
       if (triggerDate.getTime() <= Date.now()) {
-        console.log('La hora del recordatorio ya pasó, no se programa notificación.');
+        console.log(
+          'La hora del recordatorio ya pasó, no se programa notificación.'
+        );
         return;
       }
 
@@ -411,7 +439,9 @@ export default function CalendarioScreen() {
       {bannerVisible && (
         <View style={styles.banner}>
           <Text style={styles.bannerTitle}>Recordatorio</Text>
-          <Text style={styles.bannerBody}>Tienes un evento en tu calendario.</Text>
+          <Text style={styles.bannerBody}>
+            Tienes un evento en tu calendario.
+          </Text>
         </View>
       )}
 
@@ -504,7 +534,7 @@ export default function CalendarioScreen() {
 
         {eventsForSelectedDay.length === 0 ? (
           <Text style={styles.emptyEventsText}>
-            No hay eventos para este día.{"\n"}Toca 「＋」 para agregar uno nuevo.
+            No hay eventos para este día.{'\n'}Toca 「＋」 para agregar uno nuevo.
           </Text>
         ) : (
           eventsForSelectedDay.map((ev) => (
@@ -558,7 +588,7 @@ export default function CalendarioScreen() {
 
             <TextInput
               style={styles.input}
-              placeholder="Título del evento (ej. Examen N5, Clase de kanji…) "
+              placeholder="Título del evento (ej. Examen N5, Clase de kanji…)"
               placeholderTextColor="#999"
               value={title}
               onChangeText={setTitle}
@@ -571,7 +601,9 @@ export default function CalendarioScreen() {
               onPress={() => setShowTimePicker(true)}
             >
               <Text style={[styles.timeText, !time && { color: '#999' }]}>
-                {time ? `Hora: ${time}` : 'Hora (opcional) – todo el día si lo dejas vacío'}
+                {time
+                  ? `Hora: ${time}`
+                  : 'Hora (opcional) – todo el día si lo dejas vacío'}
               </Text>
             </TouchableOpacity>
 
@@ -585,7 +617,7 @@ export default function CalendarioScreen() {
               />
             )}
 
-            <View style={styles.row}>
+            <View className="row" style={styles.row}>
               <Text style={styles.label}>Recordatorio</Text>
               <View style={styles.reminderRow}>
                 {(['0', '5', '10', '30', '60'] as const).map((val) => (
@@ -600,7 +632,8 @@ export default function CalendarioScreen() {
                     <Text
                       style={[
                         styles.reminderChipText,
-                        reminderMinutes === val && styles.reminderChipTextActive,
+                        reminderMinutes === val &&
+                          styles.reminderChipTextActive,
                       ]}
                     >
                       {val === '0' ? 'Sin recordatorio' : `${val} min antes`}
@@ -631,10 +664,7 @@ export default function CalendarioScreen() {
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[
-                      styles.typeChip,
-                      asGlobal && styles.typeChipActive,
-                    ]}
+                    style={[styles.typeChip, asGlobal && styles.typeChipActive]}
                     onPress={() => setAsGlobal(true)}
                   >
                     <Text
